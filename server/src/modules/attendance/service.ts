@@ -1,10 +1,12 @@
-import prisma from '../../config/database';
+import { PrismaClient } from '@prisma/client';
 import { 
   MarkStudentAttendanceInput, 
   BulkStudentAttendanceInput, 
   MarkTeacherAttendanceInput, 
   GetAttendanceQuery 
 } from './schema';
+
+const prisma = new PrismaClient();
 
 export class AttendanceService {
   async markStudentAttendance(schoolId: string, userId: string, data: MarkStudentAttendanceInput) {

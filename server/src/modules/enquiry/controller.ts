@@ -81,26 +81,29 @@ export class EnquiryController {
     }
   }
 
-  async getReceipts(req: Request, res: Response, next: NextFunction) {
+  async createAdvanceReceipt(req: Request, res: Response, next: NextFunction) {
     try {
       const schoolId = req.user!.schoolId!;
-      const receipts = await enquiryService.getReceipts(req.params.id as string, schoolId);
-      res.json({ success: true, data: receipts });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async addReceipt(req: Request, res: Response, next: NextFunction) {
-    try {
-      const schoolId = req.user!.schoolId!;
-      const receipt = await enquiryService.addReceipt(
+      const receipt = await enquiryService.createAdvanceReceipt(
         req.params.id as string,
         schoolId,
         req.body,
         req.user!.userId
       );
       res.status(201).json({ success: true, data: receipt });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getAdvanceReceipts(req: Request, res: Response, next: NextFunction) {
+    try {
+      const schoolId = req.user!.schoolId!;
+      const receipts = await enquiryService.getAdvanceReceipts(
+        req.params.id as string,
+        schoolId
+      );
+      res.json({ success: true, data: receipts });
     } catch (error) {
       next(error);
     }

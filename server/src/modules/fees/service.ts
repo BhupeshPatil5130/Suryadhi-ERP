@@ -18,7 +18,7 @@ export class FeeService {
   async calculateFee(schoolId: string, input: CalculateFeeInput) {
     const feeStructures = await prisma.feeStructure.findMany({
       where: {
-        ...(schoolId && { schoolId }),
+        // schoolId,
         programId: input.programId,
         ...(input.academicYearId && { academicYearId: input.academicYearId }),
         isActive: true,
@@ -88,36 +88,20 @@ export class FeeService {
   }
 
   /**
-   * Get receipts for an admission (or all receipts for school if no admissionId provided)
+   * Get receipts for an admission
    */
-  async getReceipts(admissionId: string | undefined, schoolId: string) {
-    if (!admissionId) {
-      const receipts = await prisma.receipt.findMany({
-        where: { admission: { schoolId }, deletedAt: null },
-        include: {
-          admission: {
-            select: {
-              id: true,
-              student: { select: { firstName: true, lastName: true } },
-              program: { select: { name: true } },
-            },
+  async getReceipts(admissionId: string, schoolId?: string) {
+    const admission = await prisma.admission.findFirst({
+      where: { id: admissionId, deletedAt: null },
+      include: {
+        student: {
+          include: {
+            parent: true,
           },
         },
-        orderBy: { receiptDate: 'desc' },
-      });
-      return receipts;
-    }
-
-    const whereAdmission: any = { id: admissionId, deletedAt: null };
-    if (schoolId) {
-      whereAdmission.schoolId = schoolId;
-    }
-
-    const admission = await prisma.admission.findFirst({
-      where: whereAdmission,
-      include: {
-        student: { select: { firstName: true, lastName: true } },
-        program: { select: { name: true } },
+        program: { select: { id: true, name: true, shortName: true } },
+        academicYear: { select: { id: true, label: true } },
+        school: { select: { id: true, name: true, code: true } },
         invoices: {
           where: { deletedAt: null },
           select: {
@@ -126,9 +110,10 @@ export class FeeService {
             term1Amount: true,
             term2Amount: true,
             totalAmount: true,
+            discountAmount: true,
             netAmount: true,
+            status: true,
             createdAt: true,
-
           },
         },
       },
@@ -155,6 +140,8 @@ export class FeeService {
     return {
       student: admission.student,
       program: admission.program,
+      academicYear: admission.academicYear,
+      school: admission.school,
       invoices: admission.invoices,
       receipts,
       summary: {
@@ -569,19 +556,23 @@ export class FeeService {
           receiptType: 'Fee Collection',
           franchiseeShare: 0,
           llplShare: 0,
+          slplShare: 0,
           taxAmount: 0,
           welcomeKit: 0,
           totalLLPLShare: 0,
+          totalSLPLShare: 0,
           chequeAmount: 0,
           receipts: [],
         };
       }
       const amount = Number(r.amount);
-      // Simplified royalty split (franchisee 70%, LLPL 30%)
+      // Simplified royalty split (franchisee 70%, SLPL 30%)
       grouped[dateKey].franchiseeShare += amount * 0.7;
       grouped[dateKey].llplShare += amount * 0.3;
-      grouped[dateKey].taxAmount += amount * 0.18 * 0.3; // GST on LLPL share
+      grouped[dateKey].slplShare += amount * 0.3;
+      grouped[dateKey].taxAmount += amount * 0.18 * 0.3; // GST on SLPL share
       grouped[dateKey].totalLLPLShare += amount * 0.3;
+      grouped[dateKey].totalSLPLShare += amount * 0.3;
       if (r.paymentMode === 'CHEQUE') grouped[dateKey].chequeAmount += amount;
       grouped[dateKey].receipts.push(r);
     });
@@ -663,7 +654,13 @@ export class FeeService {
       where.transactionId = { contains: query.paymentGateway };
     }
     if (query.paymentStatus && query.paymentStatus !== 'All') {
-      where.isCancelled = query.paymentStatus === 'CANCELLED';
+      if (query.paymentStatus === 'CANCELLED') {
+        where.isCancelled = true;
+      } else if (query.paymentStatus === 'SUCCESS') {
+        where.isCancelled = false;
+      } else if (query.paymentStatus === 'FAILED') {
+        where.isCancelled = true;
+      }
     }
     if (query.from || query.to) {
       where.receiptDate = {};

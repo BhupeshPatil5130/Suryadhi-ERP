@@ -131,10 +131,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
     if (!token && refreshToken) {
       try {
         const { data } = await authApi.refresh();
-        if (data.success && data.data?.accessToken) {
-          const newToken = data.data.accessToken;
-          token = newToken;
-          localStorage.setItem('accessToken', newToken);
+        if (data.success && data.data.accessToken) {
+          token = data.data.accessToken;
+          localStorage.setItem('accessToken', data.data.accessToken);
           if (data.data.refreshToken) {
             localStorage.setItem('refreshToken', data.data.refreshToken);
           }

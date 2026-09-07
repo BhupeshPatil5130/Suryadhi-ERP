@@ -11,7 +11,7 @@ export class AdmissionController {
 
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
-      const admission = await admissionService.getById(req.params.id as string, req.user?.schoolId);
+      const admission = await admissionService.getById(req.params.id as string, req.user!.schoolId!);
       res.json({ success: true, data: admission });
     } catch (error) { next(error); }
   }

@@ -5,7 +5,7 @@ import { config } from '../../config';
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: !config.isDev,
-  sameSite: config.isDev ? ('lax' as const) : ('none' as const),
+  sameSite: 'lax' as const,
   path: '/',
 };
 

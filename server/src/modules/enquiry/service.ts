@@ -6,7 +6,7 @@ import {
   UpdateEnquiryInput,
   EnquiryFollowUpInput,
   EnquiryListQuery,
-  EnquiryReceiptInput,
+  AdvanceReceiptInput,
 } from './schema';
 
 export class EnquiryService {
@@ -218,16 +218,22 @@ export class EnquiryService {
   /**
    * Add a follow-up entry to an enquiry
    */
-  async addFollowUp(enquiryId: string, schoolId: string, input: EnquiryFollowUpInput, userId: string) {
+  async addFollowUp(enquiryId: string, schoolId: string, input: any, userId: string) {
     // Verify enquiry exists
     await this.getById(enquiryId, schoolId);
+
+    const contactDate = input.contactDate ? new Date(input.contactDate) : new Date();
+    const nextDate = input.nextFollowUp || input.followUpDate;
+    const nextFollowUp = nextDate ? new Date(nextDate) : null;
+    const notes = input.notes || input.comment || '';
+    const newStage = input.stage || 'FOLLOW_UP';
 
     const followUp = await prisma.enquiryFollowUp.create({
       data: {
         enquiryId,
-        contactDate: new Date(input.contactDate),
-        nextFollowUp: input.nextFollowUp ? new Date(input.nextFollowUp) : null,
-        notes: input.notes,
+        contactDate,
+        nextFollowUp,
+        notes,
         contactedBy: input.contactedBy || userId,
       },
     });
@@ -236,9 +242,10 @@ export class EnquiryService {
     await prisma.enquiry.update({
       where: { id: enquiryId },
       data: {
-        lastContacted: new Date(input.contactDate),
-        nextFollowUp: input.nextFollowUp ? new Date(input.nextFollowUp) : null,
-        stage: 'FOLLOW_UP',
+        lastContacted: contactDate,
+        nextFollowUp,
+        stage: newStage as any,
+        subStage: input.subStage || undefined,
       },
     });
 
@@ -303,30 +310,15 @@ export class EnquiryService {
   }
 
   /**
-   * Get advance receipts for an enquiry
+   * Create an advance receipt for an enquiry
    */
-  async getReceipts(enquiryId: string, schoolId: string) {
+  async createAdvanceReceipt(enquiryId: string, schoolId: string, input: AdvanceReceiptInput, userId: string) {
+    // Verify enquiry exists and belongs to school
     await this.getById(enquiryId, schoolId);
 
-    const receipts = await prisma.advanceReceipt.findMany({
-      where: { enquiryId },
-      orderBy: { receiptDate: 'desc' },
-    });
-
-    return receipts;
-  }
-
-  /**
-   * Add advance receipt to an enquiry
-   */
-  async addReceipt(enquiryId: string, schoolId: string, input: EnquiryReceiptInput, userId: string) {
-    await this.getById(enquiryId, schoolId);
-
-    const count = await prisma.advanceReceipt.count({
-      where: { enquiry: { schoolId } },
-    });
-    const schoolCode = schoolId.slice(-4).toUpperCase();
-    const receiptNumber = `SK/${schoolCode}/REC/${String(count + 1).padStart(4, '0')}`;
+    // Generate receipt number
+    const count = await prisma.advanceReceipt.count();
+    const receiptNumber = `ADV-${new Date().getFullYear()}-${(count + 1).toString().padStart(6, '0')}`;
 
     const receipt = await prisma.advanceReceipt.create({
       data: {
@@ -351,6 +343,21 @@ export class EnquiryService {
     });
 
     return receipt;
+  }
+
+  /**
+   * Get all advance receipts for an enquiry
+   */
+  async getAdvanceReceipts(enquiryId: string, schoolId: string) {
+    // Verify enquiry exists and belongs to school
+    await this.getById(enquiryId, schoolId);
+
+    const receipts = await prisma.advanceReceipt.findMany({
+      where: { enquiryId },
+      orderBy: { receiptDate: 'desc' },
+    });
+
+    return receipts;
   }
 }
 

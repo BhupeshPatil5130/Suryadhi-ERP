@@ -2,87 +2,107 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Menu, FileText, Plus, Download, Loader2 } from 'lucide-react';
+import { Menu, FileText, Plus, Loader2, Receipt, ArrowLeft } from 'lucide-react';
 import api from '@/api/client';
-import { downloadAsPDF } from '@/lib/downloadUtils';
+import { showToast } from '@/lib/toast';
 
-interface AdvanceReceiptRow {
+interface AdvanceReceipt {
   id: string;
-  receiptDate: string;
   receiptNumber: string;
-  chequeNumber?: string;
-  chequeDate?: string;
+  receiptDate: string;
   amount: number;
-  paymentMode?: string;
-  bankName?: string;
+  paymentMode: string;
+  bankName?: string | null;
+  chequeNumber?: string | null;
+  chequeDate?: string | null;
+  notes?: string | null;
+}
+
+interface EnquiryData {
+  id: string;
+  enquirerName: string;
+  studentFirstName?: string;
+  studentLastName?: string;
+  student?: {
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+  };
+  program?: {
+    name: string;
+  };
 }
 
 export default function ViewReceiptPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
-  const [studentName, setStudentName] = useState('');
-  const [programName, setProgramName] = useState('Nursery');
-  const [receipts, setReceipts] = useState<AdvanceReceiptRow[]>([]);
+  const [enquiry, setEnquiry] = useState<EnquiryData | null>(null);
+  const [receipts, setReceipts] = useState<AdvanceReceipt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!id) return;
-    const loadEnquiryAndReceipts = async () => {
+    const fetchData = async () => {
+      if (!id) return;
       setIsLoading(true);
       try {
-        const [enquiryRes, receiptsRes] = await Promise.allSettled([
+        const [enquiryRes, receiptsRes] = await Promise.all([
           api.get(`/enquiries/${id}`),
-          api.get(`/enquiries/${id}/receipts`),
+          api.get(`/enquiries/${id}/advance-receipts`),
         ]);
 
-        if (enquiryRes.status === 'fulfilled' && enquiryRes.value.data.success) {
-          const eq = enquiryRes.value.data.data;
-          const s = eq.student;
-          const sName = s ? `${s.firstName || ''} ${s.lastName || ''}`.trim() : eq.enquirerName || '';
-          setStudentName(sName);
-          setProgramName(eq.program?.name || 'Nursery');
-
-          if (Array.isArray(eq.advanceReceipts) && eq.advanceReceipts.length > 0) {
-            setReceipts(eq.advanceReceipts);
-          }
+        if (enquiryRes.data.success) {
+          setEnquiry(enquiryRes.data.data);
         }
 
-        if (receiptsRes.status === 'fulfilled' && receiptsRes.value.data.success && Array.isArray(receiptsRes.value.data.data)) {
-          setReceipts(receiptsRes.value.data.data);
+        if (receiptsRes.data.success) {
+          setReceipts(receiptsRes.data.data || []);
+        } else if (enquiryRes.data.data?.advanceReceipts) {
+          setReceipts(enquiryRes.data.data.advanceReceipts);
         }
-      } catch (err) {
-        console.warn('Failed to load enquiry receipts data', err);
+      } catch (err: any) {
+        console.error('Failed to load enquiry receipts data', err);
+        showToast('Could not load receipts data', 'error');
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadEnquiryAndReceipts();
+    fetchData();
   }, [id]);
 
-  const handlePrintReceipt = (r: AdvanceReceiptRow) => {
-    downloadAsPDF({
-      title: 'Advance Fee Receipt',
-      subtitle: `Student: ${studentName || 'Student'} | Program: ${programName} | Receipt No: ${r.receiptNumber}`,
-      columns: ['Field', 'Details'],
-      rows: [
-        ['Receipt Number', r.receiptNumber || 'N/A'],
-        ['Receipt Date', r.receiptDate ? new Date(r.receiptDate).toLocaleDateString() : 'N/A'],
-        ['Student Name', studentName || 'N/A'],
-        ['Program', programName],
-        ['Payment Mode', r.paymentMode || 'CASH'],
-        ['Cheque Number', r.chequeNumber || 'N/A'],
-        ['Cheque Date', r.chequeDate ? new Date(r.chequeDate).toLocaleDateString() : 'N/A'],
-        ['Amount Paid (Rs.)', `INR ${Number(r.amount).toLocaleString('en-IN')}`],
-      ],
-      filename: `receipt_${r.receiptNumber || id}`,
-    });
-  };
+  const studentName = enquiry?.student
+    ? `${enquiry.student.firstName} ${enquiry.student.middleName || ''} ${enquiry.student.lastName}`.trim()
+    : enquiry?.studentFirstName
+    ? `${enquiry.studentFirstName} ${enquiry.studentLastName || ''}`.trim()
+    : enquiry?.enquirerName
+    ? `Child of ${enquiry.enquirerName}`
+    : 'N/A';
+
+  const programName = enquiry?.program?.name || 'N/A';
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600 mr-2" />
+        <span className="text-sm text-slate-500">Loading receipts data...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12 pt-4">
-      <h1 className="text-2xl font-semibold text-slate-800 mb-6">View Receipt</h1>
+      <div className="flex items-center justify-between mb-2">
+        <h1 className="text-2xl font-semibold text-slate-800">View Receipt</h1>
+        <Button
+          onClick={() => navigate('/enquiry')}
+          variant="outline"
+          className="h-8 text-xs flex items-center gap-1 border-slate-300"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back to Enquiries
+        </Button>
+      </div>
 
       <Card className="border-slate-300 shadow-sm rounded-sm overflow-hidden">
         <CardHeader className="bg-gradient-to-b from-white to-slate-100 border-b border-slate-300 py-3 px-4">
@@ -97,11 +117,11 @@ export default function ViewReceiptPage() {
             <div className="grid grid-cols-2 gap-4 mb-8 text-[13px] text-slate-800 px-8">
               <div className="flex gap-12">
                 <span className="font-normal text-slate-600">Student Name</span>
-                <span className="font-medium">{isLoading ? 'Loading...' : studentName}</span>
+                <span className="font-medium text-slate-900">{studentName}</span>
               </div>
               <div className="flex gap-6">
                 <span className="font-normal text-slate-600">Program</span>
-                <span className="font-medium">{isLoading ? 'Loading...' : programName}</span>
+                <span className="font-medium text-slate-900">{programName}</span>
               </div>
             </div>
 
@@ -120,62 +140,50 @@ export default function ViewReceiptPage() {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
+                <table className="w-full text-sm text-left border-collapse">
                   <thead className="bg-[#f5f5f5] text-slate-700 font-bold border-b border-slate-300 text-[13px]">
                     <tr>
                       <th className="px-4 py-3 text-center border-r border-slate-200">Receipt Date</th>
                       <th className="px-4 py-3 text-center border-r border-slate-200">Receipt Number</th>
-                      <th className="px-4 py-3 text-center border-r border-slate-200">Cheque Number</th>
-                      <th className="px-4 py-3 text-center border-r border-slate-200">Cheque Date</th>
+                      <th className="px-4 py-3 text-center border-r border-slate-200">Payment Mode</th>
+                      <th className="px-4 py-3 text-center border-r border-slate-200">Cheque / Bank Details</th>
                       <th className="px-4 py-3 text-center border-r border-slate-200">Amount</th>
                       <th className="px-4 py-3 text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {isLoading ? (
+                    {receipts.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="py-8 text-center text-slate-500 bg-white">
-                          <Loader2 className="h-4 w-4 animate-spin mx-auto text-blue-600 mb-1.5" />
-                          Loading advance receipts...
+                        <td colSpan={6} className="h-24 bg-white text-center text-slate-500 text-xs border-b border-slate-200 py-6">
+                          <Receipt className="h-6 w-6 text-slate-300 mx-auto mb-1" />
+                          No advance receipts recorded for this enquiry yet.
                         </td>
                       </tr>
-                    ) : receipts.length > 0 ? (
-                      receipts.map((r, idx) => (
-                        <tr key={r.id || idx} className="border-b border-slate-200 hover:bg-slate-50 text-[13px]">
-                          <td className="px-4 py-3 text-center text-slate-700 font-medium">
-                            {r.receiptDate ? new Date(r.receiptDate).toLocaleDateString() : '-'}
+                    ) : (
+                      receipts.map((r) => (
+                        <tr key={r.id} className="bg-white border-b border-slate-200 hover:bg-slate-50 text-[13px]">
+                          <td className="px-4 py-3 text-center border-r border-slate-200">
+                            {r.receiptDate ? new Date(r.receiptDate).toLocaleDateString('en-GB') : 'N/A'}
                           </td>
-                          <td className="px-4 py-3 text-center font-mono font-bold text-blue-700">
-                            {r.receiptNumber || `SK/3201/REC/${String(idx + 1).padStart(4, '0')}`}
+                          <td className="px-4 py-3 text-center border-r border-slate-200 font-mono text-xs font-semibold text-slate-800">
+                            {r.receiptNumber}
                           </td>
-                          <td className="px-4 py-3 text-center font-mono text-slate-600">
-                            {r.chequeNumber || '-'}
+                          <td className="px-4 py-3 text-center border-r border-slate-200 capitalize text-slate-700">
+                            {r.paymentMode?.toLowerCase().replace('_', ' ')}
                           </td>
-                          <td className="px-4 py-3 text-center text-slate-600">
-                            {r.chequeDate ? new Date(r.chequeDate).toLocaleDateString() : '-'}
+                          <td className="px-4 py-3 text-center border-r border-slate-200 text-xs text-slate-600">
+                            {r.chequeNumber ? `Cheque No: ${r.chequeNumber}` : ''}
+                            {r.bankName ? ` (${r.bankName})` : ''}
+                            {!r.chequeNumber && !r.bankName ? '—' : ''}
                           </td>
-                          <td className="px-4 py-3 text-center font-mono font-bold text-emerald-700">
-                            ₹{Number(r.amount).toLocaleString('en-IN')}
+                          <td className="px-4 py-3 text-center border-r border-slate-200 font-semibold text-emerald-700">
+                            ₹{Number(r.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handlePrintReceipt(r)}
-                              className="h-7 text-xs px-2.5 text-blue-700 hover:bg-blue-50 border-blue-200"
-                            >
-                              <Download className="h-3 w-3 mr-1" />
-                              Print
-                            </Button>
+                            <span className="text-xs text-slate-500 italic">Saved</span>
                           </td>
                         </tr>
                       ))
-                    ) : (
-                      <tr>
-                        <td colSpan={6} className="h-16 bg-white border-b border-slate-200 text-center text-slate-400 text-xs py-6">
-                          No receipts recorded for this enquiry yet.
-                        </td>
-                      </tr>
                     )}
                   </tbody>
                 </table>
@@ -183,13 +191,21 @@ export default function ViewReceiptPage() {
             </div>
           </div>
 
-          <div className="bg-[#f2f2f2] border-t border-slate-300 p-4 px-12 mt-12">
+          <div className="bg-[#f2f2f2] border-t border-slate-300 p-4 px-12 mt-6 flex justify-between items-center">
             <Button 
               onClick={() => navigate(-1)} 
               className="bg-[#333] hover:bg-[#222] text-white h-8 px-6 text-[13px] shadow-none rounded-sm font-semibold"
             >
               Back
             </Button>
+            <Link to={`/enquiry/${id}/receipts/add`}>
+              <Button 
+                className="bg-[#0056b3] hover:bg-[#004494] text-white h-8 px-6 text-[13px] shadow-none rounded-sm font-semibold flex items-center gap-1.5"
+              >
+                <Plus className="h-4 w-4" />
+                Add New Advance Receipt
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>

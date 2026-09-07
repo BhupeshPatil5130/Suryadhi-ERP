@@ -18,10 +18,10 @@ interface GraduationRow {
 const dummyData: GraduationRow[] = [
   { id: '1', name: 'Aditi Nikesh Ade', uin: 'SEMS/3201/0070/2526', currProg: 'SUNOIA Junior', expProg: 'SUNOIA Senior', payment: 'No', eligible: false, admissionId: '1' },
   { id: '2', name: 'Advit Ganesh Pinnamwar', uin: 'SEMS/3201/0048/2526', currProg: 'SUNOIA Junior', expProg: 'SUNOIA Senior', payment: 'No', eligible: false, admissionId: '2' },
-  { id: '3', name: 'Akshay Amit Jadhao', uin: 'SK/3201/0024/2526', currProg: 'SUNOIA Junior', expProg: 'SUNOIA Senior', payment: 'No', eligible: false, admissionId: '3' },
-  { id: '4', name: 'Anjali Sanjay Karewad', uin: 'SK/3201/0044/2526', currProg: 'SUNOIA Junior', expProg: 'SUNOIA Senior', payment: 'No', eligible: false, admissionId: '4' },
-  { id: '5', name: 'Anviksha Satish Wankhede', uin: 'SK/3201/0053/2526', currProg: 'SUNOIA Junior', expProg: 'SUNOIA Senior', payment: 'No', eligible: false, admissionId: '5' },
-  { id: '6', name: 'Ayansh Nandkishor Dawale', uin: 'SK/3201/0059/2526', currProg: 'Nursery', expProg: 'SUNOIA Junior', payment: 'No', eligible: false, admissionId: '6' },
+  { id: '3', name: 'Akshay Amit Jadhao', uin: 'SNK/3201/0024/2526', currProg: 'SUNOIA Junior', expProg: 'SUNOIA Senior', payment: 'No', eligible: false, admissionId: '3' },
+  { id: '4', name: 'Anjali Sanjay Karewad', uin: 'SNK/3201/0044/2526', currProg: 'SUNOIA Junior', expProg: 'SUNOIA Senior', payment: 'No', eligible: false, admissionId: '4' },
+  { id: '5', name: 'Anviksha Satish Wankhede', uin: 'SNK/3201/0053/2526', currProg: 'SUNOIA Junior', expProg: 'SUNOIA Senior', payment: 'No', eligible: false, admissionId: '5' },
+  { id: '6', name: 'Ayansh Nandkishor Dawale', uin: 'SNK/3201/0059/2526', currProg: 'Nursery', expProg: 'SUNOIA Junior', payment: 'No', eligible: false, admissionId: '6' },
 ];
 
 const NEXT_PROGRAM: Record<string, string> = {
@@ -45,26 +45,22 @@ export default function GraduationHomebuddyPage() {
           api.get('/lookups/programs'),
         ]);
 
-        if (admissionsRes.data.success && Array.isArray(admissionsRes.data.data)) {
+        if (admissionsRes.data.success && admissionsRes.data.data?.length > 0) {
           const rows = admissionsRes.data.data.map((a: any) => ({
             id: a.id,
             admissionId: a.id,
-            name: `${a.student?.firstName || ''} ${a.student?.lastName || ''}`.trim() || 'Student',
+            name: `${a.student?.firstName || ''} ${a.student?.lastName || ''}`.trim(),
             uin: a.student?.uin || 'N/A',
             currProg: a.program?.name || 'N/A',
-            expProg: NEXT_PROGRAM[a.program?.name || ''] || 'Graduated',
+            expProg: NEXT_PROGRAM[a.program?.name || ''] || 'N/A',
             payment: 'No',
             eligible: false,
           }));
-          if (rows.length > 0) {
-            setData(rows);
-          }
+          setData(rows);
         }
-        if (programsRes.data.success && Array.isArray(programsRes.data.data)) {
-          setPrograms(programsRes.data.data);
-        }
-      } catch (err) {
-        console.warn('Failed to load graduation admissions', err);
+        if (programsRes.data.success) setPrograms(programsRes.data.data);
+      } catch {
+        // fallback to dummy
       }
     };
     fetchData();

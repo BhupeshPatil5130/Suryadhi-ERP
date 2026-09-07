@@ -15,6 +15,7 @@ export default function ProgramChangePage() {
   const [studentData, setStudentData] = useState<any>(null);
   const [programs, setPrograms] = useState<any[]>([]);
   const [newProgramId, setNewProgramId] = useState('');
+  const [isUnlocked, setIsUnlocked] = useState(false);
 
   const [isLoadingStudent, setIsLoadingStudent] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -105,12 +106,7 @@ export default function ProgramChangePage() {
             <div className="flex items-center">
               <label className="w-[35%] text-[13px] text-[#333] text-right pr-4">Student Name</label>
               <div className="w-[65%]">
-                <Input 
-                  type="text" 
-                  value={studentData ? (studentData.student ? `${studentData.student.firstName || ''} ${studentData.student.lastName || ''}`.trim() : `${studentData.studentFirstName || ''} ${studentData.studentLastName || ''}`.trim()) : ''} 
-                  disabled 
-                  className="h-8 rounded-sm border-[#ccc] bg-[#eee] text-[13px] w-full" 
-                />
+                <Input type="text" value={studentData ? `${studentData.studentFirstName} ${studentData.studentLastName}` : ''} disabled className="h-8 rounded-sm border-[#ccc] bg-[#eee] text-[13px] w-full" />
               </div>
             </div>
 
@@ -138,13 +134,45 @@ export default function ProgramChangePage() {
               </div>
             </div>
 
+            {/* Unlock Option */}
+            <div className="flex items-center">
+              <label className="w-[35%] text-[13px] font-medium text-[#333] text-right pr-4">Unlock (Yes & No)</label>
+              <div className="w-[65%] flex items-center gap-5 text-[13px] text-[#333]">
+                <label className="flex items-center gap-1.5 cursor-pointer font-medium">
+                  <input
+                    type="radio"
+                    name="unlockToggle"
+                    value="yes"
+                    checked={isUnlocked}
+                    onChange={() => setIsUnlocked(true)}
+                    className="w-4 h-4 text-[#0056b3] focus:ring-0 cursor-pointer"
+                  />
+                  <span>Yes</span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer font-medium">
+                  <input
+                    type="radio"
+                    name="unlockToggle"
+                    value="no"
+                    checked={!isUnlocked}
+                    onChange={() => setIsUnlocked(false)}
+                    className="w-4 h-4 text-[#0056b3] focus:ring-0 cursor-pointer"
+                  />
+                  <span>No</span>
+                </label>
+                <span className={`text-[11px] font-medium px-2 py-0.5 rounded ${isUnlocked ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                  {isUnlocked ? 'Unlocked for Changes' : 'Locked (Select Yes to Edit)'}
+                </span>
+              </div>
+            </div>
+
             {/* New Program */}
             <div className="flex items-center">
               <label className="w-[35%] text-[13px] text-[#333] text-right pr-4">New Program</label>
               <div className="w-[65%]">
-                <Select value={newProgramId} onValueChange={setNewProgramId} disabled={!studentData}>
-                  <SelectTrigger className="h-8 rounded-sm border-[#ccc] text-[13px] bg-white w-full">
-                    <SelectValue placeholder="Select New Program" />
+                <Select value={newProgramId} onValueChange={setNewProgramId} disabled={!studentData || !isUnlocked}>
+                  <SelectTrigger className={`h-8 rounded-sm border-[#ccc] text-[13px] w-full ${!isUnlocked ? 'bg-[#eee] cursor-not-allowed text-gray-500' : 'bg-white'}`}>
+                    <SelectValue placeholder={isUnlocked ? "Select New Program" : "Locked (Select Yes to Unlock)"} />
                   </SelectTrigger>
                   <SelectContent>
                     {programs.filter(p => p.id !== studentData?.programId).map(p => (
@@ -171,8 +199,8 @@ export default function ProgramChangePage() {
                 Welcome kit used by student?
               </label>
               <div className="w-[65%]">
-                <Select disabled={!studentData}>
-                  <SelectTrigger className="h-8 rounded-sm border-[#ccc] text-[13px] bg-white w-full">
+                <Select disabled={!studentData || !isUnlocked}>
+                  <SelectTrigger className={`h-8 rounded-sm border-[#ccc] text-[13px] w-full ${!isUnlocked ? 'bg-[#eee] cursor-not-allowed text-gray-500' : 'bg-white'}`}>
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
@@ -189,7 +217,7 @@ export default function ProgramChangePage() {
           <div className="mt-8 flex gap-2 pl-[17.5%]">
             <Button
               onClick={handleUpdate}
-              disabled={!studentData || !newProgramId || isUpdating}
+              disabled={!studentData || !isUnlocked || !newProgramId || isUpdating}
               className="bg-[#0056b3] hover:bg-[#004494] text-white rounded-[3px] h-8 px-4 text-[13px] font-normal shadow-sm"
             >
               {isUpdating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}

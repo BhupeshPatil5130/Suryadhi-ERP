@@ -7,8 +7,10 @@ import DataTable from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatDate, formatCurrency, getStatusColor } from '@/lib/utils';
+import { Card, CardContent } from '@/components/ui/card';
 import { 
-  Download, Plus, Eye, Printer, Filter, Edit2, Trash, Check, X, Loader2
+  Download, Plus, Eye, Printer, Filter, Edit2, Trash, Check, X, Loader2,
+  Package, Clock, Send, Truck, CheckCircle2
 } from 'lucide-react';
 import {
   Dialog,
@@ -49,6 +51,7 @@ export default function PurchaseOrderPage() {
   const [submitting, setSubmitting] = useState(false);
   const [viewPO, setViewPO] = useState<PurchaseOrder | null>(null);
   const [editPO, setEditPO] = useState<PurchaseOrder | null>(null);
+  const [statusFilter, setStatusFilter] = useState('ALL');
 
   // New PO Form state
   const [formData, setFormData] = useState({
@@ -264,41 +267,137 @@ export default function PurchaseOrderPage() {
     },
   ];
 
+  const orderReceivedCount = data.filter(d => ['SUBMITTED', 'PENDING', 'ORDER_RECEIVED'].includes(d.status.toUpperCase())).length;
+  const inProcessCount = data.filter(d => ['IN_PROCESS', 'APPROVED'].includes(d.status.toUpperCase())).length;
+  const orderDispatchCount = data.filter(d => ['DISPATCHED', 'ORDER_DISPATCH'].includes(d.status.toUpperCase())).length;
+  const inTransitCount = data.filter(d => ['IN_TRANSIT'].includes(d.status.toUpperCase())).length;
+  const orderDeliveredCount = data.filter(d => ['DELIVERED', 'ORDER_DELIVERED'].includes(d.status.toUpperCase())).length;
+
+  const filteredData = statusFilter === 'ALL'
+    ? data
+    : data.filter((item) => {
+        const s = item.status.toUpperCase();
+        if (statusFilter === 'ORDER_RECEIVED') return ['SUBMITTED', 'PENDING', 'ORDER_RECEIVED'].includes(s);
+        if (statusFilter === 'IN_PROCESS') return ['IN_PROCESS', 'APPROVED'].includes(s);
+        if (statusFilter === 'ORDER_DISPATCH') return ['DISPATCHED', 'ORDER_DISPATCH'].includes(s);
+        if (statusFilter === 'IN_TRANSIT') return ['IN_TRANSIT'].includes(s);
+        if (statusFilter === 'ORDER_DELIVERED') return ['DELIVERED', 'ORDER_DELIVERED'].includes(s);
+        return true;
+      });
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Purchase Orders"
         description="Manage your kit inventory, educational materials, and uniform orders"
       >
-        <Button variant="outline" size="sm">
-          <Filter className="h-4 w-4 mr-2" />
-          Filter Status
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => apiDownload(
-          'purchase-orders',
-          {},
-          data.map((d) => ({
-            'PO Number': d.poNo,
-            Date: d.date,
-            Vendor: d.supplier,
-            Amount: d.totalAmount ?? 0,
-            Status: d.status,
-          })),
-          'purchase-orders'
-        )}>
-          <Download className="h-4 w-4 mr-2" />
-          Export
+        <Button
+          variant={statusFilter === 'ALL' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setStatusFilter('ALL')}
+        >
+          All Orders ({data.length})
         </Button>
         <Button size="sm" onClick={() => setIsModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
-          <Plus className="h-4 w-4 mr-2" />
-          Purchase Order
+          <Plus className="h-4 w-4 mr-1.5" />
+          Add Order
         </Button>
       </PageHeader>
 
+      {/* 5 Dashboard KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
+        <Card
+          className={`cursor-pointer transition-all border-l-4 border-l-blue-500 shadow-sm hover:shadow-md ${
+            statusFilter === 'ORDER_RECEIVED' ? 'ring-2 ring-blue-500 bg-blue-50/20' : ''
+          }`}
+          onClick={() => setStatusFilter(statusFilter === 'ORDER_RECEIVED' ? 'ALL' : 'ORDER_RECEIVED')}
+        >
+          <CardContent className="p-3.5 flex items-center justify-between">
+            <div>
+              <p className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Order Received</p>
+              <h3 className="text-xl font-black text-blue-700 mt-1">{orderReceivedCount}</h3>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+              <Package className="w-4 h-4" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card
+          className={`cursor-pointer transition-all border-l-4 border-l-amber-500 shadow-sm hover:shadow-md ${
+            statusFilter === 'IN_PROCESS' ? 'ring-2 ring-amber-500 bg-amber-50/20' : ''
+          }`}
+          onClick={() => setStatusFilter(statusFilter === 'IN_PROCESS' ? 'ALL' : 'IN_PROCESS')}
+        >
+          <CardContent className="p-3.5 flex items-center justify-between">
+            <div>
+              <p className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">In-Process</p>
+              <h3 className="text-xl font-black text-amber-700 mt-1">{inProcessCount}</h3>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+              <Clock className="w-4 h-4" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card
+          className={`cursor-pointer transition-all border-l-4 border-l-indigo-500 shadow-sm hover:shadow-md ${
+            statusFilter === 'ORDER_DISPATCH' ? 'ring-2 ring-indigo-500 bg-indigo-50/20' : ''
+          }`}
+          onClick={() => setStatusFilter(statusFilter === 'ORDER_DISPATCH' ? 'ALL' : 'ORDER_DISPATCH')}
+        >
+          <CardContent className="p-3.5 flex items-center justify-between">
+            <div>
+              <p className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Order Dispatch</p>
+              <h3 className="text-xl font-black text-indigo-700 mt-1">{orderDispatchCount}</h3>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+              <Send className="w-4 h-4" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card
+          className={`cursor-pointer transition-all border-l-4 border-l-purple-500 shadow-sm hover:shadow-md ${
+            statusFilter === 'IN_TRANSIT' ? 'ring-2 ring-purple-500 bg-purple-50/20' : ''
+          }`}
+          onClick={() => setStatusFilter(statusFilter === 'IN_TRANSIT' ? 'ALL' : 'IN_TRANSIT')}
+        >
+          <CardContent className="p-3.5 flex items-center justify-between">
+            <div>
+              <p className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">In Transit</p>
+              <h3 className="text-xl font-black text-purple-700 mt-1">{inTransitCount}</h3>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+              <Truck className="w-4 h-4" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card
+          className={`cursor-pointer transition-all border-l-4 border-l-emerald-500 shadow-sm hover:shadow-md ${
+            statusFilter === 'ORDER_DELIVERED' ? 'ring-2 ring-emerald-500 bg-emerald-50/20' : ''
+          }`}
+          onClick={() => setStatusFilter(statusFilter === 'ORDER_DELIVERED' ? 'ALL' : 'ORDER_DELIVERED')}
+        >
+          <CardContent className="p-3.5 flex items-center justify-between">
+            <div>
+              <p className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Order Delivered</p>
+              <h3 className="text-xl font-black text-emerald-600 mt-1">{orderDeliveredCount}</h3>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <DataTable
         columns={columns}
-        data={data}
+        data={filteredData}
         searchPlaceholder="Search by PO number or supplier..."
+        showExportBox={true}
+        exportTitle="purchase_orders"
       />
 
       {/* New Purchase Order Dialog */}

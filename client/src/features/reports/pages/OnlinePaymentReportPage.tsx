@@ -31,7 +31,7 @@ interface OnlinePayment {
 
 const mockOnlinePayments: OnlinePayment[] = [
   { id: 'op1', receiptNumber: 'REC-2026-000031', receiptDate: '2026-06-08', amount: 35000, paymentMode: 'ONLINE', admission: { student: { firstName: 'Rohan', lastName: 'Gupta', uin: 'SEMS/3201/0088/2627' }, program: { name: 'SUNOIA Junior' } } },
-  { id: 'op2', receiptNumber: 'REC-2026-000032', receiptDate: '2026-06-12', amount: 18500, paymentMode: 'BANK_TRANSFER', admission: { student: { firstName: 'Anika', lastName: 'Mehta', uin: 'SK/3201/0091/2627' }, program: { name: 'Nursery' } } },
+  { id: 'op2', receiptNumber: 'REC-2026-000032', receiptDate: '2026-06-12', amount: 18500, paymentMode: 'BANK_TRANSFER', admission: { student: { firstName: 'Anika', lastName: 'Mehta', uin: 'SNK/3201/0091/2627' }, program: { name: 'Nursery' } } },
 ];
 
 export default function OnlinePaymentReportPage() {
