@@ -1,11 +1,11 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const router = Router();
 const prisma = new PrismaClient();
 
-router.get('/trigger-seed', async (_req, res) => {
+router.get('/trigger-seed', async (_req: Request, res: Response) => {
   try {
     console.log('🌱 Triggering seed from endpoint...');
     
@@ -17,14 +17,19 @@ router.get('/trigger-seed', async (_req, res) => {
     });
 
     // ── Programs ───────────────────────────────────────────────
-    const { migrateLegacyEuroPrograms } = await import('./utils/cleanup-programs');
-    await migrateLegacyEuroPrograms(prisma);
+    // Delete old Euro Junior and Euro Senior duplicates if present
+    try {
+      await prisma.program.deleteMany({ where: { name: { in: ['Euro Junior', 'Euro Senior'] } } });
+      console.log('🗑️ Deleted old Euro Junior / Euro Senior program entries');
+    } catch (e) {
+      console.warn('Could not delete old programs (may not exist or have references):', e);
+    }
 
     const programs = await Promise.all([
-      prisma.program.upsert({ where: { name: 'Play Group' }, update: {}, create: { name: 'Play Group', shortName: 'PG', ageFrom: 18, ageTo: 30, sortOrder: 1 } }),
-      prisma.program.upsert({ where: { name: 'Nursery' }, update: {}, create: { name: 'Nursery', shortName: 'NR', ageFrom: 30, ageTo: 42, sortOrder: 2 } }),
-      prisma.program.upsert({ where: { name: 'SUNOIA Junior' }, update: {}, create: { name: 'SUNOIA Junior', shortName: 'EJ', ageFrom: 42, ageTo: 54, sortOrder: 3 } }),
-      prisma.program.upsert({ where: { name: 'SUNOIA Senior' }, update: {}, create: { name: 'SUNOIA Senior', shortName: 'ES', ageFrom: 54, ageTo: 72, sortOrder: 4 } }),
+      prisma.program.upsert({ where: { name: 'Play Group' }, update: { shortName: 'PG', sortOrder: 1 }, create: { name: 'Play Group', shortName: 'PG', ageFrom: 18, ageTo: 30, sortOrder: 1 } }),
+      prisma.program.upsert({ where: { name: 'Nursery' }, update: { shortName: 'NR', sortOrder: 2 }, create: { name: 'Nursery', shortName: 'NR', ageFrom: 30, ageTo: 42, sortOrder: 2 } }),
+      prisma.program.upsert({ where: { name: 'SUNOIA Junior' }, update: { shortName: 'SJ', sortOrder: 3 }, create: { name: 'SUNOIA Junior', shortName: 'SJ', ageFrom: 42, ageTo: 54, sortOrder: 3 } }),
+      prisma.program.upsert({ where: { name: 'SUNOIA Senior' }, update: { shortName: 'SS', sortOrder: 4 }, create: { name: 'SUNOIA Senior', shortName: 'SS', ageFrom: 54, ageTo: 72, sortOrder: 4 } }),
     ]);
 
     // ── Media Sources ──────────────────────────────────────────
@@ -50,7 +55,7 @@ router.get('/trigger-seed', async (_req, res) => {
 
     // ── Batches ────────────────────────────────────────────────
     for (const program of programs) {
-      const batchTimes = ['9:00 AM - 11:30 AM', '11:30 AM - 2:00 PM', '2:00 PM - 4:30 PM'];
+      const batchTimes = ['Early Morning Shift', 'Late Morning Shift'];
       for (const timeSlot of batchTimes) {
         const existingBatch = await prisma.batch.findFirst({
           where: { programId: program.id, schoolId: school.id, timeSlot },
@@ -71,7 +76,7 @@ router.get('/trigger-seed', async (_req, res) => {
       { program: 'SUNOIA Senior', registration: 5000, termFee: 22000, tuitionFee: 16000 },
     ];
     for (const fee of feeData) {
-      const program = programs.find((p) => p.name === fee.program)!;
+      const program = programs.find((p: any) => p.name === fee.program)!;
       const feeEntries = [
         { feeType: 'REGISTRATION' as const, term1: fee.registration, term2: 0 },
         { feeType: 'TERM_FEE' as const, term1: fee.termFee, term2: fee.termFee },
@@ -100,7 +105,7 @@ router.get('/trigger-seed', async (_req, res) => {
     }
 
     // ── Users ──────────────────────────────────────────────────
-    const passwordHash = await bcrypt.hash('Suryadhi@7474', 12);
+    const passwordHash = await bcrypt.hash('Sunoia@7474', 12);
     await prisma.user.upsert({
       where: { username: 'Rahul.Khandale' },
       update: { passwordHash, schoolId: school.id },

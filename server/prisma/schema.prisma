@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -111,6 +112,7 @@ model User {
   firstName     String    @map("first_name")
   lastName      String    @map("last_name")
   phone         String?
+  profileData   Json?     @map("profile_data")
   isActive      Boolean   @default(true) @map("is_active")
   lastLoginAt   DateTime? @map("last_login_at")
 
@@ -222,7 +224,7 @@ model SchoolAcademicYear {
 model Program {
   id           String   @id @default(cuid())
   name         String   @unique // Play Group, Nursery, SUNOIA Junior, SUNOIA Senior
-  shortName    String?  @map("short_name") // PG, NR, EJ, ES
+  shortName    String?  @map("short_name") // PG, NR, SJ, SS
   ageFrom      Int?     @map("age_from") // Minimum age in months
   ageTo        Int?     @map("age_to")   // Maximum age in months
   sortOrder    Int      @default(0) @map("sort_order")
@@ -388,11 +390,11 @@ model Enquiry {
   deletedAt         DateTime? @map("deleted_at")
 
   @@map("enquiries")
-  @@index([schoolId, stage, deletedAt])
   @@index([schoolId])
   @@index([stage])
   @@index([enquirerMobile])
   @@index([studentId])
+  @@index([schoolId, deletedAt, stage])
 }
 
 model EnquiryFollowUp {
@@ -471,12 +473,13 @@ model Admission {
   deletedAt           DateTime? @map("deleted_at")
 
   @@map("admissions")
-  @@index([schoolId, status, deletedAt])
   @@index([schoolId])
   @@index([studentId])
   @@index([programId])
   @@index([status])
   @@index([admissionDate])
+  @@index([schoolId, deletedAt, status])
+  @@index([schoolId, deletedAt, academicYearId])
 }
 
 model Graduation {
@@ -945,3 +948,34 @@ model ReportCard {
   @@unique([examId, studentId])
   @@map("report_cards")
 }
+
+// ─────────────────────────────────────────────────────────────
+// SYSTEM CONFIGURATION & SEQUENCES
+// ─────────────────────────────────────────────────────────────
+
+model SystemSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       Json
+  category    String   @default("GENERAL")
+  description String?
+  isPublic    Boolean  @default(false) @map("is_public")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+  @@index([category])
+}
+
+model SequenceCounter {
+  id          String   @id @default(cuid())
+  prefix      String
+  year        Int
+  schoolId    String?  @map("school_id")
+  currentVal  Int      @default(0) @map("current_val")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([prefix, year, schoolId])
+  @@map("sequence_counters")
+}
+

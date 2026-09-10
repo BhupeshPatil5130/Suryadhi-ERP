@@ -1,6 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 import { config } from './index';
 
+// Auto-derive DIRECT_URL for Neon PostgreSQL if not explicitly set
+if (process.env.DATABASE_URL && !process.env.DIRECT_URL) {
+  process.env.DIRECT_URL = process.env.DATABASE_URL.replace('-pooler.', '.');
+}
+
 const basePrisma = new PrismaClient({
   log: config.isDev ? ['query', 'error', 'warn'] : ['error'],
 });

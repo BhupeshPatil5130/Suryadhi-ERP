@@ -69,27 +69,44 @@ export default function ConvertToAdmissionPage() {
           api.get('/lookups/academic-years'),
         ]);
         if (progRes.data.success) setPrograms(progRes.data.data);
-        if (yearRes.data.success) setAcademicYears(yearRes.data.data);
+        let currentAyId = '';
+        if (yearRes.data?.success && yearRes.data.data?.length > 0) {
+          const currentAy = yearRes.data.data.find((y: any) => y.isCurrent) || yearRes.data.data[0];
+          currentAyId = currentAy.id;
+        }
 
         if (id) {
           const res = await api.get(`/enquiries/${id}`);
           if (res.data.success) {
             const e = res.data.data;
+            const stu = e.student || {};
+            const dob = stu.dateOfBirth
+              ? new Date(stu.dateOfBirth).toISOString().split('T')[0]
+              : e.dateOfBirth
+              ? new Date(e.dateOfBirth).toISOString().split('T')[0]
+              : '2022-01-01';
+
             setForm((prev: any) => ({
               ...prev,
-              academicYearId: e.academicYearId || '',
-              studentFirstName: e.studentFirstName || '',
-              studentMiddleName: e.studentMiddleName || '',
-              studentLastName: e.studentLastName || '',
-              gender: e.gender || 'BOY',
-              dateOfBirth: e.dateOfBirth ? e.dateOfBirth.split('T')[0] : '',
-              programId: e.programId || '',
-              address: e.enquirerAddress || '',
+              academicYearId: e.academicYearId || currentAyId,
+              studentFirstName: stu.firstName || e.studentFirstName || '',
+              studentMiddleName: stu.middleName || e.studentMiddleName || '',
+              studentLastName: stu.lastName || e.studentLastName || '',
+              gender: stu.gender || e.gender || 'BOY',
+              dateOfBirth: dob,
+              programId: e.programId || prev.programId || '',
+              address: e.enquirerAddress || stu.address || 'Arni, Yavatmal',
+              postalCode: stu.postalCode || '445001',
+              city: stu.city || 'Yavatmal',
+              state: stu.state || 'Maharashtra',
+              country: stu.country || 'India',
               hasSibling: e.hasSibling ? 'yes' : 'no',
-              // Set enquirer details as father for now (will adjust on Ok click)
               _rawEnquirerName: e.enquirerName || '',
               _rawEnquirerMobile: e.enquirerMobile || '',
               _rawEnquirerEmail: e.enquirerEmail || '',
+              fatherName: e.enquirerName || '',
+              fatherMobile: e.enquirerMobile || '',
+              fatherEmail: e.enquirerEmail || '',
             }));
 
             if (e.programId) {
@@ -420,14 +437,7 @@ export default function ConvertToAdmissionPage() {
                 <Select value={form.batchId} onValueChange={v => setField('batchId', v)}>
                   <SelectTrigger className="h-8 text-[13px] border-slate-300 shadow-none rounded-sm bg-white"><SelectValue placeholder="Select Batch" /></SelectTrigger>
                   <SelectContent>
-                    {(batches.length > 0 ? batches : [
-                      { id: 'early', timeSlot: 'Early Morning Shift' },
-                      { id: 'late', timeSlot: 'Late Morning Shift' }
-                    ]).map(b => (
-                      <SelectItem key={b.id} value={b.id}>
-                        {b.timeSlot?.includes('Shift') ? b.timeSlot : (b.timeSlot?.toLowerCase().includes('late') || b.timeSlot?.toLowerCase().includes('afternoon') ? 'Late Morning Shift' : 'Early Morning Shift')}
-                      </SelectItem>
-                    ))}
+                    {batches.map(b => <SelectItem key={b.id} value={b.id}>{b.timeSlot}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

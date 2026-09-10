@@ -33,8 +33,8 @@ export class SOAService {
       ]);
 
     const enrollments: Record<string, number> = { total: 0 };
-    enrollmentCounts.forEach((ec) => {
-      const program = programs.find((p) => p.id === ec.programId);
+    enrollmentCounts.forEach((ec: any) => {
+      const program = programs.find((p: any) => p.id === ec.programId);
       if (program?.shortName) {
         enrollments[program.shortName] = ec._count.id;
       }
@@ -44,7 +44,7 @@ export class SOAService {
     const receivable = Number(totalReceivable._sum.netAmount || 0);
     const collected = Number(totalCollected._sum.amount || 0);
 
-    const statementSummary = summaryByType.map((s) => ({
+    const statementSummary = summaryByType.map((s: any) => ({
       collectionType: s.entryType,
       invoiceCharges: Number(s._sum.invoiceAmount || 0),
       receiptsCredits: Number(s._sum.receiptAmount || 0),
@@ -86,12 +86,12 @@ export class SOAService {
     ]);
 
     const grouped: Record<string, typeof entries> = {};
-    entries.forEach((entry) => {
+    entries.forEach((entry: any) => {
       if (!grouped[entry.entryType]) grouped[entry.entryType] = [];
       grouped[entry.entryType].push(entry);
     });
 
-    const monthlyForecast = forecastedRoyalty.reduce((acc: Record<string, number>, fr) => {
+    const monthlyForecast = forecastedRoyalty.reduce((acc: Record<string, number>, fr: any) => {
       const key = `${fr.month.getFullYear()}-${String(fr.month.getMonth() + 1).padStart(2, '0')}`;
       acc[key] = (acc[key] || 0) + Number(fr.amount);
       return acc;

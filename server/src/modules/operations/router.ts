@@ -14,11 +14,13 @@ router.put('/purchase-orders/:id/status', operationsController.updatePurchaseOrd
 
 // Shortage & Damage Reports
 router.get('/shortage-reports', operationsController.getShortageReports);
+router.get('/shortages', operationsController.getShortageReports);
 router.post('/shortage-reports', operationsController.createShortageReport);
 router.put('/shortage-reports/:id/resolve', operationsController.resolveShortageReport);
 
 // Exchange Orders
-router.get('/exchanges', operationsController.getExchangeOrders);
-router.post('/exchanges', operationsController.createExchangeOrder);
+router.get('/exchange-orders', operationsController.getExchangeOrders);
+router.post('/exchange-orders', operationsController.createExchangeOrder);
+router.put('/exchange-orders/:id/status', operationsController.updateExchangeOrderStatus);
 
 export default router;

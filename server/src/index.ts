@@ -1,3 +1,8 @@
+// Auto-derive DIRECT_URL for Neon PostgreSQL if not set (bypasses pooler advisory lock issue)
+if (process.env.DATABASE_URL && !process.env.DIRECT_URL) {
+  process.env.DIRECT_URL = process.env.DATABASE_URL.replace('-pooler.', '.');
+}
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -34,33 +39,10 @@ const app = express();
 
 // ─── Security Middleware ───────────────────────────────────
 app.use(helmet());
-
-const getAllowedOrigin = (origin: string | undefined, callback: (err: Error | null, allow?: boolean | string) => void) => {
-  // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
-  if (!origin) return callback(null, true);
-
-  const configuredOrigin = config.cors.origin;
-  if (configuredOrigin === '*' || !configuredOrigin) {
-    return callback(null, true);
-  }
-
-  const allowedList = configuredOrigin.split(',').map((s) => s.trim());
-  if (allowedList.includes(origin) || allowedList.includes('*')) {
-    return callback(null, true);
-  }
-
-  // Allow vercel preview / production domains and localhost
-  if (origin.endsWith('.vercel.app') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
-    return callback(null, true);
-  }
-
-  return callback(null, true); // Fallback allow in production to avoid hard CORS lockouts
-};
-
 app.use(cors({
-  origin: getAllowedOrigin,
+  origin: config.cors.origin,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
 }));
 
@@ -92,9 +74,9 @@ app.get('/api/health', (_req, res) => {
 
 import seedRouter from './seed-endpoint';
 
-// ─── Seed Endpoint ─────────────────────────────────────────
+// ─── Seed Endpoint (For initial DB population & test setup) ──
 app.use('/api', seedRouter);
-logger.info('🌱 Seed endpoint mounted at /api/seed');
+logger.info('🌱 Seed endpoint mounted (/api/trigger-seed)');
 
 // ─── API Routes ────────────────────────────────────────────
 app.use('/api/auth', authRouter);
@@ -122,17 +104,11 @@ app.use('/api/support', supportRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-import { migrateLegacyEuroPrograms, ensureDefaultUsers } from './utils/cleanup-programs';
-
 // ─── Start Server ──────────────────────────────────────────
-const server = app.listen(config.port, '0.0.0.0', async () => {
+const server = app.listen(config.port, () => {
   logger.info(`🚀 SEMS Server running on port ${config.port}`);
   logger.info(`📍 Environment: ${config.nodeEnv}`);
   logger.info(`🔗 API: http://localhost:${config.port}/api`);
-
-  // Ensure default administrators and run legacy programs migration/cleanup
-  await ensureDefaultUsers(prisma);
-  await migrateLegacyEuroPrograms(prisma);
 });
 
 // ─── Graceful Shutdown ─────────────────────────────────────

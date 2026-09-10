@@ -82,6 +82,9 @@ const GenericListPage = lazy(() => import('@/features/shared/pages/GenericListPa
 const ManageAcademicYearsPage = lazy(() => import('@/features/shared/pages/ManageAcademicYearsPage'));
 const OnlinePaymentReportPage = lazy(() => import('@/features/reports/pages/OnlinePaymentReportPage'));
 const StudentForecastedRoyaltyReportPage = lazy(() => import('@/features/reports/pages/StudentForecastedRoyaltyReportPage'));
+const AdmissionDetailsReportPage = lazy(() => import('@/features/reports/pages/AdmissionDetailsReportPage'));
+const PaymentDueReportPage = lazy(() => import('@/features/reports/pages/PaymentDueReportPage'));
+const FCRReportPage = lazy(() => import('@/features/reports/pages/FCRReportPage'));
 const AdmissionCountReportPage = lazy(() => import('@/features/reports/pages/AdmissionCountReportPage'));
 
 const PageLoader = () => (
@@ -173,14 +176,14 @@ export default function AppRoutes() {
           <Route path={PATHS.FRANCHISEE.COACH_LIST} element={<CoachListPage />} />
 
           {/* Reports */}
-          <Route path={PATHS.REPORTS.ADMISSIONS} element={<GenericListPage title="Admission Details Report" description="Comprehensive listing of all branch admissions" apiEndpoint="/reports/admissions" />} />
+          <Route path={PATHS.REPORTS.ADMISSIONS} element={<AdmissionDetailsReportPage />} />
           <Route path={PATHS.REPORTS.FEE_CARD} element={<GenericListPage title="Fee Card Report" description="Export fee structures and applied discounts" apiEndpoint="/reports/fee-card" />} />
           <Route path={PATHS.REPORTS.ENQUIRIES} element={<GenericListPage title="Enquiry Details Report" description="Export all enquiry data" apiEndpoint="/reports/enquiries" />} />
-          <Route path={PATHS.REPORTS.LSQ_ENQUIRIES} element={<GenericListPage title="LSQ Enquiry Details" description="Lead squared integrated enquiry exports" apiEndpoint="/reports/lsq-enquiries" />} />
-          <Route path={PATHS.REPORTS.PAYMENT_DUE} element={<GenericListPage title="Payment Due Report" description="Track outstanding balances and defaulters" apiEndpoint="/reports/payment-due" />} />
+          <Route path={PATHS.REPORTS.LSQ_ENQUIRIES} element={<GenericListPage title="LeadSuryadhi Enquiry Details" description="Suryadhi Integrated Enquiry Exports" apiEndpoint="/reports/lsq-enquiries" />} />
+          <Route path={PATHS.REPORTS.PAYMENT_DUE} element={<PaymentDueReportPage />} />
           <Route path={PATHS.REPORTS.CANCELLED_RECEIPTS} element={<GenericListPage title="Cancelled Receipts" description="Audit log of all voided financial receipts" apiEndpoint="/reports/cancelled-receipts" />} />
           <Route path={PATHS.REPORTS.TRANSFERS} element={<GenericListPage title="Transferred Student Report" description="Log of all incoming and outgoing student transfers" apiEndpoint="/reports/transfers" />} />
-          <Route path={PATHS.REPORTS.FCR} element={<GenericListPage title="FCR Report" description="Fee Collection Report analytics" apiEndpoint="/reports/fcr" />} />
+          <Route path={PATHS.REPORTS.FCR} element={<FCRReportPage />} />
           <Route path={PATHS.REPORTS.ADMISSION_COUNT} element={<AdmissionCountReportPage />} />
           <Route path={PATHS.REPORTS.ONLINE_PAYMENTS} element={<OnlinePaymentReportPage />} />
           <Route path={PATHS.REPORTS.ROYALTY_FORECAST} element={<StudentForecastedRoyaltyReportPage />} />

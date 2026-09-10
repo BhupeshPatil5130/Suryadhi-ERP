@@ -139,12 +139,10 @@ export default function EnquiryListPage() {
         }
 
         if (countsRes.data.success && countsRes.data.data && countsRes.data.data.length > 0) {
-          const countsData = countsRes.data.data
-            .filter((c: any) => !c.program?.name?.toLowerCase().includes('euro'))
-            .map((c: any) => ({
-              title: c.program.name,
-              count: c.count
-            }));
+          const countsData = countsRes.data.data.map((c: any) => ({
+            title: c.program.name,
+            count: c.count
+          }));
           setSummaryCards(countsData);
         }
       } catch (error) {

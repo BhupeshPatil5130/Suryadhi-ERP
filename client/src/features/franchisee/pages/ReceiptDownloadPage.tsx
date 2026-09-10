@@ -27,8 +27,8 @@ interface FranchiseeReceipt {
 }
 
 const mockReceipts: FranchiseeReceipt[] = [
-  { id: 'r1', receiptNumber: 'REC-2026-000001', receiptDate: '2026-06-05', amount: 18500, paymentMode: 'ONLINE', admission: { student: { firstName: 'Aarav', lastName: 'Sharma', uin: 'SK/3201/0011/2627' } } },
-  { id: 'r2', receiptNumber: 'REC-2026-000002', receiptDate: '2026-06-10', amount: 25000, paymentMode: 'CHEQUE', admission: { student: { firstName: 'Kabir', lastName: 'Singh', uin: 'SK/3201/0014/2627' } } },
+  { id: 'r1', receiptNumber: 'REC-2026-000001', receiptDate: '2026-06-05', amount: 18500, paymentMode: 'ONLINE', admission: { student: { firstName: 'Aarav', lastName: 'Sharma', uin: 'SNK/3201/0011/2627' } } },
+  { id: 'r2', receiptNumber: 'REC-2026-000002', receiptDate: '2026-06-10', amount: 25000, paymentMode: 'CHEQUE', admission: { student: { firstName: 'Kabir', lastName: 'Singh', uin: 'SNK/3201/0014/2627' } } },
 ];
 
 export default function ReceiptDownloadPage() {
@@ -155,9 +155,17 @@ export default function ReceiptDownloadPage() {
       header: 'Actions',
       cell: ({ row }) => (
         <div className="flex gap-2 justify-center">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs text-blue-700 hover:bg-blue-50"
+            onClick={() => window.open(`/fees/receipts/${row.original.id}/print`, '_blank')}
+          >
+            View
+          </Button>
           <Button variant="outline" size="sm" className="h-7 text-xs flex gap-1.5" onClick={() => handleDownload(row.original)}>
             <Download className="w-3.5 h-3.5" />
-            Download
+            PDF
           </Button>
         </div>
       ),
@@ -210,6 +218,14 @@ export default function ReceiptDownloadPage() {
               <span>To:</span>
               <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-8 text-xs w-[130px]" />
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={() => { setFrom(''); setTo(''); }}
+            >
+              Clear
+            </Button>
             <Button variant="outline" size="sm" onClick={handleBulkExport} className="h-8 text-xs gap-1.5">
               <Download className="w-3.5 h-3.5" />
               Export CSV
@@ -221,6 +237,8 @@ export default function ReceiptDownloadPage() {
             columns={columns}
             data={data}
             searchPlaceholder="Search by receipt number..."
+            showExportBox={true}
+            exportTitle="franchisee_receipts"
           />
         </CardContent>
       </Card>

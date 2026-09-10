@@ -10,6 +10,7 @@ import { Download, FileText, Search, CreditCard, Receipt, Loader2 } from 'lucide
 import { formatCurrency, formatDate } from '@/lib/utils';
 import api from '@/api/client';
 import { downloadAsPDF, downloadCSV, apiDownload } from '@/lib/downloadUtils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface FranchiseeInvoice {
   id: string;
@@ -32,10 +33,18 @@ export default function InvoiceDownloadPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [summary, setSummary] = useState({ totalInvoice: 0, totalReceipt: 0, balance: 0 });
 
+  const [selectedInvoice, setSelectedInvoice] = useState<FranchiseeInvoice | null>(null);
+
   // Filters
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [type, setType] = useState('');
+
+  const handleClear = () => {
+    setFrom('');
+    setTo('');
+    setType('');
+  };
 
   const fetchInvoices = async () => {
     setIsLoading(true);
@@ -138,12 +147,58 @@ export default function InvoiceDownloadPage() {
       cell: ({ getValue }) => <div className="text-right text-sm font-mono text-emerald-600 font-semibold">{formatCurrency(Number(getValue()))}</div>,
     },
     {
+      accessorKey: 'balance',
+      header: () => <div className="text-right">Balance Due</div>,
+      cell: ({ getValue }) => (
+        <div className={`text-right text-sm font-mono font-bold ${Number(getValue()) > 0 ? 'text-red-600' : 'text-slate-700'}`}>
+          {formatCurrency(Number(getValue()))}
+        </div>
+      ),
+    },
+    {
+      id: 'status',
+      header: () => <div className="text-center">Status</div>,
+      cell: ({ row }) => {
+        const bal = row.original.balance;
+        const inv = row.original.invoiceAmount;
+        const status = bal === 0 ? 'PAID' : bal < inv ? 'PARTIAL' : 'PENDING';
+        return (
+          <div className="text-center">
+            <Badge
+              className={
+                status === 'PAID'
+                  ? 'bg-emerald-100 text-emerald-800 border-none'
+                  : status === 'PARTIAL'
+                  ? 'bg-blue-100 text-blue-800 border-none'
+                  : 'bg-amber-100 text-amber-800 border-none'
+              }
+            >
+              {status}
+            </Badge>
+          </div>
+        );
+      },
+    },
+    {
       id: 'actions',
-      header: 'Actions',
+      header: () => <div className="text-center">Actions</div>,
       cell: ({ row }) => (
-        <div className="flex gap-2 justify-center">
-          <Button variant="outline" size="sm" className="h-7 text-xs flex gap-1.5" onClick={() => handleDownload(row.original)}>
-            <Download className="w-3.5 h-3.5" />
+        <div className="flex gap-1.5 justify-center">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs text-blue-700 hover:bg-blue-50"
+            onClick={() => setSelectedInvoice(row.original)}
+          >
+            View
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs flex gap-1 text-slate-700 hover:bg-slate-50"
+            onClick={() => handleDownload(row.original)}
+          >
+            <Download className="w-3 h-3" />
             PDF
           </Button>
         </div>
@@ -209,15 +264,35 @@ export default function InvoiceDownloadPage() {
               <span>To:</span>
               <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-8 text-xs w-[130px]" />
             </div>
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              className="flex h-8 rounded-md border border-input bg-background px-2.5 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring w-[140px]"
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <span>Select Type:</span>
+              <select
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+                className="flex h-8 rounded-md border border-input bg-background px-2.5 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring w-[140px]"
+              >
+                <option value="">All Types</option>
+                <option value="FRANCHISEE_FEES">Franchisee Fees</option>
+                <option value="ROYALTY">Royalties</option>
+                <option value="WELCOME_KIT">Welcome Kit</option>
+                <option value="KIT_PURCHASE">Kit Purchase</option>
+              </select>
+            </div>
+            <Button
+              size="sm"
+              className="h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={fetchInvoices}
             >
-              <option value="">All Types</option>
-              <option value="FRANCHISEE_FEES">Franchisee Fees</option>
-              <option value="ROYALTY">Royalties</option>
-            </select>
+              View
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs"
+              onClick={handleClear}
+            >
+              Clear
+            </Button>
             <Button variant="outline" size="sm" onClick={handleBulkDownload} className="h-8 text-xs gap-1.5">
               <Download className="w-3.5 h-3.5" />
               Export CSV
@@ -229,9 +304,65 @@ export default function InvoiceDownloadPage() {
             columns={columns}
             data={data}
             searchPlaceholder="Search invoice particulars..."
+            showExportBox={true}
+            exportTitle="franchisee_invoices"
           />
         </CardContent>
       </Card>
+
+      {/* Invoice Detail Dialog */}
+      {selectedInvoice && (
+        <Dialog open={!!selectedInvoice} onOpenChange={() => setSelectedInvoice(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-base font-bold">Invoice Details</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 pt-2 text-sm">
+              <div className="bg-muted/40 p-3 rounded-lg space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Particulars:</span>
+                  <span className="font-semibold text-slate-900">{selectedInvoice.particulars}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Invoice Date:</span>
+                  <span>{formatDate(selectedInvoice.entryDate)}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Invoice Type:</span>
+                  <Badge variant="outline">{selectedInvoice.entryType}</Badge>
+                </div>
+              </div>
+
+              <div className="border rounded-lg p-3 space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span>Invoice Amount:</span>
+                  <span className="font-mono font-medium">{formatCurrency(selectedInvoice.invoiceAmount)}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-emerald-700">Receipt Amount (Paid):</span>
+                  <span className="font-mono text-emerald-700 font-medium">{formatCurrency(selectedInvoice.receiptAmount)}</span>
+                </div>
+                <div className="flex justify-between text-sm font-bold pt-2 border-t">
+                  <span>Balance Due:</span>
+                  <span className={`font-mono ${selectedInvoice.balance > 0 ? 'text-red-600' : 'text-slate-700'}`}>
+                    {formatCurrency(selectedInvoice.balance)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button size="sm" variant="outline" onClick={() => setSelectedInvoice(null)}>
+                  Close
+                </Button>
+                <Button size="sm" onClick={() => handleDownload(selectedInvoice)} className="gap-1.5">
+                  <Download className="w-3.5 h-3.5" />
+                  Download PDF
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

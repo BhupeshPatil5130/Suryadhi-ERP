@@ -11,10 +11,10 @@ interface TransferRow {
   dateOfTransfer: string;
   receiptType: string;
   franchiseeShare: number;
-  llplShare: number;
+  slplShare: number;
   taxAmount: number;
   welcomeKit: number;
-  totalLLPLShare: number;
+  totalSLPLShare: number;
   chequeAmount: number;
 }
 
@@ -23,20 +23,20 @@ function downloadCSV(data: TransferRow[], filename: string) {
     'Date Of Transfer',
     'Receipt Type',
     'Sum of Franchisee Share',
-    'Sum of LLPL Share',
+    'Sum of SLPL Share',
     'Sum of TaxAmount',
     'Sum of Welcome Kit(Reconciled)',
-    'Sum of Total LLPL Share',
+    'Sum of Total SLPL Share',
     'Sum of Cheque Amount',
   ];
   const rows = data.map((r) => [
     r.dateOfTransfer,
     r.receiptType,
     r.franchiseeShare.toFixed(2),
-    r.llplShare.toFixed(2),
+    r.slplShare.toFixed(2),
     r.taxAmount.toFixed(2),
     r.welcomeKit.toFixed(2),
-    r.totalLLPLShare.toFixed(2),
+    r.totalSLPLShare.toFixed(2),
     r.chequeAmount.toFixed(2),
   ]);
   const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
@@ -65,10 +65,10 @@ export default function FundsTransferPage() {
             dateOfTransfer: r.dateOfTransfer,
             receiptType: r.receiptType || 'Fee Collection',
             franchiseeShare: r.franchiseeShare || 0,
-            llplShare: r.llplShare || 0,
+            slplShare: r.slplShare || r.llplShare || 0,
             taxAmount: r.taxAmount || 0,
             welcomeKit: r.welcomeKit || 0,
-            totalLLPLShare: r.totalLLPLShare || 0,
+            totalSLPLShare: r.totalSLPLShare || r.totalLLPLShare || 0,
             chequeAmount: r.chequeAmount || 0,
           }))
         );
@@ -142,6 +142,7 @@ export default function FundsTransferPage() {
                 <option value={10}>10</option>
                 <option value={25}>25</option>
                 <option value={50}>50</option>
+                <option value={100}>100</option>
               </select>
               entries
             </div>
@@ -155,10 +156,10 @@ export default function FundsTransferPage() {
                   <th className="p-3 text-left font-semibold">Date Of Transfer</th>
                   <th className="p-3 text-left font-semibold">Receipt Type</th>
                   <th className="p-3 text-right font-semibold">Franchisee Share</th>
-                  <th className="p-3 text-right font-semibold">LLPL Share</th>
+                  <th className="p-3 text-right font-semibold">SLPL Share</th>
                   <th className="p-3 text-right font-semibold">Tax Amount</th>
                   <th className="p-3 text-right font-semibold">Welcome Kit</th>
-                  <th className="p-3 text-right font-semibold">Total LLPL Share</th>
+                  <th className="p-3 text-right font-semibold">Total SLPL Share</th>
                   <th className="p-3 text-right font-semibold">Cheque Amount</th>
                 </tr>
               </thead>
@@ -179,10 +180,10 @@ export default function FundsTransferPage() {
                       <td className="p-3">{formatDate(row.dateOfTransfer)}</td>
                       <td className="p-3">{row.receiptType}</td>
                       <td className="p-3 text-right font-mono">{formatCurrency(row.franchiseeShare)}</td>
-                      <td className="p-3 text-right font-mono">{formatCurrency(row.llplShare)}</td>
+                      <td className="p-3 text-right font-mono">{formatCurrency(row.slplShare)}</td>
                       <td className="p-3 text-right font-mono">{formatCurrency(row.taxAmount)}</td>
                       <td className="p-3 text-right font-mono">{formatCurrency(row.welcomeKit)}</td>
-                      <td className="p-3 text-right font-mono">{formatCurrency(row.totalLLPLShare)}</td>
+                      <td className="p-3 text-right font-mono">{formatCurrency(row.totalSLPLShare)}</td>
                       <td className="p-3 text-right font-mono">{formatCurrency(row.chequeAmount)}</td>
                     </tr>
                   ))

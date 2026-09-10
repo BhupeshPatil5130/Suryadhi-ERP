@@ -13,10 +13,7 @@ router.get('/calculate', validate(calculateFeeSchema, 'query'), (req, res, next)
   feeController.calculate(req, res, next)
 );
 
-// GET /api/fees/receipts (query param admissionId) or GET /api/fees/receipts/:admissionId
-router.get('/receipts', (req, res, next) =>
-  feeController.getReceipts(req, res, next)
-);
+// GET /api/fees/receipts/:admissionId
 router.get('/receipts/:admissionId', (req, res, next) =>
   feeController.getReceipts(req, res, next)
 );

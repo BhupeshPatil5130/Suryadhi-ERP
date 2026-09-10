@@ -5,18 +5,10 @@
  */
 import axios from 'axios';
 
-const getBaseUrl = (): string => {
-  const envUrl = (import.meta.env.VITE_API_URL || '').trim();
-  if (!envUrl) return '/api';
-  const cleanUrl = envUrl.replace(/\/+$/, '');
-  return cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
-};
-
 const apiClient = axios.create({
-  baseURL: getBaseUrl(),
+  baseURL: '/api',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 60000, // 60 seconds to accommodate Render free-tier cold starts
 });
 
 // ─── Request Interceptor: Attach JWT ───────────────────────
@@ -68,9 +60,8 @@ apiClient.interceptors.response.use(
 
       try {
         const storedRefreshToken = localStorage.getItem('refreshToken');
-        const refreshBaseUrl = (apiClient.defaults.baseURL || '/api').replace(/\/$/, '');
         const { data } = await axios.post(
-          `${refreshBaseUrl}/auth/refresh`, 
+          '/api/auth/refresh', 
           { refreshToken: storedRefreshToken || undefined }, 
           { withCredentials: true }
         );

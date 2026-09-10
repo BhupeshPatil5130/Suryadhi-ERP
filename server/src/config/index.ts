@@ -1,16 +1,21 @@
 import path from 'path';
-import dotenv from 'dotenv';
 
-// Load .env variables from server root or project root
-const serverRoot = path.resolve(__dirname, '../../.env');
-const projectRoot = path.resolve(__dirname, '../../../.env');
+// Try to load dotenv, but don't crash if it's not available
+// Prisma already loads .env for database connections
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const dotenv = require('dotenv');
+  // Try project root first (d:\ERP\.env), then server root (d:\ERP\server\.env)
+  const serverRoot = path.resolve(__dirname, '../../.env');
+  const projectRoot = path.resolve(__dirname, '../../../.env');
 
-const result = dotenv.config({ path: serverRoot });
-if (result.error) {
-  const resultProj = dotenv.config({ path: projectRoot });
-  if (resultProj.error) {
-    dotenv.config();
+  const result = dotenv.config({ path: serverRoot });
+  if (result.error) {
+    dotenv.config({ path: projectRoot });
   }
+} catch {
+  // dotenv not installed, rely on environment variables being set externally
+  console.warn('dotenv not found, using system environment variables');
 }
 
 export const config = {

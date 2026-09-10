@@ -24,6 +24,12 @@ router.get('/', validate(admissionListQuerySchema, 'query'), (req, res, next) =>
 // GET /api/admissions/:id
 router.get('/:id', (req, res, next) => admissionController.getById(req, res, next));
 
+// GET /api/admissions/:id/receipt & /api/admissions/:id/receipts (alias for fee receipts)
+router.get(['/:id/receipt', '/:id/receipts'], (req, res, next) => {
+  req.params.admissionId = req.params.id;
+  import('../fees/controller').then(({ feeController }) => feeController.getReceipts(req, res, next)).catch(next);
+});
+
 // POST /api/admissions
 router.post(
   '/',

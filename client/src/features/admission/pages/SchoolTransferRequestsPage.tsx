@@ -48,10 +48,10 @@ export default function SchoolTransferRequestsPage() {
     setIsLoading(true);
     api.get('/transfers/requests')
       .then((res) => {
-        if (res.data.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
+        if (res.data.success && res.data.data?.length > 0) {
           setData(res.data.data.map((t: any) => ({
             id: t.id,
-            studentName: `${t.admission?.student?.firstName || ''} ${t.admission?.student?.lastName || ''}`.trim() || 'Student',
+            studentName: `${t.admission?.student?.firstName || ''} ${t.admission?.student?.lastName || ''}`.trim(),
             fromSchool: t.fromSchoolName || 'N/A',
             toSchool: t.toSchoolName || 'N/A',
             transferDate: t.transferDate ? new Date(t.transferDate).toLocaleDateString('en-GB') : 'N/A',

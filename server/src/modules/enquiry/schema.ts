@@ -23,9 +23,14 @@ export const updateEnquirySchema = createEnquirySchema.partial().extend({
 });
 
 export const enquiryFollowUpSchema = z.object({
-  contactDate: z.string().refine((val) => !isNaN(Date.parse(val)), 'Valid date required'),
+  contactDate: z.string().refine((val) => !isNaN(Date.parse(val)), 'Valid date required').optional(),
   nextFollowUp: z.string().refine((val) => !isNaN(Date.parse(val)), 'Valid date required').optional(),
+  followUpDate: z.string().optional(),
   notes: z.string().max(1000).optional(),
+  comment: z.string().max(1000).optional(),
+  stage: z.enum(['NEW', 'CONTACTED', 'FOLLOW_UP', 'TRIAL_CLASS', 'CONVERTED', 'LOST']).optional(),
+  subStage: z.string().optional(),
+  stageReason: z.string().optional(),
   contactedBy: z.string().optional(),
 });
 
@@ -46,15 +51,14 @@ export type UpdateEnquiryInput = z.infer<typeof updateEnquirySchema>;
 export type EnquiryFollowUpInput = z.infer<typeof enquiryFollowUpSchema>;
 export type EnquiryListQuery = z.infer<typeof enquiryListQuerySchema>;
 
-export const enquiryReceiptSchema = z.object({
+export const advanceReceiptSchema = z.object({
   amount: z.number().positive('Amount must be greater than 0'),
-  paymentMode: z.enum(['CASH', 'CHEQUE', 'ONLINE']),
-  receiptDate: z.string().optional(),
-  bankName: z.string().optional(),
-  chequeNumber: z.string().optional(),
-  chequeDate: z.string().optional(),
-  notes: z.string().optional(),
+  paymentMode: z.enum(['CASH', 'CHEQUE', 'ONLINE', 'PAYTM_POS', 'BANK_TRANSFER']),
+  bankName: z.string().max(200).optional(),
+  chequeNumber: z.string().max(50).optional(),
+  chequeDate: z.string().refine((val) => !isNaN(Date.parse(val)), 'Valid date required').optional(),
+  notes: z.string().max(500).optional(),
+  receiptDate: z.string().refine((val) => !isNaN(Date.parse(val)), 'Valid date required').optional(),
 });
 
-export type EnquiryReceiptInput = z.infer<typeof enquiryReceiptSchema>;
-
+export type AdvanceReceiptInput = z.infer<typeof advanceReceiptSchema>;

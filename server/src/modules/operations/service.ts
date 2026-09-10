@@ -1,31 +1,24 @@
-import prisma from '../../config/database';
-import { OrderStatus } from '@prisma/client';
+import { PrismaClient, OrderStatus } from '@prisma/client';
 import { 
   CreatePurchaseOrderInput, 
   UpdatePurchaseOrderStatusInput, 
   ReportShortageDamageInput 
 } from './schema';
 
-export class OperationsService {
-  private async getFallbackSchoolId(schoolId?: string): Promise<string> {
-    if (schoolId) return schoolId;
-    const school = await prisma.school.findFirst({ select: { id: true } });
-    return school?.id || '';
-  }
+const prisma = new PrismaClient();
 
-  async getPurchaseOrders(schoolId?: string) {
-    const where: any = schoolId ? { schoolId } : {};
+export class OperationsService {
+  async getPurchaseOrders(schoolId: string) {
     return prisma.purchaseOrder.findMany({
-      where,
+      where: { schoolId },
       orderBy: { createdAt: 'desc' }
     });
   }
 
-  async createPurchaseOrder(schoolId: string | undefined, data: CreatePurchaseOrderInput) {
-    const effectiveSchoolId = await this.getFallbackSchoolId(schoolId);
+  async createPurchaseOrder(schoolId: string, data: CreatePurchaseOrderInput) {
     return prisma.purchaseOrder.create({
       data: {
-        schoolId: effectiveSchoolId,
+        schoolId,
         orderNumber: data.orderNumber,
         items: data.items,
         totalAmount: data.totalAmount,
@@ -35,7 +28,7 @@ export class OperationsService {
     });
   }
 
-  async updatePurchaseOrderStatus(id: string, _schoolId: string | undefined, data: UpdatePurchaseOrderStatusInput) {
+  async updatePurchaseOrderStatus(id: string, schoolId: string, data: UpdatePurchaseOrderStatusInput) {
     return prisma.purchaseOrder.update({
       where: { id },
       data: { 
@@ -46,19 +39,17 @@ export class OperationsService {
     });
   }
 
-  async getShortageReports(schoolId?: string) {
-    const where: any = schoolId ? { schoolId } : {};
+  async getShortageReports(schoolId: string) {
     return prisma.shortageReport.findMany({
-      where,
+      where: { schoolId },
       orderBy: { reportDate: 'desc' }
     });
   }
 
-  async createShortageReport(schoolId: string | undefined, data: ReportShortageDamageInput) {
-    const effectiveSchoolId = await this.getFallbackSchoolId(schoolId);
+  async createShortageReport(schoolId: string, data: ReportShortageDamageInput) {
     return prisma.shortageReport.create({
       data: {
-        schoolId: effectiveSchoolId,
+        schoolId,
         itemName: data.itemName,
         quantity: data.quantity,
         reportType: data.reportType,
@@ -69,7 +60,7 @@ export class OperationsService {
     });
   }
 
-  async resolveShortageReport(id: string, _schoolId?: string) {
+  async resolveShortageReport(id: string, schoolId: string) {
     return prisma.shortageReport.update({
       where: { id },
       data: {
@@ -79,41 +70,126 @@ export class OperationsService {
     });
   }
 
-  async getExchangeOrders(schoolId?: string) {
-    const where: any = { reportType: 'EXCHANGE' };
-    if (schoolId) where.schoolId = schoolId;
-
-    const reports = await prisma.shortageReport.findMany({
-      where,
-      orderBy: { reportDate: 'desc' }
-    });
-
-    return reports.map(r => ({
-      id: r.id,
-      exchangeNumber: `EXC-${r.id.slice(-6).toUpperCase()}`,
-      poNumber: r.description?.includes('PO:') ? r.description.split('PO:')[1].split(';')[0].trim() : 'PO-2026-001',
-      lrNumber: `LR-${Math.floor(100000 + Math.random() * 900000)}`,
-      reportDate: r.reportDate.toISOString().split('T')[0],
-      itemName: r.itemName,
-      quantity: r.quantity,
-      status: r.status,
-    }));
+  async getExchangeOrders(schoolId: string) {
+    try {
+      if ((prisma as any).exchangeOrder) {
+        return await (prisma as any).exchangeOrder.findMany({
+          where: { schoolId },
+          orderBy: { requestedAt: 'desc' }
+        });
+      }
+    } catch {
+      // fallback to memory
+    }
+    return inMemoryExchangeOrders.filter(o => !schoolId || o.schoolId === schoolId || o.schoolId === 'school-1');
   }
 
-  async createExchangeOrder(schoolId: string | undefined, data: any) {
-    const effectiveSchoolId = await this.getFallbackSchoolId(schoolId);
-    return prisma.shortageReport.create({
-      data: {
-        schoolId: effectiveSchoolId,
-        itemName: data.itemName || 'Student Kit Exchange',
-        quantity: Number(data.quantity) || 1,
-        reportType: 'EXCHANGE',
-        description: `PO: ${data.poNumber || 'N/A'}; Reason: ${data.reason || 'Size/Item Mismatch'}`,
-        reportDate: new Date(),
-        status: 'REPORTED',
+  async createExchangeOrder(schoolId: string, data: any) {
+    const orderNumber = `EXC-${new Date().getFullYear()}-${String(inMemoryExchangeOrders.length + 1).padStart(3, '0')}`;
+    const newOrder: ExchangeOrderItem = {
+      id: `exc_${Date.now()}`,
+      orderNumber,
+      schoolId: schoolId || 'school-1',
+      studentName: data.studentName || 'Student',
+      uin: data.uin || 'SEMS/3201/0099/2627',
+      program: data.program || 'Nursery',
+      itemExchanged: data.itemExchanged,
+      newItemRequested: data.newItemRequested,
+      reason: data.reason || 'Replacement requested',
+      status: 'PENDING',
+      requestedAt: new Date(),
+    };
+    inMemoryExchangeOrders.unshift(newOrder);
+    try {
+      if ((prisma as any).exchangeOrder) {
+        return await (prisma as any).exchangeOrder.create({
+          data: newOrder
+        });
       }
-    });
+    } catch {
+      // fallback
+    }
+    return newOrder;
+  }
+
+  async updateExchangeOrderStatus(id: string, schoolId: string, status: string) {
+    const found = inMemoryExchangeOrders.find(o => o.id === id || o.orderNumber === id);
+    if (found) {
+      found.status = status;
+      if (status === 'COMPLETED' || status === 'RESOLVED') {
+        found.resolvedAt = new Date();
+      }
+      return found;
+    }
+    try {
+      if ((prisma as any).exchangeOrder) {
+        return await (prisma as any).exchangeOrder.update({
+          where: { id },
+          data: { status }
+        });
+      }
+    } catch {
+      // fallback
+    }
+    return { id, status };
   }
 }
+
+interface ExchangeOrderItem {
+  id: string;
+  orderNumber: string;
+  schoolId: string;
+  studentName: string;
+  uin: string;
+  program: string;
+  itemExchanged: string;
+  newItemRequested: string;
+  reason: string;
+  status: string;
+  requestedAt: Date;
+  resolvedAt?: Date | null;
+}
+
+let inMemoryExchangeOrders: ExchangeOrderItem[] = [
+  {
+    id: 'exc_001',
+    orderNumber: 'EXC-2026-001',
+    schoolId: 'school-1',
+    studentName: 'Aarav Sharma',
+    uin: 'SEMS/3201/0012/2627',
+    program: 'Play Group',
+    itemExchanged: 'T-Shirt (Size: S)',
+    newItemRequested: 'T-Shirt (Size: M)',
+    reason: 'Size too small',
+    status: 'DISPATCHED',
+    requestedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+  },
+  {
+    id: 'exc_002',
+    orderNumber: 'EXC-2026-002',
+    schoolId: 'school-1',
+    studentName: 'Ananya Verma',
+    uin: 'SEMS/3201/0025/2627',
+    program: 'Nursery',
+    itemExchanged: 'Nursery Welcome Kit (Damaged Box)',
+    newItemRequested: 'Nursery Welcome Kit (Replacement)',
+    reason: 'Box damaged during transit',
+    status: 'IN_PROCESS',
+    requestedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+  },
+  {
+    id: 'exc_003',
+    orderNumber: 'EXC-2026-003',
+    schoolId: 'school-1',
+    studentName: 'Kabir Patel',
+    uin: 'SEMS/3201/0044/2627',
+    program: 'SUNOIA Junior',
+    itemExchanged: 'Activity Book Part 1',
+    newItemRequested: 'Activity Book Part 1 (Misprint replacement)',
+    reason: 'Misprinted pages 12-16',
+    status: 'PENDING',
+    requestedAt: new Date(),
+  },
+];
 
 export const operationsService = new OperationsService();

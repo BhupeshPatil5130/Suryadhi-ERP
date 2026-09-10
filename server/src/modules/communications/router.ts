@@ -1,7 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import prisma from '../../config/database';
 import { authenticate, schoolScope } from '../../middleware';
-import { getEffectiveSchoolId } from '../../utils/helpers';
 
 const router = Router();
 router.use(authenticate);
@@ -10,7 +9,7 @@ router.use(schoolScope);
 // GET /api/communications/business-visits
 router.get('/business-visits', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const schoolId = getEffectiveSchoolId(req) || '';
+    const schoolId = req.user!.schoolId!;
     const school = await prisma.school.findUnique({
       where: { id: schoolId },
       select: { name: true, code: true, city: true, state: true },
@@ -62,7 +61,7 @@ router.get('/business-visits', async (req: Request, res: Response, next: NextFun
 // GET /api/communications/academics-visits
 router.get('/academics-visits', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const schoolId = getEffectiveSchoolId(req) || '';
+    const schoolId = req.user!.schoolId!;
     const activeStudents = await prisma.admission.count({
       where: { schoolId, status: 'ACTIVE', deletedAt: null }
     });
@@ -113,7 +112,7 @@ router.get('/academics-visits', async (req: Request, res: Response, next: NextFu
 // GET /api/communications/app-report
 router.get('/app-report', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const schoolId = getEffectiveSchoolId(req) || '';
+    const schoolId = req.user!.schoolId!;
 
     const studentCount = await prisma.admission.count({
       where: { schoolId, status: 'ACTIVE', deletedAt: null }

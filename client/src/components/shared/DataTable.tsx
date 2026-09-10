@@ -17,8 +17,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   ArrowUpDown, ArrowUp, ArrowDown,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
-  Search, Download, FileSpreadsheet, FileText as FilePdf, Columns, Check,
+  Search, Download, FileSpreadsheet, FileText, Columns, Check, Printer,
 } from 'lucide-react';
+import { downloadAsCSV, downloadAsWord, downloadAsPowerPoint, printReport } from '@/lib/export';
 
 interface DataTableProps<T> {
   columns: ColumnDef<T, any>[];
@@ -28,6 +29,8 @@ interface DataTableProps<T> {
   isLoading?: boolean;
   pageSize?: number;
   showExport?: boolean;
+  showExportBox?: boolean;
+  exportTitle?: string;
   showColumnToggle?: boolean;
   toolbar?: React.ReactNode;
   emptyState?: React.ReactNode;
@@ -40,6 +43,8 @@ export default function DataTable<T>({
   isLoading = false,
   pageSize = 20,
   showExport = false,
+  showExportBox = false,
+  exportTitle = 'report',
   showColumnToggle = false,
   toolbar,
   emptyState,
@@ -61,18 +66,41 @@ export default function DataTable<T>({
     initialState: { pagination: { pageSize } },
   });
 
+  const getExportData = () => {
+    const rows = table.getFilteredRowModel().rows.map((r) => r.original);
+    return rows.length > 0 ? rows : data;
+  };
+
   return (
     <div className="space-y-3">
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={searchPlaceholder}
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            className="pl-9 h-9"
-          />
+        <div className="flex items-center gap-3 flex-wrap w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={searchPlaceholder}
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
+            <span>Show</span>
+            <select
+              value={table.getState().pagination.pageSize}
+              onChange={(e) => table.setPageSize(Number(e.target.value))}
+              className="border rounded px-1.5 py-1 text-xs bg-background"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span>entries</span>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -106,21 +134,50 @@ export default function DataTable<T>({
             </div>
           )}
 
-          {showExport && (
-            <>
-              <Button variant="outline" size="sm">
-                <Download className="h-3.5 w-3.5 mr-1.5" />
-                CSV
+          {(showExportBox || showExport) && (
+            <div className="flex items-center gap-1 border rounded-lg p-1 bg-muted/20">
+              <span className="text-[11px] font-semibold text-muted-foreground px-1.5">Export:</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-blue-700 hover:bg-blue-50"
+                onClick={() => downloadAsWord(getExportData(), `${exportTitle}.doc`, exportTitle)}
+                title="Export to Word"
+              >
+                <FileText className="h-3.5 w-3.5 mr-1" />
+                Word
               </Button>
-              <Button variant="outline" size="sm" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50">
-                <FileSpreadsheet className="h-3.5 w-3.5 mr-1.5" />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-emerald-700 hover:bg-emerald-50"
+                onClick={() => downloadAsCSV(getExportData(), `${exportTitle}.csv`)}
+                title="Export to Excel"
+              >
+                <FileSpreadsheet className="h-3.5 w-3.5 mr-1" />
                 Excel
               </Button>
-              <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50">
-                <FilePdf className="h-3.5 w-3.5 mr-1.5" />
-                PDF
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-amber-700 hover:bg-amber-50"
+                onClick={() => downloadAsPowerPoint(getExportData(), `${exportTitle}.ppt`, exportTitle)}
+                title="Export to PowerPoint"
+              >
+                <Download className="h-3.5 w-3.5 mr-1" />
+                PowerPoint
               </Button>
-            </>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-red-700 hover:bg-red-50"
+                onClick={() => printReport(getExportData(), exportTitle)}
+                title="PDF / Print"
+              >
+                <Printer className="h-3.5 w-3.5 mr-1" />
+                Print / PDF
+              </Button>
+            </div>
           )}
         </div>
       </div>

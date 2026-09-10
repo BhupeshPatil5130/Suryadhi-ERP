@@ -86,6 +86,8 @@ export default function GenericListPage({
         columns={activeColumns}
         data={data}
         searchPlaceholder={searchPlaceholder}
+        showExportBox={true}
+        exportTitle={title}
       />
     </div>
   );
