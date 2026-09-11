@@ -1,11 +1,11 @@
-import { PrismaClient, OrderStatus } from '@prisma/client';
+import prisma from '../../config/database';
+import { OrderStatus } from '@prisma/client';
+import { getNextSequenceNumber } from '../../utils/helpers';
 import { 
   CreatePurchaseOrderInput, 
   UpdatePurchaseOrderStatusInput, 
   ReportShortageDamageInput 
 } from './schema';
-
-const prisma = new PrismaClient();
 
 export class OperationsService {
   async getPurchaseOrders(schoolId: string) {
@@ -16,10 +16,11 @@ export class OperationsService {
   }
 
   async createPurchaseOrder(schoolId: string, data: CreatePurchaseOrderInput) {
+    const orderNumber = data.orderNumber || await getNextSequenceNumber('PO', schoolId, prisma, 5);
     return prisma.purchaseOrder.create({
       data: {
         schoolId,
-        orderNumber: data.orderNumber,
+        orderNumber,
         items: data.items,
         totalAmount: data.totalAmount,
         notes: data.notes,
@@ -85,7 +86,7 @@ export class OperationsService {
   }
 
   async createExchangeOrder(schoolId: string, data: any) {
-    const orderNumber = `EXC-${new Date().getFullYear()}-${String(inMemoryExchangeOrders.length + 1).padStart(3, '0')}`;
+    const orderNumber = await getNextSequenceNumber('EXC', schoolId, prisma, 3);
     const newOrder: ExchangeOrderItem = {
       id: `exc_${Date.now()}`,
       orderNumber,

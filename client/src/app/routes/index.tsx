@@ -80,6 +80,7 @@ const VideoLibraryPage = lazy(() => import('@/features/video/pages/VideoLibraryP
 const HelpdeskSupportPage = lazy(() => import('@/features/support/pages/HelpdeskSupportPage'));
 const GenericListPage = lazy(() => import('@/features/shared/pages/GenericListPage'));
 const ManageAcademicYearsPage = lazy(() => import('@/features/shared/pages/ManageAcademicYearsPage'));
+const SystemSettingsPage = lazy(() => import('@/features/shared/pages/SystemSettingsPage'));
 const OnlinePaymentReportPage = lazy(() => import('@/features/reports/pages/OnlinePaymentReportPage'));
 const StudentForecastedRoyaltyReportPage = lazy(() => import('@/features/reports/pages/StudentForecastedRoyaltyReportPage'));
 const AdmissionDetailsReportPage = lazy(() => import('@/features/reports/pages/AdmissionDetailsReportPage'));
@@ -192,6 +193,7 @@ export default function AppRoutes() {
           <Route path={PATHS.TOOLS.FEE_CALCULATOR} element={<FeeCalculatorPage />} />
 
           {/* Settings / Admin */}
+          <Route path={PATHS.SETTINGS.SYSTEM} element={<SystemSettingsPage />} />
           <Route path={PATHS.SETTINGS.ACADEMIC_YEARS} element={<ManageAcademicYearsPage />} />
 
           {/* Catch-all */}

@@ -180,6 +180,7 @@ model School {
   holidays        AttendanceHoliday[]
   subjects        Subject[]
   exams           Exam[]
+  systemSettings  SystemSetting[]
 
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
@@ -955,17 +956,22 @@ model ReportCard {
 
 model SystemSetting {
   id          String   @id @default(cuid())
-  key         String   @unique
-  value       Json
+  key         String
+  value       String
+  schoolId    String?  @map("school_id")
+  school      School?  @relation(fields: [schoolId], references: [id])
   category    String   @default("GENERAL")
   description String?
   isPublic    Boolean  @default(false) @map("is_public")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  @@unique([key, schoolId], name: "key_schoolId")
   @@map("system_settings")
   @@index([category])
+  @@index([schoolId])
 }
+
 
 model SequenceCounter {
   id          String   @id @default(cuid())

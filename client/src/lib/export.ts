@@ -1,3 +1,31 @@
+/**
+ * Escapes a string for safe interpolation into HTML.
+ * Prevents XSS when building HTML strings from user-controlled data.
+ */
+function escapeHtml(value: any): string {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\0/g, '');
+}
+
+/**
+ * Sanitizes a CSV cell to prevent CSV / Spreadsheet formula injection (CWE-1236).
+ * Prepends a single quote if the value begins with formula characters (=, +, -, @, \t, \r).
+ */
+export function sanitizeCsvCell(value: any): string {
+  if (value === null || value === undefined) return '';
+  let str = String(value);
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = `'${str}`;
+  }
+  return str.replace(/"/g, '""');
+}
+
 export function flattenObject(obj: any, prefix = ''): Record<string, string> {
   let result: Record<string, string> = {};
 
@@ -41,18 +69,14 @@ export function downloadAsCSV(data: any[], filename: string) {
     new Set(flattenedData.flatMap((item) => Object.keys(item)))
   );
 
-  // Generate CSV content
+  // Generate CSV content with formula-injection sanitization
   const csvContent = [
     // Header row
-    headers.map((h) => `"${h.replace(/"/g, '""')}"`).join(','),
+    headers.map((h) => `"${sanitizeCsvCell(h)}"`).join(','),
     // Data rows
     ...flattenedData.map((row) =>
       headers
-        .map((header) => {
-          const val = row[header] ?? '';
-          // Escape quotes and wrap in quotes to handle commas/newlines
-          return `"${String(val).replace(/"/g, '""')}"`;
-        })
+        .map((header) => `"${sanitizeCsvCell(row[header])}"`)
         .join(',')
     ),
   ].join('\n');
@@ -79,19 +103,20 @@ export function downloadAsWord(data: any[], filename: string, title = 'Report') 
   const flattened = data.map((item) => flattenObject(item));
   const headers = Array.from(new Set(flattened.flatMap((item) => Object.keys(item))));
 
-  let html = `<html><head><meta charset='utf-8'><title>${title}</title><style>
+  const safeTitle = escapeHtml(title);
+  let html = `<html><head><meta charset='utf-8'><title>${safeTitle}</title><style>
     body { font-family: Arial, sans-serif; font-size: 11pt; }
     table { width: 100%; border-collapse: collapse; margin-top: 15px; }
     th, td { border: 1px solid #999; padding: 6px; text-align: left; font-size: 10pt; }
     th { background-color: #f2f2f2; font-weight: bold; }
     h2 { color: #1e3a8a; }
-  </style></head><body><h2>${title}</h2><p>Generated: ${new Date().toLocaleDateString()}</p><table><thead><tr>`;
+  </style></head><body><h2>${safeTitle}</h2><p>Generated: ${escapeHtml(new Date().toLocaleDateString())}</p><table><thead><tr>`;
 
-  headers.forEach((h) => { html += `<th>${h}</th>`; });
+  headers.forEach((h) => { html += `<th>${escapeHtml(h)}</th>`; });
   html += `</tr></thead><tbody>`;
   flattened.forEach((row) => {
     html += `<tr>`;
-    headers.forEach((h) => { html += `<td>${row[h] ?? ''}</td>`; });
+    headers.forEach((h) => { html += `<td>${escapeHtml(String(row[h] ?? ''))}</td>`; });
     html += `</tr>`;
   });
   html += `</tbody></table></body></html>`;
@@ -110,18 +135,19 @@ export function downloadAsPowerPoint(data: any[], filename: string, title = 'Rep
   const flattened = data.map((item) => flattenObject(item));
   const headers = Array.from(new Set(flattened.flatMap((item) => Object.keys(item)))).slice(0, 6);
 
-  let html = `<html><head><meta charset='utf-8'><title>${title}</title><style>
+  const safeTitle = escapeHtml(title);
+  let html = `<html><head><meta charset='utf-8'><title>${safeTitle}</title><style>
     body { font-family: Calibri, sans-serif; }
     .slide { page-break-after: always; padding: 30px; }
     table { width: 100%; border-collapse: collapse; font-size: 10pt; }
     th, td { border: 1px solid #ccc; padding: 6px; }
     th { background: #2563eb; color: white; }
-  </style></head><body><div class='slide'><h1>${title}</h1><p>ERP Suryadhi Learning Report</p><table><thead><tr>`;
-  headers.forEach((h) => { html += `<th>${h}</th>`; });
+  </style></head><body><div class='slide'><h1>${safeTitle}</h1><p>ERP Suryadhi Learning Report</p><table><thead><tr>`;
+  headers.forEach((h) => { html += `<th>${escapeHtml(h)}</th>`; });
   html += `</tr></thead><tbody>`;
   flattened.slice(0, 50).forEach((row) => {
     html += `<tr>`;
-    headers.forEach((h) => { html += `<td>${row[h] ?? ''}</td>`; });
+    headers.forEach((h) => { html += `<td>${escapeHtml(String(row[h] ?? ''))}</td>`; });
     html += `</tr>`;
   });
   html += `</tbody></table></div></body></html>`;
@@ -143,7 +169,8 @@ export function printReport(data: any[], title = 'Report') {
   const printWindow = window.open('', '_blank');
   if (!printWindow) return;
 
-  let html = `<!DOCTYPE html><html><head><title>${title}</title><style>
+  const safeTitle = escapeHtml(title);
+  let html = `<!DOCTYPE html><html><head><title>${safeTitle}</title><style>
     body { font-family: system-ui, -apple-system, sans-serif; padding: 20px; color: #111; }
     h2 { margin-bottom: 4px; color: #1e3a8a; }
     p { margin-top: 0; color: #666; font-size: 12px; }
@@ -152,13 +179,13 @@ export function printReport(data: any[], title = 'Report') {
     th { background: #f8fafc; font-weight: 600; text-transform: uppercase; font-size: 10px; }
     tr:nth-child(even) { background: #fbfbfb; }
     @media print { body { padding: 0; } }
-  </style></head><body><h2>${title}</h2><p>Report Generated: ${new Date().toLocaleString()}</p><table><thead><tr>`;
+  </style></head><body><h2>${safeTitle}</h2><p>Report Generated: ${escapeHtml(new Date().toLocaleString())}</p><table><thead><tr>`;
 
-  headers.forEach((h) => { html += `<th>${h}</th>`; });
+  headers.forEach((h) => { html += `<th>${escapeHtml(h)}</th>`; });
   html += `</tr></thead><tbody>`;
   flattened.forEach((row) => {
     html += `<tr>`;
-    headers.forEach((h) => { html += `<td>${row[h] ?? ''}</td>`; });
+    headers.forEach((h) => { html += `<td>${escapeHtml(String(row[h] ?? ''))}</td>`; });
     html += `</tr>`;
   });
   html += `</tbody></table><script>window.onload = function() { window.print(); window.close(); };<\/script></body></html>`;

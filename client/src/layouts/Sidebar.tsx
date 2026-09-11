@@ -145,6 +145,7 @@ const navigation: SidebarItem[] = [
     label: 'Settings',
     icon: Settings,
     children: [
+      { label: 'System Settings', href: '/settings/system' },
       { label: 'Manage Academic Years', href: '/settings/academic-years' },
     ],
   },

@@ -1,5 +1,15 @@
 import prisma from '../../config/database';
 
+const DEFAULT_DOWNLOAD_LIMIT = 5000;
+const MAX_DOWNLOAD_LIMIT = 10000;
+
+export function getDownloadLimit(filters?: any): number {
+  if (!filters || filters.limit === undefined || filters.limit === null) return DEFAULT_DOWNLOAD_LIMIT;
+  const parsed = parseInt(String(filters.limit), 10);
+  if (isNaN(parsed) || parsed <= 0) return DEFAULT_DOWNLOAD_LIMIT;
+  return Math.min(parsed, MAX_DOWNLOAD_LIMIT);
+}
+
 /**
  * DownloadService
  * Provides raw data for every downloadable entity in the ERP.
@@ -23,6 +33,7 @@ export class DownloadService {
 
     const rows = await prisma.admission.findMany({
       where,
+      take: getDownloadLimit(filters),
       include: {
         student: { include: { parent: true } },
         program: true,
@@ -69,6 +80,7 @@ export class DownloadService {
 
     const rows = await prisma.enquiry.findMany({
       where,
+      take: getDownloadLimit(filters),
       include: {
         student: { include: { parent: true } },
         program: true,
@@ -107,6 +119,7 @@ export class DownloadService {
 
     const rows = await prisma.receipt.findMany({
       where,
+      take: getDownloadLimit(filters),
       include: {
         admission: {
           include: {
@@ -146,6 +159,7 @@ export class DownloadService {
 
     const rows = await prisma.sOAEntry.findMany({
       where,
+      take: getDownloadLimit(filters),
       orderBy: { entryDate: 'asc' },
     });
 
@@ -169,6 +183,7 @@ export class DownloadService {
 
     const rows = await prisma.student.findMany({
       where,
+      take: getDownloadLimit(filters),
       include: {
         parent: true,
         admissions: {
@@ -213,6 +228,7 @@ export class DownloadService {
 
     const rows = await prisma.studentAttendance.findMany({
       where,
+      take: getDownloadLimit(filters),
       include: {
         student: true,
         batch: true,
@@ -233,13 +249,14 @@ export class DownloadService {
 
   // ─── Payment Due Report ────────────────────────────────────────
 
-  async paymentDue(schoolId: string) {
+  async paymentDue(schoolId: string, filters?: any) {
     const dues = await prisma.admission.findMany({
       where: {
         schoolId,
         deletedAt: null,
         status: 'ACTIVE',
       },
+      take: getDownloadLimit(filters),
       include: {
         student: { include: { parent: true } },
         program: true,
@@ -266,6 +283,7 @@ export class DownloadService {
       where: {
         admission: { schoolId },
       },
+      take: getDownloadLimit(filters),
       include: {
         admission: {
           include: {
@@ -297,6 +315,7 @@ export class DownloadService {
 
     const rows = await prisma.feeStructure.findMany({
       where,
+      take: getDownloadLimit(filters),
       include: { program: true },
       orderBy: [{ program: { name: 'asc' } }, { feeType: 'asc' }],
     });
@@ -312,9 +331,10 @@ export class DownloadService {
 
   // ─── Cancelled Receipts ────────────────────────────────────────
 
-  async cancelledReceipts(schoolId: string) {
+  async cancelledReceipts(schoolId: string, filters?: any) {
     const rows = await prisma.receipt.findMany({
       where: { admission: { schoolId }, isCancelled: true },
+      take: getDownloadLimit(filters),
       include: {
         admission: { include: { student: true, program: true } },
       },
@@ -335,9 +355,10 @@ export class DownloadService {
 
   // ─── Operations: Purchase Orders ──────────────────────────────
 
-  async purchaseOrders(schoolId: string) {
+  async purchaseOrders(schoolId: string, filters?: any) {
     const rows = await prisma.purchaseOrder.findMany({
       where: { schoolId },
+      take: getDownloadLimit(filters),
       orderBy: { createdAt: 'desc' },
     });
 
@@ -369,6 +390,7 @@ export class DownloadService {
 
     const rows = await prisma.receipt.findMany({
       where,
+      take: getDownloadLimit(filters),
       include: {
         admission: { include: { student: true, program: true } },
       },
@@ -388,9 +410,10 @@ export class DownloadService {
 
   // ─── Graduation ────────────────────────────────────────────────
 
-  async graduation(schoolId: string) {
+  async graduation(schoolId: string, filters?: any) {
     const rows = await prisma.graduation.findMany({
       where: { admission: { schoolId } },
+      take: getDownloadLimit(filters),
       include: {
         admission: {
           include: {
@@ -415,9 +438,10 @@ export class DownloadService {
 
   // ─── SOA Ledger (per admission) ────────────────────────────────
 
-  async soaLedger(admissionId: string) {
+  async soaLedger(admissionId: string, filters?: any) {
     const rows = await prisma.sOAEntry.findMany({
       where: { schoolId: admissionId },
+      take: getDownloadLimit(filters),
       orderBy: { createdAt: 'asc' },
     });
 
@@ -434,9 +458,10 @@ export class DownloadService {
 
   // ─── Quit / Withdrawn ─────────────────────────────────────────
 
-  async quit(schoolId: string) {
+  async quit(schoolId: string, filters?: any) {
     const rows = await prisma.admission.findMany({
       where: { schoolId, status: 'QUIT', deletedAt: null },
+      take: getDownloadLimit(filters),
       include: {
         student: { include: { parent: true } },
         program: true,

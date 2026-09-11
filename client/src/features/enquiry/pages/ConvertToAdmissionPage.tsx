@@ -131,7 +131,10 @@ export default function ConvertToAdmissionPage() {
     try {
       const res = await api.get(`/lookups/batches?programId=${val}`);
       if (res.data.success) setBatches(res.data.data);
-    } catch {}
+    } catch (err) {
+      console.error('Failed to load batches for program:', err);
+      showToast('Could not load batches for selected program', 'error');
+    }
   };
 
   const handleConfirmMapping = () => {

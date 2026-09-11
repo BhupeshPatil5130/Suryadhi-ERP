@@ -122,6 +122,7 @@ export const PATHS = {
 
   // ── Settings / Admin ────────────────────────────
   SETTINGS: {
+    SYSTEM: '/settings/system',
     ACADEMIC_YEARS: '/settings/academic-years',
   },
 } as const;

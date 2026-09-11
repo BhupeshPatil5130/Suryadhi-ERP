@@ -1,11 +1,13 @@
 import { Router } from 'express';
 import { operationsController } from './controller';
-import { authenticate } from '../../middleware/auth';
+import { authenticate, authorize, schoolScope } from '../../middleware';
 
 const router = Router();
 
-// Protect all routes
+// Protect all operations routes with authentication, role authorization, and tenant scoping
 router.use(authenticate);
+router.use(authorize('SUPER_ADMIN', 'SCHOOL_ADMIN'));
+router.use(schoolScope);
 
 // Purchase Orders
 router.get('/purchase-orders', operationsController.getPurchaseOrders);

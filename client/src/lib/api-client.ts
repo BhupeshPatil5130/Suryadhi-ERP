@@ -5,18 +5,35 @@
  */
 import axios from 'axios';
 
+const rawApiUrl = (import.meta as any).env?.VITE_API_URL;
+export const API_BASE_URL = rawApiUrl
+  ? `${rawApiUrl.replace(/\/+$/, '')}/api`
+  : '/api';
+
 const apiClient = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
 
-// ─── Request Interceptor: Attach JWT ───────────────────────
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
+  return match ? decodeURIComponent(match[3]) : null;
+}
+
+// ─── Request Interceptor: Attach JWT & CSRF ────────────────
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  const csrfToken = getCookie('csrfToken') || getCookie('XSRF-TOKEN');
+  if (csrfToken) {
+    config.headers['x-csrf-token'] = csrfToken;
+  }
+
   return config;
 });
 
@@ -61,7 +78,7 @@ apiClient.interceptors.response.use(
       try {
         const storedRefreshToken = localStorage.getItem('refreshToken');
         const { data } = await axios.post(
-          '/api/auth/refresh', 
+          `${API_BASE_URL}/auth/refresh`, 
           { refreshToken: storedRefreshToken || undefined }, 
           { withCredentials: true }
         );

@@ -116,7 +116,11 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   logout: async () => {
-    try { await authApi.logout(); } catch {}
+    try {
+      await authApi.logout();
+    } catch (err) {
+      console.warn('Server logout call failed or session already expired:', err);
+    }
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     set({ user: null, isAuthenticated: false, isLoading: false });

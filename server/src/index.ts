@@ -3,6 +3,8 @@ if (process.env.DATABASE_URL && !process.env.DIRECT_URL) {
   process.env.DIRECT_URL = process.env.DATABASE_URL.replace('-pooler.', '.');
 }
 
+import path from 'path';
+import fs from 'fs';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -10,8 +12,9 @@ import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import { config } from './config';
 import { logger } from './utils/logger';
-import { errorHandler, notFoundHandler, rateLimiter, requestId } from './middleware';
+import { errorHandler, notFoundHandler, rateLimiter, requestId, csrfProtection } from './middleware';
 import prisma from './config/database';
+import { initDatabase } from './config/dbInit';
 
 // Import routers
 import authRouter from './modules/auth/router';
@@ -34,16 +37,43 @@ import communicationsRouter from './modules/communications/router';
 import lookupsRouter from './modules/lookups/router';
 import downloadsRouter from './modules/downloads/router';
 import supportRouter from './modules/support/router';
+import settingsRouter from './modules/settings/router';
 
 const app = express();
 
 // ─── Security Middleware ───────────────────────────────────
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false, // Prevent CSP from breaking frontend assets/inline scripts
+}));
+
+const isOriginAllowed = (origin?: string): boolean => {
+  if (!origin) return true; // Allow curl, mobile, server-to-server, Render health checks
+  const configuredOrigins = Array.isArray(config.cors.origin)
+    ? config.cors.origin
+    : [config.cors.origin];
+
+  if (configuredOrigins.includes('*') || configuredOrigins.includes(origin)) {
+    return true;
+  }
+  // Automatically allow all *.onrender.com subdomains, localhost, and 127.0.0.1
+  if (origin.endsWith('.onrender.com') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+    return true;
+  }
+  return false;
+};
+
 app.use(cors({
-  origin: config.cors.origin,
+  origin: (origin, callback) => {
+    if (isOriginAllowed(origin)) {
+      callback(null, true);
+    } else {
+      logger.warn({ origin }, 'Origin rejected by CORS');
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id', 'X-CSRF-Token', 'X-XSRF-Token'],
 }));
 
 // ─── Request ID (Correlation) ──────────────────────────────
@@ -54,6 +84,9 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// ─── CSRF Protection ───────────────────────────────────────
+app.use(csrfProtection);
+
 // ─── Logging ───────────────────────────────────────────────
 if (config.isDev) {
   app.use(morgan('dev'));
@@ -63,20 +96,16 @@ if (config.isDev) {
 app.use('/api/', rateLimiter);
 
 // ─── Health Check ──────────────────────────────────────────
-app.get('/api/health', (_req, res) => {
-  res.json({
+const handleHealth = (_req: express.Request, res: express.Response) => {
+  res.status(200).json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: config.nodeEnv,
   });
-});
-
-import seedRouter from './seed-endpoint';
-
-// ─── Seed Endpoint (For initial DB population & test setup) ──
-app.use('/api', seedRouter);
-logger.info('🌱 Seed endpoint mounted (/api/trigger-seed)');
+};
+app.get('/api/health', handleHealth);
+app.get('/health', handleHealth);
 
 // ─── API Routes ────────────────────────────────────────────
 app.use('/api/auth', authRouter);
@@ -99,16 +128,42 @@ app.use('/api/communications', communicationsRouter);
 app.use('/api/lookups', lookupsRouter);
 app.use('/api/downloads', downloadsRouter);
 app.use('/api/support', supportRouter);
+app.use('/api/settings', settingsRouter);
+
+// ─── Static Frontend Serving (Fullstack Render Deployment) ─────────
+const candidateDistDirs = [
+  path.resolve(__dirname, '../../client/dist'),
+  path.resolve(__dirname, '../client/dist'),
+  path.resolve(process.cwd(), 'client/dist'),
+  path.resolve(process.cwd(), '../client/dist'),
+];
+
+const clientDistPath = candidateDistDirs.find((dir) => fs.existsSync(dir));
+
+if (clientDistPath) {
+  logger.info(`📦 Serving static client build from: ${clientDistPath}`);
+  app.use(express.static(clientDistPath));
+
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
+      return next();
+    }
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+}
 
 // ─── Error Handling ────────────────────────────────────────
 app.use(notFoundHandler);
 app.use(errorHandler);
 
 // ─── Start Server ──────────────────────────────────────────
-const server = app.listen(config.port, () => {
-  logger.info(`🚀 SEMS Server running on port ${config.port}`);
+const server = app.listen(config.port, '0.0.0.0', async () => {
+  logger.info(`🚀 SEMS Server running on port ${config.port} (0.0.0.0)`);
   logger.info(`📍 Environment: ${config.nodeEnv}`);
   logger.info(`🔗 API: http://localhost:${config.port}/api`);
+
+  // Initialize DB and bootstrap auto-seeding if needed
+  await initDatabase();
 });
 
 // ─── Graceful Shutdown ─────────────────────────────────────

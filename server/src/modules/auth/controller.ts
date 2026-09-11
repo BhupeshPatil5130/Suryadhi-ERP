@@ -1,11 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { authService } from './service';
 import { config } from '../../config';
+import { setCsrfCookie } from '../../middleware';
 
+const isProd = config.nodeEnv === 'production';
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: !config.isDev,
-  sameSite: 'lax' as const,
+  secure: isProd,
+  sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax',
   path: '/',
 };
 
@@ -29,12 +31,16 @@ export class AuthController {
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
+      // Set non-httpOnly CSRF cookie for client-side double-submit protection
+      const csrfToken = setCsrfCookie(res);
+
       res.json({
         success: true,
         data: {
           user: result.user,
           accessToken: result.accessToken,
           refreshToken: result.refreshToken,
+          csrfToken,
         },
       });
     } catch (error) {
@@ -61,12 +67,16 @@ export class AuthController {
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
+      // Set non-httpOnly CSRF cookie for client-side double-submit protection
+      const csrfToken = setCsrfCookie(res);
+
       res.status(201).json({
         success: true,
         data: {
           user: result.user,
           accessToken: result.accessToken,
           refreshToken: result.refreshToken,
+          csrfToken,
         },
       });
     } catch (error) {
@@ -96,9 +106,11 @@ export class AuthController {
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
+      const csrfToken = setCsrfCookie(res);
+
       res.json({
         success: true,
-        data: { accessToken: result.accessToken, refreshToken: result.refreshToken },
+        data: { accessToken: result.accessToken, refreshToken: result.refreshToken, csrfToken },
       });
     } catch (error) {
       next(error);
@@ -113,6 +125,8 @@ export class AuthController {
       // Clear cookies
       res.clearCookie('accessToken', COOKIE_OPTIONS);
       res.clearCookie('refreshToken', COOKIE_OPTIONS);
+      res.clearCookie('csrfToken');
+      res.clearCookie('XSRF-TOKEN');
 
       res.json({ success: true, message: 'Logged out successfully' });
     } catch (error) {

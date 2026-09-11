@@ -5,7 +5,15 @@ import bcrypt from 'bcryptjs';
 const router = Router();
 const prisma = new PrismaClient();
 
-router.get('/trigger-seed', async (_req: Request, res: Response) => {
+router.get('/trigger-seed', async (req: Request, res: Response) => {
+  const allowSeed = process.env.ALLOW_RUNTIME_SEED === 'true';
+  const seedToken = process.env.SEED_MAINTENANCE_TOKEN;
+  const providedToken = req.headers['x-seed-token'] || req.query.token;
+
+  if (process.env.NODE_ENV === 'production' || !allowSeed || !seedToken || providedToken !== seedToken) {
+    return res.status(403).json({ success: false, error: 'Runtime seeding is disabled or maintenance token invalid' });
+  }
+
   try {
     console.log('🌱 Triggering seed from endpoint...');
     
@@ -105,14 +113,15 @@ router.get('/trigger-seed', async (_req: Request, res: Response) => {
     }
 
     // ── Users ──────────────────────────────────────────────────
-    const passwordHash = await bcrypt.hash('Sunoia@7474', 12);
+    const seedAdminPassword = process.env.SEED_ADMIN_PASSWORD || 'ChangeMeImmediately@2026';
+    const passwordHash = await bcrypt.hash(seedAdminPassword, 12);
     await prisma.user.upsert({
       where: { username: 'Rahul.Khandale' },
       update: { passwordHash, schoolId: school.id },
       create: { username: 'Rahul.Khandale', email: 'rahul.khandale@sems.suryadhi.in', passwordHash, firstName: 'Rahul', lastName: 'Khandale', role: 'SUPER_ADMIN', schoolId: school.id }
     });
 
-    const adminHash = await bcrypt.hash('Admin@123', 12);
+    const adminHash = await bcrypt.hash(seedAdminPassword, 12);
     await prisma.user.upsert({
       where: { username: 'admin' },
       update: { passwordHash: adminHash, schoolId: school.id },

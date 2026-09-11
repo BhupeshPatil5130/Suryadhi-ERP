@@ -1,23 +1,30 @@
 import { Request, Response, NextFunction } from 'express';
 import { downloadService } from './service';
 
+function sanitizeCell(val: any): string {
+  if (val === null || val === undefined) return '';
+  let str = String(val);
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = `'${str}`;
+  }
+  return str.replace(/"/g, '""');
+}
+
 /**
  * Shared helper — serialise a flat record[] to CSV and stream it.
  */
 function sendCSV(res: Response, rows: Record<string, any>[], filename: string) {
+  res.setHeader('X-Total-Count', String(rows ? rows.length : 0));
   if (!rows || rows.length === 0) {
     return res.status(200).json({ success: true, data: [], message: 'No data to export' });
   }
 
   const headers = Object.keys(rows[0]);
   const csvLines = [
-    headers.map((h) => `"${h}"`).join(','),
+    headers.map((h) => `"${sanitizeCell(h)}"`).join(','),
     ...rows.map((row) =>
       headers
-        .map((h) => {
-          const val = row[h] === null || row[h] === undefined ? '' : String(row[h]);
-          return `"${val.replace(/"/g, '""')}"`;
-        })
+        .map((h) => `"${sanitizeCell(row[h])}"`)
         .join(',')
     ),
   ];
@@ -34,9 +41,11 @@ function sendCSV(res: Response, rows: Record<string, any>[], filename: string) {
  * Shared helper — return JSON payload.
  */
 function sendJSON(res: Response, data: any, filename: string) {
+  const total = Array.isArray(data) ? data.length : 1;
+  res.setHeader('X-Total-Count', String(total));
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Content-Disposition', `attachment; filename="${filename}.json"`);
-  res.json({ success: true, data, total: Array.isArray(data) ? data.length : 1 });
+  res.json({ success: true, data, total });
 }
 
 export class DownloadsController {

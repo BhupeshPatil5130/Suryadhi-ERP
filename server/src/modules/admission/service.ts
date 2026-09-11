@@ -1,6 +1,6 @@
 import prisma from '../../config/database';
 import { AppError } from '../../middleware/errorHandler';
-import { createAuditLog } from '../../utils/helpers';
+import { createAuditLog, getNextSequenceNumber, getNextSequenceValue } from '../../utils/helpers';
 import {
   CreateAdmissionInput,
   UpdateAdmissionInput,
@@ -137,13 +137,13 @@ export class AdmissionService {
       // Fetch school and academic year for UIN generation
       const school = await tx.school.findUnique({ where: { id: schoolId } });
       const academicYear = await tx.academicYear.findUnique({ where: { id: input.academicYearId } });
-      const count = await tx.admission.count({ where: { schoolId, academicYearId: input.academicYearId } });
+      const seq = await getNextSequenceValue(`UIN_${input.academicYearId}`, schoolId, tx);
 
       const ayStart = academicYear?.startDate.getFullYear().toString().slice(-2) || '24';
       const ayEnd = academicYear?.endDate.getFullYear().toString().slice(-2) || '25';
       const aySuffix = `${ayStart}${ayEnd}`;
       
-      const newUin = `SNK/${school?.code || '3201'}/${(count + 1).toString().padStart(4, '0')}/${aySuffix}`;
+      const newUin = `SNK/${school?.code || '3201'}/${seq.toString().padStart(4, '0')}/${aySuffix}`;
 
       // Create or update student record
       let student;
@@ -266,8 +266,7 @@ export class AdmissionService {
         const netAmount = totalAmount - discountAmount;
 
         // Create Invoice
-        const invoiceCount = await tx.invoice.count();
-        const invoiceNumber = `INV-${new Date().getFullYear()}-${(invoiceCount + 1).toString().padStart(6, '0')}`;
+        const invoiceNumber = await getNextSequenceNumber('INV', schoolId, tx, 6);
 
         const invoice = await tx.invoice.create({
           data: {
@@ -290,8 +289,7 @@ export class AdmissionService {
 
           let totalAdvancePaid = 0;
           for (const ar of advanceReceipts) {
-            const arReceiptCount = await tx.receipt.count();
-            const arReceiptNumber = `REC-${new Date().getFullYear()}-${(arReceiptCount + 1).toString().padStart(6, '0')}`;
+            const arReceiptNumber = await getNextSequenceNumber('RCP', schoolId, tx, 6);
 
             await tx.receipt.create({
               data: {
@@ -491,8 +489,7 @@ export class AdmissionService {
 
           const netAmount = totalAmount - discountAmount;
 
-          const invoiceCount = await tx.invoice.count();
-          const invoiceNumber = `INV-${new Date().getFullYear()}-${(invoiceCount + 1).toString().padStart(6, '0')}`;
+          const invoiceNumber = await getNextSequenceNumber('INV', schoolId, tx, 6);
 
           await tx.invoice.create({
             data: {

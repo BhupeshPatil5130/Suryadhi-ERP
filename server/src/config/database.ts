@@ -47,34 +47,54 @@ export const prisma = basePrisma.$extends({
         }
         return withRetry(() => query(args));
       },
+      async findUnique({ model, args, query }) {
+        if (modelsWithSoftDelete.includes(model)) {
+          let injectedDeletedAt = false;
+          const anyArgs = args as any;
+          if (anyArgs.select && anyArgs.select.deletedAt === undefined) {
+            anyArgs.select = { ...anyArgs.select, deletedAt: true };
+            injectedDeletedAt = true;
+          }
+          const result: any = await withRetry(() => query(args));
+          if (result && result.deletedAt !== null && result.deletedAt !== undefined) {
+            return null;
+          }
+          if (result && injectedDeletedAt) {
+            delete result.deletedAt;
+          }
+          return result;
+        }
+        return withRetry(() => query(args));
+      },
+      async findUniqueOrThrow({ model, args, query }) {
+        if (modelsWithSoftDelete.includes(model)) {
+          let injectedDeletedAt = false;
+          const anyArgs = args as any;
+          if (anyArgs.select && anyArgs.select.deletedAt === undefined) {
+            anyArgs.select = { ...anyArgs.select, deletedAt: true };
+            injectedDeletedAt = true;
+          }
+          const result: any = await withRetry(() => query(args));
+          if (result && result.deletedAt !== null && result.deletedAt !== undefined) {
+            throw new Error(`Record not found in ${model}`);
+          }
+          if (result && injectedDeletedAt) {
+            delete result.deletedAt;
+          }
+          return result;
+        }
+        return withRetry(() => query(args));
+      },
       async create({ args, query }) {
         return withRetry(() => query(args));
       },
       async update({ args, query }) {
         return withRetry(() => query(args));
       },
-      async delete({ model, args, query }) {
-        if (modelsWithSoftDelete.includes(model)) {
-          // @ts-ignore
-          const modelName = model.charAt(0).toLowerCase() + model.slice(1);
-          // @ts-ignore
-          return withRetry(() => basePrisma[modelName].update({
-            ...args,
-            data: { deletedAt: new Date() },
-          }));
-        }
+      async delete({ args, query }) {
         return withRetry(() => query(args));
       },
-      async deleteMany({ model, args, query }) {
-        if (modelsWithSoftDelete.includes(model)) {
-          // @ts-ignore
-          const modelName = model.charAt(0).toLowerCase() + model.slice(1);
-          // @ts-ignore
-          return withRetry(() => basePrisma[modelName].updateMany({
-            ...args,
-            data: { deletedAt: new Date() },
-          }));
-        }
+      async deleteMany({ args, query }) {
         return withRetry(() => query(args));
       },
     },
