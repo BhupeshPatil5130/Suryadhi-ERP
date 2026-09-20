@@ -187,13 +187,22 @@ export default function ExchangeOrdersPage() {
       cell: ({ getValue }) => <span className="text-xs">{formatDate(getValue() as string)}</span>,
     },
     {
-      accessorKey: 'reason',
-      header: 'Reason / Item',
+      accessorKey: 'itemDescription',
+      header: 'Item Details',
       cell: ({ row }) => (
-        <div className="text-left text-xs max-w-[200px] truncate">
-          <span className="font-medium text-slate-900 block truncate">{row.original.itemDescription}</span>
-          <span className="text-muted-foreground block truncate">{row.original.reason}</span>
+        <div className="text-left text-xs max-w-[220px]">
+          <span className="font-semibold text-slate-900 block">{row.original.itemDescription}</span>
+          <span className="text-slate-500 block text-[11px]">Qty: {row.original.qty} pcs</span>
         </div>
+      ),
+    },
+    {
+      accessorKey: 'reason',
+      header: 'Exchange Reason',
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground block max-w-[180px] truncate" title={row.original.reason}>
+          {row.original.reason}
+        </span>
       ),
     },
     {
@@ -212,17 +221,30 @@ export default function ExchangeOrdersPage() {
     },
     {
       id: 'actions',
-      header: () => <div className="text-center">Action</div>,
+      header: () => <div className="text-center">Action Buttons</div>,
       cell: ({ row }) => (
-        <div className="flex items-center justify-center gap-1.5">
+        <div className="flex items-center justify-center gap-1">
           <Button
             size="sm"
             variant="outline"
-            className="h-7 text-xs text-blue-700 hover:bg-blue-50 gap-1 px-2"
+            className="h-7 text-xs text-blue-700 hover:bg-blue-50 gap-1 px-2 bg-white"
             onClick={() => setSelectedOrder(row.original)}
+            title="View Item Details"
           >
             <Eye className="w-3 h-3" />
             View
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs text-emerald-700 hover:bg-emerald-50 gap-1 px-2 bg-white"
+            onClick={() => {
+              setData(prev => prev.map(o => o.id === row.original.id ? { ...o, status: 'APPROVED' } : o));
+              showToast('Exchange item replacement approved!', 'success');
+            }}
+            title="Approve Replacement"
+          >
+            Approve
           </Button>
           <Button
             size="sm"

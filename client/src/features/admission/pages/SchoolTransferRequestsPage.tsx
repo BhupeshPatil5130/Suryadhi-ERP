@@ -95,13 +95,75 @@ export default function SchoolTransferRequestsPage() {
     return matchSearch && matchStatus;
   });
 
+  const totalCount = data.length;
+  const requestedCount = data.filter(d => d.status === 'REQUESTED').length;
+  const approvedCount = data.filter(d => d.status === 'APPROVED').length;
+  const completedCount = data.filter(d => d.status === 'COMPLETED').length;
+  const rejectedCount = data.filter(d => d.status === 'REJECTED').length;
+
   return (
     <div className="max-w-[1400px] mx-auto pb-12 pt-2 space-y-4">
-      <h1 className="text-[24px] font-normal text-[#333] mb-4">School Transfer Requests</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-[24px] font-normal text-[#333]">School Transfer Requests (Transfer IN)</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Manage and track student transfer-in requests across campuses</p>
+        </div>
+      </div>
+
+      {/* Dashboard Summary Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="bg-white border border-slate-200 p-3 shadow-sm rounded-sm">
+          <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-1">Total Transfers</div>
+          <div className="text-2xl font-bold text-slate-700">{isLoading ? '...' : totalCount}</div>
+          <div className="mt-2 h-1 w-full bg-blue-500 rounded"></div>
+        </div>
+        <div className="bg-white border border-slate-200 p-3 shadow-sm rounded-sm">
+          <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-1">Requested</div>
+          <div className="text-2xl font-bold text-amber-600">{isLoading ? '...' : requestedCount}</div>
+          <div className="mt-2 h-1 w-full bg-amber-500 rounded"></div>
+        </div>
+        <div className="bg-white border border-slate-200 p-3 shadow-sm rounded-sm">
+          <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-1">Approved</div>
+          <div className="text-2xl font-bold text-blue-600">{isLoading ? '...' : approvedCount}</div>
+          <div className="mt-2 h-1 w-full bg-blue-600 rounded"></div>
+        </div>
+        <div className="bg-white border border-slate-200 p-3 shadow-sm rounded-sm">
+          <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-1">Completed</div>
+          <div className="text-2xl font-bold text-emerald-600">{isLoading ? '...' : completedCount}</div>
+          <div className="mt-2 h-1 w-full bg-emerald-500 rounded"></div>
+        </div>
+        <div className="bg-white border border-slate-200 p-3 shadow-sm rounded-sm">
+          <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-1">Rejected</div>
+          <div className="text-2xl font-bold text-rose-600">{isLoading ? '...' : rejectedCount}</div>
+          <div className="mt-2 h-1 w-full bg-rose-500 rounded"></div>
+        </div>
+      </div>
 
       <div className="bg-white border border-[#ccc] shadow-sm">
-        <div className="p-3 border-b border-[#ccc]">
-          <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="p-3 border-b border-[#ccc] space-y-3">
+          {/* Status Tabs / Pills */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs font-semibold text-slate-600 mr-2">Status:</span>
+            {[
+              { id: 'ALL', label: 'All Status' },
+              { id: 'REQUESTED', label: 'Requested' },
+              { id: 'APPROVED', label: 'Approved' },
+              { id: 'COMPLETED', label: 'Completed' },
+              { id: 'REJECTED', label: 'Rejected' },
+            ].map((tab) => (
+              <Button
+                key={tab.id}
+                size="sm"
+                variant={statusFilter === tab.id ? 'default' : 'outline'}
+                className={`h-7 text-xs px-3 rounded-sm ${statusFilter === tab.id ? 'bg-[#0056b3] text-white' : 'bg-white text-slate-700'}`}
+                onClick={() => setStatusFilter(tab.id)}
+              >
+                {tab.label}
+              </Button>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-slate-100">
             <div className="flex items-center gap-2">
               <div className="bg-[#f9f9f9] border border-[#ccc] p-1.5 rounded-sm">
                 <Grid className="w-4 h-4 text-slate-600" />
@@ -110,17 +172,6 @@ export default function SchoolTransferRequestsPage() {
                 Search:
                 <Input type="text" value={search} onChange={(e) => setSearch(e.target.value)} className="h-[30px] w-[200px] border-[#ccc] rounded-sm text-[13px] px-2" />
               </label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-[30px] border border-[#ccc] rounded-sm text-[13px] px-2 bg-white"
-              >
-                <option value="ALL">All Status</option>
-                <option value="REQUESTED">Requested</option>
-                <option value="APPROVED">Approved</option>
-                <option value="COMPLETED">Completed</option>
-                <option value="REJECTED">Rejected</option>
-              </select>
             </div>
             <Button
               variant="outline"

@@ -171,9 +171,48 @@ export default function ManageTransferStagePage() {
                       {student.createdAt ? formatDate(student.createdAt) : 'N/A'}
                     </td>
                     <td className="py-2 px-3 text-[13px] text-center">
-                      <Button variant="outline" size="sm" className="h-7 text-[12px] px-2 rounded-sm gap-1 inline-flex items-center" onClick={() => setSelectedStudent(student)}>
-                        <Eye className="w-3.5 h-3.5" /> View Details
-                      </Button>
+                      <div className="flex items-center justify-center gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-[11px] px-2 rounded-sm gap-1 bg-white hover:bg-slate-50"
+                          onClick={() => setSelectedStudent(student)}
+                          title="View Details"
+                        >
+                          <Eye className="w-3 h-3" /> View
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="h-7 text-[11px] px-2 rounded-sm bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+                          onClick={async () => {
+                            try {
+                              await api.put(`/transfers/${student.id}/status`, { status: 'APPROVED' });
+                              fetchTransfers();
+                            } catch {
+                              fetchTransfers();
+                            }
+                          }}
+                          title="Approve Transfer"
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-[11px] px-2 rounded-sm text-rose-600 border-rose-200 hover:bg-rose-50"
+                          onClick={async () => {
+                            try {
+                              await api.put(`/transfers/${student.id}/status`, { status: 'REJECTED' });
+                              fetchTransfers();
+                            } catch {
+                              fetchTransfers();
+                            }
+                          }}
+                          title="Reject Transfer"
+                        >
+                          Reject
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))

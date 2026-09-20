@@ -97,7 +97,12 @@ export default function GraduationHomebuddyPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto pb-12 pt-2 space-y-4">
-      <h1 className="text-[22px] font-normal text-[#333] mb-4">Graduate student via SEMS Parent App</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-[22px] font-normal text-[#333]">Graduate Student via Home Sunny Parent App</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Track and verify graduation eligibility for enrolled students across academic terms</p>
+        </div>
+      </div>
 
       <div className="bg-white border border-[#ccc] shadow-sm p-4">
         {/* Table Top Toolbar */}

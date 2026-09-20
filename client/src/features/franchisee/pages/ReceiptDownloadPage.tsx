@@ -1,247 +1,238 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { type ColumnDef } from '@tanstack/react-table';
 import DataTable from '@/components/shared/DataTable';
-import PageHeader from '@/components/shared/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Download, FileDown, Receipt, CheckCircle, Search } from 'lucide-react';
+import { Download, Receipt, Eye, Search, RotateCcw } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import api from '@/api/client';
-import { downloadAsPDF, downloadCSV, apiDownload } from '@/lib/downloadUtils';
+import { downloadAsPDF } from '@/lib/downloadUtils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { showToast } from '@/lib/toast';
 
-interface FranchiseeReceipt {
+interface ReceiptRecord {
   id: string;
   receiptNumber: string;
+  receiptId: string;
+  collectionType: string;
   receiptDate: string;
-  amount: number;
-  paymentMode: string;
-  admission: {
-    student: {
-      firstName: string;
-      lastName: string;
-      uin: string;
-    };
-  };
+  bankAccountNumber: string;
+  receiptAmount: number;
 }
 
-const mockReceipts: FranchiseeReceipt[] = [
-  { id: 'r1', receiptNumber: 'REC-2026-000001', receiptDate: '2026-06-05', amount: 18500, paymentMode: 'ONLINE', admission: { student: { firstName: 'Aarav', lastName: 'Sharma', uin: 'SNK/3201/0011/2627' } } },
-  { id: 'r2', receiptNumber: 'REC-2026-000002', receiptDate: '2026-06-10', amount: 25000, paymentMode: 'CHEQUE', admission: { student: { firstName: 'Kabir', lastName: 'Singh', uin: 'SNK/3201/0014/2627' } } },
+const dummyReceiptRecords: ReceiptRecord[] = [
+  { id: '1', receiptNumber: 'REC-2026-0001', receiptId: 'RCP-3201-001', collectionType: 'Term 1 Tuition Fee', receiptDate: '2026-06-02', bankAccountNumber: 'XXXXXX4819', receiptAmount: 24000 },
+  { id: '2', receiptNumber: 'REC-2026-0002', receiptId: 'RCP-3201-002', collectionType: 'Welcome Kit Fee', receiptDate: '2026-06-04', bankAccountNumber: 'XXXXXX4819', receiptAmount: 4500 },
+  { id: '3', receiptNumber: 'REC-2026-0003', receiptId: 'RCP-3201-003', collectionType: 'Admission Registration', receiptDate: '2026-06-06', bankAccountNumber: 'XXXXXX9012', receiptAmount: 5000 },
+  { id: '4', receiptNumber: 'REC-2026-0004', receiptId: 'RCP-3201-004', collectionType: 'Term 1 Tuition Fee', receiptDate: '2026-06-09', bankAccountNumber: 'XXXXXX4819', receiptAmount: 21000 },
+  { id: '5', receiptNumber: 'REC-2026-0005', receiptId: 'RCP-3201-005', collectionType: 'Winter Uniform Fee', receiptDate: '2026-06-11', bankAccountNumber: 'XXXXXX3341', receiptAmount: 2500 },
+  { id: '6', receiptNumber: 'REC-2026-0006', receiptId: 'RCP-3201-006', collectionType: 'Transport Fee', receiptDate: '2026-06-14', bankAccountNumber: 'XXXXXX4819', receiptAmount: 6000 },
 ];
 
 export default function ReceiptDownloadPage() {
-  const [data, setData] = useState<FranchiseeReceipt[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [totalAmount, setTotalAmount] = useState(0);
+  const [data] = useState<ReceiptRecord[]>(dummyReceiptRecords);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedReceipt, setSelectedReceipt] = useState<ReceiptRecord | null>(null);
 
-  // Filters
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
-
-  const fetchReceipts = async () => {
-    setIsLoading(true);
-    try {
-      const res = await api.get('/reports/fcr', {
-        params: {
-          ...(from && { from }),
-          ...(to && { to }),
-        }
-      });
-      if (res.data.success) {
-        setData(res.data.data);
-        setTotalAmount(Number(res.data.totalAmount || 0));
-      }
-    } catch (err) {
-      console.warn('Failed to fetch receipts, using fallback mock receipts logs', err);
-      setData(mockReceipts);
-      setTotalAmount(43500);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchReceipts();
-  }, [from, to]);
-
-  const handleDownload = (receipt: FranchiseeReceipt) => {
-    const student = receipt.admission?.student;
-    const studentName = student ? `${student.firstName} ${student.lastName}` : 'Student';
-    downloadAsPDF({
-      title: 'Fee Receipt',
-      subtitle: `Receipt No: ${receipt.receiptNumber} | Student: ${studentName}`,
-      filename: `receipt-${receipt.receiptNumber}`,
-      columns: ['Receipt Number', 'Student Name', 'UIN', 'Date', 'Payment Mode', 'Amount'],
-      rows: [[
-        receipt.receiptNumber,
-        studentName,
-        student?.uin ?? 'N/A',
-        formatDate(receipt.receiptDate),
-        receipt.paymentMode,
-        formatCurrency(receipt.amount),
-      ]],
-      footer: `Total Amount: ${formatCurrency(receipt.amount)} | Mode: ${receipt.paymentMode}`,
-    });
-  };
-
-  const handleBulkExport = () => {
-    const fallback = data.map((r) => ({
-      'Receipt Number': r.receiptNumber,
-      'Student Name': r.admission?.student
-        ? `${r.admission.student.firstName} ${r.admission.student.lastName}`
-        : 'N/A',
-      'UIN': r.admission?.student?.uin ?? 'N/A',
-      'Date': formatDate(r.receiptDate),
-      'Payment Mode': r.paymentMode,
-      'Amount': r.amount,
-    }));
-    apiDownload(
-      'receipts',
-      { ...(from && { from }), ...(to && { to }) },
-      fallback,
-      'fee-receipts'
+  const filteredData = useMemo(() => {
+    if (!searchQuery.trim()) return data;
+    const q = searchQuery.toLowerCase();
+    return data.filter(
+      r =>
+        r.receiptNumber.toLowerCase().includes(q) ||
+        r.receiptId.toLowerCase().includes(q) ||
+        r.collectionType.toLowerCase().includes(q) ||
+        r.bankAccountNumber.toLowerCase().includes(q)
     );
+  }, [data, searchQuery]);
+
+  const handleClear = () => {
+    setSearchQuery('');
+    showToast('Search cleared', 'info');
   };
 
-  const columns: ColumnDef<FranchiseeReceipt>[] = [
+  const handleDownloadPDF = (rcp: ReceiptRecord) => {
+    downloadAsPDF({
+      title: `Fee Receipt — ${rcp.receiptNumber}`,
+      subtitle: `Receipt ID: ${rcp.receiptId} | Date: ${formatDate(rcp.receiptDate)}`,
+      filename: `receipt-${rcp.receiptNumber}`,
+      columns: ['Receipt No', 'Receipt ID', 'Collection Type', 'Date', 'Bank A/c', 'Amount (₹)'],
+      rows: [[
+        rcp.receiptNumber,
+        rcp.receiptId,
+        rcp.collectionType,
+        formatDate(rcp.receiptDate),
+        rcp.bankAccountNumber,
+        formatCurrency(rcp.receiptAmount),
+      ]],
+    });
+    showToast(`Receipt PDF downloaded successfully!`, 'success');
+  };
+
+  const columns: ColumnDef<ReceiptRecord, any>[] = [
     {
       accessorKey: 'receiptNumber',
-      header: 'Receipt Number',
-      cell: ({ getValue }) => <span className="font-mono font-bold text-sm text-slate-800">{getValue() as string}</span>,
+      header: '1. Receipt Number',
+      cell: ({ getValue }) => <span className="font-mono font-bold text-xs text-blue-700">{getValue() as string}</span>,
     },
     {
-      id: 'studentName',
-      header: 'Student Name / UIN',
-      cell: ({ row }) => {
-        const student = row.original.admission?.student;
-        return (
-          <div>
-            <span className="font-semibold text-slate-800 text-sm block">
-              {student ? `${student.firstName} ${student.lastName}` : 'N/A'}
-            </span>
-            <span className="text-[11px] text-muted-foreground font-mono block mt-0.5">
-              {student?.uin || 'N/A'}
-            </span>
-          </div>
-        );
-      },
+      accessorKey: 'receiptId',
+      header: '2. Receipt ID',
+      cell: ({ getValue }) => <span className="font-mono text-xs text-slate-700">{getValue() as string}</span>,
+    },
+    {
+      accessorKey: 'collectionType',
+      header: '3. Collection Type',
+      cell: ({ getValue }) => <span className="text-xs font-medium text-slate-800">{getValue() as string}</span>,
     },
     {
       accessorKey: 'receiptDate',
-      header: 'Receipt Date',
-      cell: ({ getValue }) => <span className="text-sm">{formatDate(getValue() as string)}</span>,
+      header: '4. Receipt Date',
+      cell: ({ getValue }) => <span className="text-xs">{formatDate(getValue() as string)}</span>,
     },
     {
-      accessorKey: 'paymentMode',
-      header: 'Payment Mode',
-      cell: ({ getValue }) => {
-        const mode = getValue() as string;
-        return (
-          <Badge className={mode === 'CASH' ? 'bg-orange-100 text-orange-700' : mode === 'CHEQUE' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'}>
-            {mode}
-          </Badge>
-        );
-      },
+      accessorKey: 'bankAccountNumber',
+      header: '5. Bank Account Number',
+      cell: ({ getValue }) => <span className="font-mono text-xs text-slate-600">{getValue() as string}</span>,
     },
     {
-      accessorKey: 'amount',
-      header: () => <div className="text-right">Amount</div>,
-      cell: ({ getValue }) => <div className="text-right text-sm font-mono font-bold text-slate-900">{formatCurrency(Number(getValue()))}</div>,
+      accessorKey: 'receiptAmount',
+      header: () => <div className="text-right">6. Receipt Amount</div>,
+      cell: ({ getValue }) => <div className="text-right font-mono font-bold text-xs text-emerald-700">{formatCurrency(getValue() as number)}</div>,
     },
     {
       id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => (
-        <div className="flex gap-2 justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs text-blue-700 hover:bg-blue-50"
-            onClick={() => window.open(`/fees/receipts/${row.original.id}/print`, '_blank')}
-          >
-            View
-          </Button>
-          <Button variant="outline" size="sm" className="h-7 text-xs flex gap-1.5" onClick={() => handleDownload(row.original)}>
-            <Download className="w-3.5 h-3.5" />
-            PDF
-          </Button>
-        </div>
-      ),
+      header: () => <div className="text-center">7. Action</div>,
+      enableSorting: false,
+      cell: ({ row }) => {
+        const rcp = row.original;
+        return (
+          <div className="flex items-center justify-center gap-1.5">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs px-2.5 bg-white text-blue-700 hover:bg-blue-50 gap-1 font-semibold"
+              onClick={() => setSelectedReceipt(rcp)}
+              title="View Receipt"
+            >
+              <Eye className="h-3 w-3" /> View
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 w-7 p-0 text-slate-600 hover:text-slate-900"
+              title="Download PDF"
+              onClick={() => handleDownloadPDF(rcp)}
+            >
+              <Download className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        );
+      },
     },
   ];
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Receipt Download"
-        description="View, verify, and export all fee collection receipts for students at your franchisee branch"
-      />
-
-      {/* Receipts summary statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <Card className="border-l-4 border-l-emerald-500 shadow-sm">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Total Fees Collected</p>
-              <h3 className="text-2xl font-black text-slate-800 mt-1">{formatCurrency(totalAmount)}</h3>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500">
-              <Receipt className="w-5 h-5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-blue-500 shadow-sm">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Receipts Issued</p>
-              <h3 className="text-2xl font-black text-blue-600 mt-1">{data.length}</h3>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
-              <CheckCircle className="w-5 h-5" />
-            </div>
-          </CardContent>
-        </Card>
+    <div className="space-y-4 max-w-[1600px] mx-auto pb-12 pt-2">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h1 className="text-2xl font-normal text-slate-800">Receipt Download</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Search, view, and export student and franchisee receipts</p>
+        </div>
       </div>
 
-      <Card className="shadow-lg">
-        <CardHeader className="border-b border-border/50 flex flex-wrap flex-row items-center justify-between gap-4 py-4">
-          <CardTitle className="text-base font-bold">Receipts Registry</CardTitle>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <span>From:</span>
-              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-8 text-xs w-[130px]" />
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <span>To:</span>
-              <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-8 text-xs w-[130px]" />
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs"
-              onClick={() => { setFrom(''); setTo(''); }}
-            >
-              Clear
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleBulkExport} className="h-8 text-xs gap-1.5">
-              <Download className="w-3.5 h-3.5" />
-              Export CSV
-            </Button>
+      {/* Search & Clear Bar */}
+      <div className="bg-white border border-slate-200 rounded-sm p-4 shadow-sm">
+        <div className="flex items-center flex-wrap gap-2.5 max-w-lg">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by receipt number, ID, or collection type..."
+              className="pl-8 h-8 text-xs bg-white border-slate-300"
+            />
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
+
+          <Button
+            size="sm"
+            onClick={() => showToast(`Filtered ${filteredData.length} receipts`, 'info')}
+            className="h-8 text-xs bg-[#0056b3] hover:bg-[#004494] text-white px-4 font-semibold"
+          >
+            Search
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClear}
+            className="h-8 text-xs text-slate-600 hover:bg-slate-100 gap-1 px-3"
+          >
+            <RotateCcw className="h-3.5 w-3.5" /> Clear
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Table */}
+      <Card className="border-slate-200 shadow-sm">
+        <CardContent className="p-4">
           <DataTable
             columns={columns}
-            data={data}
-            searchPlaceholder="Search by receipt number..."
-            showExportBox={true}
-            exportTitle="franchisee_receipts"
+            data={filteredData}
+            searchPlaceholder="Filter results..."
           />
         </CardContent>
       </Card>
+
+      {/* View Receipt Dialog */}
+      {selectedReceipt && (
+        <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
+          <DialogContent className="max-w-md bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-sm font-bold flex items-center gap-2">
+                <Receipt className="h-4 w-4 text-blue-600" />
+                Receipt — {selectedReceipt.receiptNumber}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-2.5 text-xs pt-2">
+              <div className="flex justify-between border-b pb-1.5">
+                <span className="text-slate-500">Receipt Number:</span>
+                <span className="font-mono font-bold text-blue-700">{selectedReceipt.receiptNumber}</span>
+              </div>
+              <div className="flex justify-between border-b pb-1.5">
+                <span className="text-slate-500">Receipt ID:</span>
+                <span className="font-mono">{selectedReceipt.receiptId}</span>
+              </div>
+              <div className="flex justify-between border-b pb-1.5">
+                <span className="text-slate-500">Collection Type:</span>
+                <span className="font-medium">{selectedReceipt.collectionType}</span>
+              </div>
+              <div className="flex justify-between border-b pb-1.5">
+                <span className="text-slate-500">Receipt Date:</span>
+                <span>{formatDate(selectedReceipt.receiptDate)}</span>
+              </div>
+              <div className="flex justify-between border-b pb-1.5">
+                <span className="text-slate-500">Bank Account Number:</span>
+                <span className="font-mono">{selectedReceipt.bankAccountNumber}</span>
+              </div>
+              <div className="flex justify-between border-b pb-1.5">
+                <span className="text-slate-500">Receipt Amount:</span>
+                <span className="font-mono font-bold text-sm text-emerald-700">{formatCurrency(selectedReceipt.receiptAmount)}</span>
+              </div>
+
+              <div className="pt-3 flex gap-2 justify-end">
+                <Button variant="outline" size="sm" onClick={() => setSelectedReceipt(null)} className="h-8 text-xs">
+                  Close
+                </Button>
+                <Button size="sm" onClick={() => handleDownloadPDF(selectedReceipt)} className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white gap-1">
+                  <Download className="h-3.5 w-3.5" /> Download PDF
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

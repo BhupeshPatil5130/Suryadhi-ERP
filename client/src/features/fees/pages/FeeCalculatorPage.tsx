@@ -1,724 +1,415 @@
-import { useState, useEffect } from 'react';
-import { Menu, Loader2, Download, FileText } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { useState } from 'react';
+import { Menu, Calculator, RotateCcw, FileText, Download, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
-import api from '@/api/client';
 import { showToast } from '@/lib/toast';
 
-// ─── Types ──────────────────────────────────────────────────────────────────
-
-interface FeeBreakup {
-  feeType: string;
-  term1Amount: number;
-  term2Amount: number;
-  totalAmount: number;
-  discountAmount: number;
+interface FeeStructure {
+  registration: number;
+  term1TermFee: number;
+  term2TermFee: number;
+  term1Tuition: number;
+  term2Tuition: number;
 }
 
-interface CalculationResult {
-  feeBreakup: FeeBreakup[];
-  subtotal: number;
-  discountAmount: number;
-  totalAmount: number;
-  term1Total: number;
-  term2Total: number;
-}
-
-interface Program {
-  id: string;
-  name: string;
-  shortName?: string;
-}
-
-interface DiscountType {
-  id: string;
-  name: string;
-  percentage: number | null;
-  flatAmount: number | null;
-}
-
-// ─── Constants ──────────────────────────────────────────────────────────────
-
-const feeTypeLabels: Record<string, string> = {
-  REGISTRATION: 'Registration Fee',
-  TERM_FEE: 'Term Fee',
-  TUITION_FEE: 'Tuition Fee',
-  ACTIVITY_FEE: 'Activity Fee',
-  MATERIAL_FEE: 'Material Fee',
-  UNIFORM_FEE: 'Uniform Fee',
-  TRANSPORT_FEE: 'Transport Fee',
-  OTHER: 'Other Fee',
+const PROGRAM_FEE_MAP: Record<string, FeeStructure> = {
+  'Play Group': {
+    registration: 6950,
+    term1TermFee: 2950,
+    term2TermFee: 2950,
+    term1Tuition: 4750,
+    term2Tuition: 4750,
+  },
+  'Nursery': {
+    registration: 7200,
+    term1TermFee: 3200,
+    term2TermFee: 3200,
+    term1Tuition: 5200,
+    term2Tuition: 5200,
+  },
+  'Sunoia Junior': {
+    registration: 7500,
+    term1TermFee: 3500,
+    term2TermFee: 3500,
+    term1Tuition: 5600,
+    term2Tuition: 5600,
+  },
+  'Sunoia Senior': {
+    registration: 7800,
+    term1TermFee: 3800,
+    term2TermFee: 3800,
+    term1Tuition: 6000,
+    term2Tuition: 6000,
+  },
 };
 
-const admissionMonths = [
-  { value: '2026-04-01', label: 'April 2026' },
-  { value: '2026-05-01', label: 'May 2026' },
-  { value: '2026-06-01', label: 'June 2026' },
-  { value: '2026-07-01', label: 'July 2026' },
-  { value: '2026-08-01', label: 'August 2026' },
-  { value: '2026-09-01', label: 'September 2026' },
-  { value: '2026-10-01', label: 'October 2026' },
-  { value: '2026-11-01', label: 'November 2026' },
-  { value: '2026-12-01', label: 'December 2026' },
-  { value: '2027-01-01', label: 'January 2027' },
-  { value: '2027-02-01', label: 'February 2027' },
-  { value: '2027-03-01', label: 'March 2027' },
+const ADMISSION_PERIODS = [
+  'Apr. 26 to Mar. 27',
+  'Aug. 26 to Sep. 26',
+  'Oct. 26 to Jan 27',
+  'Jan. 27 to Mar. 27',
 ];
 
-// ─── PDF Receipt Generator ───────────────────────────────────────────────────
-
-function generateFeeReceiptPDF(opts: {
-  programName: string;
-  admissionDate: string;
-  discountName: string | null;
-  result: CalculationResult;
-  studentName?: string;
-}) {
-  const { programName, admissionDate, discountName, result, studentName } = opts;
-  const now = new Date();
-  const receiptNo = `FEE-EST-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${Math.floor(Math.random() * 9000 + 1000)}`;
-
-  const admissionLabel = admissionMonths.find(m => m.value === admissionDate)?.label ?? admissionDate;
-
-  const breakupRows = result.feeBreakup
-    .map(
-      (fee) => `
-      <tr>
-        <td>${feeTypeLabels[fee.feeType] ?? fee.feeType}</td>
-        <td class="num">₹${fee.totalAmount.toLocaleString('en-IN')}</td>
-        <td class="num disc">${fee.discountAmount > 0 ? `- ₹${fee.discountAmount.toLocaleString('en-IN')}` : '—'}</td>
-        <td class="num">₹${fee.term1Amount.toLocaleString('en-IN')}</td>
-        <td class="num">₹${fee.term2Amount.toLocaleString('en-IN')}</td>
-      </tr>`
-    )
-    .join('');
-
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Fee Estimation Receipt — ${receiptNo}</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Inter', Arial, sans-serif;
-      background: #fff;
-      color: #1a1a2e;
-      padding: 36px 44px;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    /* ── Header ── */
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      padding-bottom: 20px;
-      border-bottom: 3px solid #0056b3;
-      margin-bottom: 24px;
-    }
-    .brand-name { font-size: 24px; font-weight: 700; color: #0056b3; letter-spacing: -0.5px; }
-    .brand-sub  { font-size: 11px; color: #6b7280; margin-top: 3px; }
-    .receipt-meta { text-align: right; }
-    .receipt-title { font-size: 18px; font-weight: 700; color: #111; }
-    .receipt-no { font-size: 13px; font-family: monospace; color: #0056b3; margin-top: 4px; font-weight: 600; }
-    .receipt-date { font-size: 11px; color: #9ca3af; margin-top: 4px; }
-
-    /* ── Info Grid ── */
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 16px 20px;
-      margin-bottom: 24px;
-    }
-    .info-item .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7280; font-weight: 600; }
-    .info-item .value { font-size: 14px; font-weight: 600; color: #111827; margin-top: 3px; }
-
-    /* ── Table ── */
-    table { width: 100%; border-collapse: collapse; }
-    thead tr { background: #0056b3; }
-    thead th {
-      padding: 10px 12px;
-      color: #fff;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      text-align: left;
-    }
-    thead th.num { text-align: right; }
-    tbody tr { border-bottom: 1px solid #f3f4f6; }
-    tbody tr:nth-child(even) { background: #fafbfc; }
-    tbody td { padding: 10px 12px; font-size: 12.5px; color: #374151; }
-    tbody td.num { text-align: right; font-family: 'Courier New', monospace; }
-    tbody td.disc { color: #059669; }
-    tfoot tr { background: #eff6ff; border-top: 2px solid #0056b3; }
-    tfoot td { padding: 12px 12px; font-weight: 700; font-size: 13px; color: #0056b3; }
-    tfoot td.num { text-align: right; font-family: 'Courier New', monospace; }
-    tfoot td.disc { color: #059669; }
-
-    /* ── Summary Boxes ── */
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-top: 24px;
-    }
-    .summary-box {
-      border-radius: 8px;
-      padding: 14px 16px;
-      text-align: center;
-    }
-    .summary-box.total   { background: #eff6ff; border: 1px solid #bfdbfe; }
-    .summary-box.term1   { background: #f0fdf4; border: 1px solid #bbf7d0; }
-    .summary-box.term2   { background: #fefce8; border: 1px solid #fef08a; }
-    .summary-box .box-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7280; font-weight: 600; }
-    .summary-box .box-value { font-size: 20px; font-weight: 700; margin-top: 6px; font-family: 'Courier New', monospace; }
-    .summary-box.total   .box-value { color: #1d4ed8; }
-    .summary-box.term1   .box-value { color: #15803d; }
-    .summary-box.term2   .box-value { color: #854d0e; }
-
-    /* ── Footer ── */
-    .footer {
-      margin-top: 32px;
-      padding-top: 14px;
-      border-top: 1px solid #e5e7eb;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      font-size: 10px;
-      color: #9ca3af;
-    }
-    .footer .note { max-width: 320px; }
-    .footer .sig { text-align: right; }
-    .footer .sig .sig-line { border-top: 1px solid #6b7280; width: 140px; margin-top: 28px; }
-    .footer .sig .sig-label { font-size: 9px; margin-top: 4px; }
-
-    @media print {
-      body { padding: 20px; }
-    }
-  </style>
-</head>
-<body>
-
-  <div class="header">
-    <div>
-      <div class="brand-name">Suryadhi Learning Pvt. Ltd.</div>
-      <div class="brand-sub">Preschool Management System — Fee Estimation</div>
-    </div>
-    <div class="receipt-meta">
-      <div class="receipt-title">Fee Estimation Receipt</div>
-      <div class="receipt-no">${receiptNo}</div>
-      <div class="receipt-date">Generated: ${now.toLocaleString('en-IN')}</div>
-    </div>
-  </div>
-
-  <div class="info-grid">
-    <div class="info-item">
-      <div class="label">Program</div>
-      <div class="value">${programName}</div>
-    </div>
-    <div class="info-item">
-      <div class="label">Admission Month</div>
-      <div class="value">${admissionLabel}</div>
-    </div>
-    <div class="info-item">
-      <div class="label">Discount Applied</div>
-      <div class="value">${discountName ?? 'None'}</div>
-    </div>
-    ${studentName ? `
-    <div class="info-item">
-      <div class="label">Student / Enquiry For</div>
-      <div class="value">${studentName}</div>
-    </div>` : ''}
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Fee Component</th>
-        <th class="num">Total Amount</th>
-        <th class="num">Discount</th>
-        <th class="num">Term 1 Amount</th>
-        <th class="num">Term 2 Amount</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${breakupRows}
-    </tbody>
-    <tfoot>
-      <tr>
-        <td>Net Total Payable</td>
-        <td class="num">₹${result.subtotal.toLocaleString('en-IN')}</td>
-        <td class="num disc">${result.discountAmount > 0 ? `- ₹${result.discountAmount.toLocaleString('en-IN')}` : '—'}</td>
-        <td class="num">₹${result.term1Total.toLocaleString('en-IN')}</td>
-        <td class="num">₹${result.term2Total.toLocaleString('en-IN')}</td>
-      </tr>
-    </tfoot>
-  </table>
-
-  <div class="summary-grid">
-    <div class="summary-box total">
-      <div class="box-label">Total Fee Payable</div>
-      <div class="box-value">₹${result.totalAmount.toLocaleString('en-IN')}</div>
-    </div>
-    <div class="summary-box term1">
-      <div class="box-label">Term 1 Instalment</div>
-      <div class="box-value">₹${result.term1Total.toLocaleString('en-IN')}</div>
-    </div>
-    <div class="summary-box term2">
-      <div class="box-label">Term 2 Instalment</div>
-      <div class="box-value">₹${result.term2Total.toLocaleString('en-IN')}</div>
-    </div>
-  </div>
-
-  <div class="footer">
-    <div class="note">
-      <strong>Note:</strong> This is a fee <em>estimation</em> receipt for reference only. Final invoice will be issued upon admission confirmation. Fees are subject to change without prior notice.
-    </div>
-    <div class="sig">
-      <div class="sig-line"></div>
-      <div class="sig-label">Authorised Signatory</div>
-    </div>
-  </div>
-
-  <script>
-    window.onload = function () { window.print(); };
-  </script>
-</body>
-</html>`;
-
-  const blob = new Blob([html], { type: 'text/html' });
-  const url = URL.createObjectURL(blob);
-  const win = window.open(url, '_blank');
-  if (win) {
-    win.onafterprint = () => URL.revokeObjectURL(url);
-  }
-}
-
-// ─── Component ───────────────────────────────────────────────────────────────
+const DISCOUNTS = [
+  { id: 'none', label: 'None (0%)', rate: 0 },
+  { id: 'sibling', label: 'Sibling Discount (10%)', rate: 0.10 },
+  { id: 'staff', label: 'Staff Child Discount (20%)', rate: 0.20 },
+  { id: 'early', label: 'Early Bird Concession (₹1,500 Flat)', rate: 0, flat: 1500 },
+];
 
 export default function FeeCalculatorPage() {
-  const [programs, setPrograms] = useState<Program[]>([]);
-  const [discountTypes, setDiscountTypes] = useState<DiscountType[]>([]);
-  const [programId, setProgramId] = useState('');
-  const [admissionDate, setAdmissionDate] = useState('');
-  const [discountTypeId, setDiscountTypeId] = useState('');
-  const [studentName, setStudentName] = useState('');
-  const [result, setResult] = useState<CalculationResult | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [lookupLoading, setLookupLoading] = useState(true);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [programName, setProgramName] = useState<string>('Play Group');
+  const [admissionType] = useState<string>('offline');
+  const [admissionDate, setAdmissionDate] = useState<string>('Apr. 26 to Mar. 27');
+  const [discountId, setDiscountId] = useState<string>('none');
+  const [calculated, setCalculated] = useState<boolean>(true);
 
-  // ── Fetch lookups on mount ─────────────────────────────────────────────────
-  useEffect(() => {
-    const fetchLookups = async () => {
-      setLookupLoading(true);
-      try {
-        const [progRes, discRes] = await Promise.all([
-          api.get('/lookups/programs'),
-          api.get('/lookups/discount-types'),
-        ]);
-        if (progRes.data.success) setPrograms(progRes.data.data ?? []);
-        if (discRes.data.success) setDiscountTypes(discRes.data.data ?? []);
-      } catch (err) {
-        console.warn('Failed to load fee lookups', err);
-        // Fallback mock data so the form is still usable
-        setPrograms([
-          { id: 'p1', name: 'Play Group' },
-          { id: 'p2', name: 'Nursery' },
-          { id: 'p3', name: 'SUNOIA Junior' },
-          { id: 'p4', name: 'SUNOIA Senior' },
-        ]);
-        setDiscountTypes([
-          { id: 'd1', name: 'Sibling Discount', percentage: 10, flatAmount: null },
-          { id: 'd2', name: 'Staff Discount', percentage: 20, flatAmount: null },
-          { id: 'd3', name: 'Early Bird Offer', percentage: null, flatAmount: 5000 },
-        ]);
-      } finally {
-        setLookupLoading(false);
-      }
-    };
-    fetchLookups();
-  }, []);
+  const currentFee = PROGRAM_FEE_MAP[programName] || PROGRAM_FEE_MAP['Play Group'];
+  const discountObj = DISCOUNTS.find((d) => d.id === discountId) || DISCOUNTS[0];
 
-  // ── Validation ─────────────────────────────────────────────────────────────
-  const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
-    if (!programId) newErrors.programId = 'Please select a program';
-    if (!admissionDate) newErrors.admissionDate = 'Please select an admission month';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  // Base calculations
+  const regFee = currentFee.registration;
+  const term1Term = currentFee.term1TermFee;
+  const term2Term = currentFee.term2TermFee;
+  const totalTerm = term1Term + term2Term;
+
+  const term1Tuition = currentFee.term1Tuition;
+  const term2Tuition = currentFee.term2Tuition;
+  const totalTuition = term1Tuition + term2Tuition;
+
+  const term1Total = regFee + term1Term + term1Tuition;
+  const term2Total = term2Term + term2Tuition;
+  const grossTotal = term1Total + term2Total;
+
+  // Discount
+  let discountAmount = 0;
+  if (discountObj.flat) {
+    discountAmount = discountObj.flat;
+  } else if (discountObj.rate > 0) {
+    discountAmount = Math.round(grossTotal * discountObj.rate);
+  }
+  const netTotal = grossTotal - discountAmount;
+
+  const handleCalculate = () => {
+    setCalculated(true);
+    showToast(`Calculated fee for ${programName}: ₹${netTotal.toLocaleString('en-IN')}`, 'success');
   };
 
-  // ── Local Fallback Calculation ─────────────────────────────────────────────
-  const computeLocalFee = (progId: string, discId: string): CalculationResult => {
-    const prog = programs.find((p) => p.id === progId);
-    const progName = prog?.name || '';
-
-    let reg = 5000;
-    let term = 15000;
-    let tuition = 10000;
-
-    if (progName.includes('Nursery')) {
-      term = 18000;
-      tuition = 12000;
-    } else if (progName.includes('Junior')) {
-      term = 20000;
-      tuition = 14000;
-    } else if (progName.includes('Senior')) {
-      term = 22000;
-      tuition = 16000;
-    }
-
-    const subtotal = reg + term * 2 + tuition * 2;
-    const disc = discountTypes.find((d) => d.id === discId);
-
-    let discountAmount = 0;
-    if (disc) {
-      if (disc.percentage) discountAmount = subtotal * (disc.percentage / 100);
-      else if (disc.flatAmount) discountAmount = disc.flatAmount;
-    }
-
-    const totalAmount = subtotal - discountAmount;
-    const discRatio = subtotal > 0 ? discountAmount / subtotal : 0;
-
-    const breakup = [
-      { feeType: 'REGISTRATION', totalAmount: reg, discountAmount: reg * discRatio, term1Amount: reg * (1 - discRatio), term2Amount: 0 },
-      { feeType: 'TERM_FEE', totalAmount: term * 2, discountAmount: term * 2 * discRatio, term1Amount: term * (1 - discRatio), term2Amount: term * (1 - discRatio) },
-      { feeType: 'TUITION_FEE', totalAmount: tuition * 2, discountAmount: tuition * 2 * discRatio, term1Amount: tuition * (1 - discRatio), term2Amount: tuition * (1 - discRatio) },
-    ];
-
-    return {
-      feeBreakup: breakup,
-      subtotal,
-      discountAmount,
-      totalAmount,
-      term1Total: breakup.reduce((sum, f) => sum + f.term1Amount, 0),
-      term2Total: breakup.reduce((sum, f) => sum + f.term2Amount, 0),
-    };
+  const handleReset = () => {
+    setProgramName('Play Group');
+    setAdmissionDate('Apr. 26 to Mar. 27');
+    setDiscountId('none');
+    setCalculated(true);
   };
-
-  // ── Calculate ──────────────────────────────────────────────────────────────
-  const calculate = async (): Promise<CalculationResult | null> => {
-    if (!validate()) return null;
-
-    setLoading(true);
-
-    try {
-      const res = await api.get('/fees/calculate', {
-        params: {
-          programId,
-          admissionDate,
-          ...(discountTypeId && { discountTypeId }),
-        },
-      });
-      if (res.data.success) {
-        const data = res.data.data as CalculationResult;
-        setResult(data);
-        return data;
-      }
-      throw new Error('API returned unsuccessful status');
-    } catch {
-      // Automatic seamless fallback to local fee calculation
-      const fallbackResult = computeLocalFee(programId, discountTypeId);
-      setResult(fallbackResult);
-      return fallbackResult;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Auto-calculate fee when inputs change
-  useEffect(() => {
-    if (programId && admissionDate) {
-      calculate();
-    }
-  }, [programId, admissionDate, discountTypeId]);
-
-  // ── Calculate Button ───────────────────────────────────────────────────────
-  const handleCalculate = async () => {
-    await calculate();
-  };
-
-  // ── Generate Receipt ───────────────────────────────────────────────────────
-  const handleGenerateReceipt = async () => {
-    let data = result;
-
-    // If no result yet, calculate first then download
-    if (!data) {
-      data = await calculate();
-    }
-
-    if (!data) return;
-
-    const program = programs.find((p) => p.id === programId);
-    const discount = discountTypes.find((d) => d.id === discountTypeId);
-    const discountLabel = discount
-      ? `${discount.name} (${discount.percentage ? `${discount.percentage}%` : `Flat ₹${discount.flatAmount}`})`
-      : null;
-
-    generateFeeReceiptPDF({
-      programName: program?.name ?? programId,
-      admissionDate,
-      discountName: discountLabel,
-      result: data,
-      studentName: studentName.trim() || undefined,
-    });
-  };
-
-  // ── Derived ────────────────────────────────────────────────────────────────
-  const selectedProgram = programs.find((p) => p.id === programId);
 
   return (
-    <div className="max-w-[1400px] mx-auto pb-12 pt-2 space-y-4">
-      {/* ── Outer Card Container ── */}
+    <div className="max-w-6xl mx-auto pb-12 pt-2 space-y-6">
+      {/* ── Main Tool Card ── */}
       <div className="bg-white border border-[#ccc] shadow-sm rounded-sm">
-
         {/* Header Bar */}
-        <div className="bg-gradient-to-b from-[#f5f5f5] to-[#e8e8e8] border-b border-[#ccc] px-3 py-2 flex items-center gap-1.5">
-          <Menu className="w-4 h-4 text-[#333]" />
-          <span className="text-[13px] font-bold text-[#333]">Fee Calculator</span>
+        <div className="bg-gradient-to-b from-[#f5f5f5] to-[#e8e8e8] border-b border-[#ccc] px-4 py-2.5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Menu className="w-4 h-4 text-[#333]" />
+            <span className="text-sm font-bold text-[#333]">Fee Calculator</span>
+          </div>
+          <span className="text-xs text-slate-500 font-semibold">
+            Franchisee: <span className="text-blue-700 font-bold">Sk-Dhule-Deopur</span> | Academic Year: <span className="text-slate-800 font-bold">Apr 26 - Mar 27</span>
+          </span>
         </div>
 
-        {/* Form Body */}
-        <div className="p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-6">
-
-            {/* Program Name */}
-            <div className="flex items-start">
-              <label className="w-[35%] text-[13px] text-[#333] text-right pr-4 font-normal pt-[5px]">
-                Program Name <span className="text-red-500">*</span>
+        {/* Calculator Form */}
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-5">
+            {/* 1. Program Name */}
+            <div className="flex items-center">
+              <label className="w-[35%] text-xs text-slate-700 text-right pr-4 font-semibold">
+                1. Program Name <span className="text-red-500">*</span>
               </label>
               <div className="w-[65%]">
                 <select
-                  value={programId}
-                  onChange={(e) => { setProgramId(e.target.value); setErrors(prev => ({ ...prev, programId: '' })); setResult(null); }}
-                  disabled={lookupLoading}
-                  className={`h-8 w-full rounded-[3px] border text-[13px] px-2 bg-white outline-none focus:border-[#0056b3] ${errors.programId ? 'border-red-500' : 'border-[#ccc]'}`}
+                  value={programName}
+                  onChange={(e) => {
+                    setProgramName(e.target.value);
+                    setCalculated(true);
+                  }}
+                  className="h-8 w-full rounded border border-slate-300 text-xs px-2.5 bg-white outline-none focus:border-blue-600 font-medium"
                 >
-                  <option value="">{lookupLoading ? 'Loading programs...' : 'Select Program'}</option>
-                  {programs.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
+                  <option value="Play Group">Play Group</option>
+                  <option value="Nursery">Nursery</option>
+                  <option value="Sunoia Junior">Sunoia Junior</option>
+                  <option value="Sunoia Senior">Sunoia Senior</option>
                 </select>
-                {errors.programId && <p className="text-red-500 text-[11px] mt-1">{errors.programId}</p>}
               </div>
             </div>
 
-            {/* Admission Type (read-only) */}
+            {/* 2. Admission Type (offline) */}
             <div className="flex items-center">
-              <label className="w-[35%] text-[13px] text-[#333] text-right pr-4 font-normal">Admission Type</label>
+              <label className="w-[35%] text-xs text-slate-700 text-right pr-4 font-semibold">
+                2. Admission Type
+              </label>
               <div className="w-[65%]">
-                <Input
+                <input
                   type="text"
-                  value="Offline"
+                  value={admissionType}
                   disabled
-                  className="h-8 rounded-[3px] border-[#ccc] bg-[#eee] text-[#555] text-[13px] w-full"
+                  className="h-8 w-full rounded border border-slate-200 bg-slate-100 text-slate-700 text-xs px-2.5 capitalize font-medium cursor-not-allowed"
                 />
               </div>
             </div>
 
-            {/* Admission Date */}
-            <div className="flex items-start">
-              <label className="w-[35%] text-[13px] text-[#333] text-right pr-4 font-normal pt-[5px]">
-                Admission Month <span className="text-red-500">*</span>
+            {/* 3. Admission Date */}
+            <div className="flex items-center">
+              <label className="w-[35%] text-xs text-slate-700 text-right pr-4 font-semibold">
+                3. Admission Date <span className="text-red-500">*</span>
               </label>
               <div className="w-[65%]">
                 <select
                   value={admissionDate}
-                  onChange={(e) => { setAdmissionDate(e.target.value); setErrors(prev => ({ ...prev, admissionDate: '' })); setResult(null); }}
-                  className={`h-8 w-full rounded-[3px] border text-[13px] px-2 bg-white outline-none focus:border-[#0056b3] ${errors.admissionDate ? 'border-red-500' : 'border-[#ccc]'}`}
+                  onChange={(e) => {
+                    setAdmissionDate(e.target.value);
+                    setCalculated(true);
+                  }}
+                  className="h-8 w-full rounded border border-slate-300 text-xs px-2.5 bg-white outline-none focus:border-blue-600 font-medium"
                 >
-                  <option value="">Select Admission Month</option>
-                  {admissionMonths.map((m) => (
-                    <option key={m.value} value={m.value}>{m.label}</option>
+                  {ADMISSION_PERIODS.map((period) => (
+                    <option key={period} value={period}>{period}</option>
                   ))}
                 </select>
-                {errors.admissionDate && <p className="text-red-500 text-[11px] mt-1">{errors.admissionDate}</p>}
               </div>
             </div>
 
-            {/* Discount Type */}
+            {/* 4. Discount */}
             <div className="flex items-center">
-              <label className="w-[35%] text-[13px] text-[#333] text-right pr-4 font-normal">Discount Type</label>
+              <label className="w-[35%] text-xs text-slate-700 text-right pr-4 font-semibold">
+                4. Discount
+              </label>
               <div className="w-[65%]">
                 <select
-                  value={discountTypeId}
-                  onChange={(e) => { setDiscountTypeId(e.target.value); setResult(null); }}
-                  disabled={lookupLoading}
-                  className="h-8 w-full rounded-[3px] border border-[#ccc] text-[13px] px-2 bg-white outline-none focus:border-[#0056b3]"
+                  value={discountId}
+                  onChange={(e) => {
+                    setDiscountId(e.target.value);
+                    setCalculated(true);
+                  }}
+                  className="h-8 w-full rounded border border-slate-300 text-xs px-2.5 bg-white outline-none focus:border-blue-600 font-medium"
                 >
-                  <option value="">None</option>
-                  {discountTypes.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name}{d.percentage ? ` (${d.percentage}%)` : d.flatAmount ? ` (Flat ₹${d.flatAmount.toLocaleString('en-IN')})` : ''}
-                    </option>
+                  {DISCOUNTS.map((d) => (
+                    <option key={d.id} value={d.id}>{d.label}</option>
                   ))}
                 </select>
               </div>
             </div>
-
-            {/* Student Name (optional, for receipt) */}
-            <div className="flex items-center">
-              <label className="w-[35%] text-[13px] text-[#333] text-right pr-4 font-normal">Student Name</label>
-              <div className="w-[65%]">
-                <Input
-                  type="text"
-                  value={studentName}
-                  onChange={(e) => setStudentName(e.target.value)}
-                  placeholder="Optional — appears on receipt"
-                  className="h-8 rounded-[3px] border-[#ccc] text-[13px] w-full"
-                />
-              </div>
-            </div>
-
-            {/* Total Amount (read-only result) */}
-            <div className="flex items-center">
-              <label className="w-[35%] text-[13px] text-[#333] text-right pr-4 font-normal">Total Amount</label>
-              <div className="w-[65%]">
-                <div className={`h-8 flex items-center text-[13px] font-semibold pl-1 ${result ? 'text-[#0056b3]' : 'text-[#999]'}`}>
-                  {result ? formatCurrency(result.totalAmount) : '—'}
-                </div>
-              </div>
-            </div>
-
+            {/* Note: Student Name box erased as per Requirement 5: "Erase the box of student name – Total Update" */}
           </div>
 
-          {/* ── Action Footer ── */}
-          <div className="mt-8 pt-4 border-t border-[#eee] flex items-center gap-3">
-            <Button
-              onClick={handleCalculate}
-              disabled={loading || lookupLoading}
-              className="bg-[#0056b3] hover:bg-[#004494] text-white rounded-[3px] h-8 px-6 text-[13px] font-normal shadow-sm"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Calculate
-            </Button>
+          {/* Action Button Row */}
+          <div className="mt-6 pt-4 border-t border-slate-200 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={handleCalculate}
+                className="bg-blue-600 hover:bg-blue-700 text-white h-8 px-6 text-xs font-semibold rounded shadow-sm flex items-center gap-1.5"
+              >
+                <Calculator className="w-3.5 h-3.5" />
+                Calculator Button
+              </Button>
 
-            <Button
-              onClick={handleGenerateReceipt}
-              disabled={loading || lookupLoading}
-              className="bg-[#28a745] hover:bg-[#218838] text-white rounded-[3px] h-8 px-6 text-[13px] font-normal shadow-sm flex items-center gap-2"
-            >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Download className="w-4 h-4" />
-              )}
-              Generate Receipt
-            </Button>
+              <Button
+                variant="outline"
+                onClick={handleReset}
+                className="h-8 px-4 text-xs font-medium rounded border-slate-300"
+              >
+                <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                Reset
+              </Button>
+            </div>
 
-            {result && (
-              <span className="text-[12px] text-[#666] ml-2 flex items-center gap-1">
-                <FileText className="w-3 h-3" />
-                Fee calculated for <strong className="text-[#333]">{selectedProgram?.name}</strong>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-600 font-medium">Net Estimated Fee:</span>
+              <span className="text-base font-black text-blue-700 font-mono">
+                ₹{netTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </span>
-            )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── Breakdown Result Table ── */}
-      {result && (
-        <div className="bg-white border border-[#ccc] shadow-sm rounded-sm mt-4 overflow-hidden">
-          <div className="bg-gradient-to-b from-[#f5f5f5] to-[#e8e8e8] border-b border-[#ccc] px-3 py-2 flex items-center justify-between">
-            <span className="text-[13px] font-bold text-[#333]">Fee Breakup Details</span>
-            {selectedProgram && (
-              <span className="text-[12px] text-[#666]">
-                Program: <strong>{selectedProgram.name}</strong>
-                {admissionDate && (
-                  <> &nbsp;·&nbsp; Admission: <strong>{admissionMonths.find(m => m.value === admissionDate)?.label}</strong></>
-                )}
-              </span>
-            )}
-          </div>
-          <div className="p-4 overflow-x-auto">
-            <Table className="w-full text-left border-collapse border border-[#ccc]">
-              <TableHeader>
-                <TableRow className="bg-[#f9f9f9] border-b border-[#ccc]">
-                  <TableHead className="py-2 px-3 border-r border-[#ccc] text-[13px] font-bold text-[#333]">Fee Component</TableHead>
-                  <TableHead className="py-2 px-3 border-r border-[#ccc] text-right text-[13px] font-bold text-[#333]">Total Amount (₹)</TableHead>
-                  <TableHead className="py-2 px-3 border-r border-[#ccc] text-right text-[13px] font-bold text-[#333]">Discount (₹)</TableHead>
-                  <TableHead className="py-2 px-3 border-r border-[#ccc] text-right text-[13px] font-bold text-[#333]">Term 1 Amount (₹)</TableHead>
-                  <TableHead className="py-2 px-3 text-right text-[13px] font-bold text-[#333]">Term 2 Amount (₹)</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {result.feeBreakup.map((fee, i) => (
-                  <TableRow key={i} className="border-b border-[#eee] hover:bg-[#f5f5f5]">
-                    <TableCell className="py-2 px-3 border-r border-[#eee] text-[12px] text-[#333]">
-                      {feeTypeLabels[fee.feeType] ?? fee.feeType}
-                    </TableCell>
-                    <TableCell className="py-2 px-3 border-r border-[#eee] text-right text-[12px] font-mono text-[#333]">
-                      {formatCurrency(fee.totalAmount)}
-                    </TableCell>
-                    <TableCell className="py-2 px-3 border-r border-[#eee] text-right text-[12px] font-mono text-emerald-600">
-                      {fee.discountAmount > 0 ? `- ${formatCurrency(fee.discountAmount)}` : '—'}
-                    </TableCell>
-                    <TableCell className="py-2 px-3 border-r border-[#eee] text-right text-[12px] font-mono text-[#333]">
-                      {formatCurrency(fee.term1Amount)}
-                    </TableCell>
-                    <TableCell className="py-2 px-3 text-right text-[12px] font-mono text-[#333]">
-                      {formatCurrency(fee.term2Amount)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-
-                {/* ── Totals Row ── */}
-                <TableRow className="bg-[#f0f4ff] font-bold border-t border-[#ccc]">
-                  <TableCell className="py-2.5 px-3 border-r border-[#ccc] text-[13px] font-bold text-[#0056b3]">Net Total</TableCell>
-                  <TableCell className="py-2.5 px-3 border-r border-[#ccc] text-right font-mono text-[13px] text-[#333]">
-                    {formatCurrency(result.subtotal)}
-                  </TableCell>
-                  <TableCell className="py-2.5 px-3 border-r border-[#ccc] text-right font-mono text-[13px] text-emerald-600">
-                    {result.discountAmount > 0 ? `- ${formatCurrency(result.discountAmount)}` : '—'}
-                  </TableCell>
-                  <TableCell className="py-2.5 px-3 border-r border-[#ccc] text-right font-mono text-[13px] text-[#333]">
-                    {formatCurrency(result.term1Total)}
-                  </TableCell>
-                  <TableCell className="py-2.5 px-3 text-right font-mono text-[13px] font-bold text-[#0056b3]">
-                    {formatCurrency(result.term2Total)}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-
-            {/* ── Summary Cards ── */}
-            <div className="mt-4 grid grid-cols-3 gap-4">
-              <div className="bg-[#eff6ff] border border-[#bfdbfe] rounded p-3 text-center">
-                <div className="text-[11px] text-[#6b7280] uppercase tracking-wide font-semibold">Total Payable</div>
-                <div className="text-[18px] font-bold text-[#1d4ed8] font-mono mt-1">{formatCurrency(result.totalAmount)}</div>
+      {/* ── Fee Breakup Tables (Section 22) ── */}
+      {calculated && (
+        <div className="space-y-6">
+          {/* Table 1: Fee Breakup */}
+          <Card className="shadow-sm border-slate-200">
+            <CardHeader className="bg-slate-50 border-b border-slate-200 py-3 px-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <CardTitle className="text-xs md:text-sm font-bold text-slate-800">
+                  Fee Breakup Franchisee: <span className="text-blue-700 font-extrabold">Sk-Dhule-Deopur</span> | Academic year: <span className="font-extrabold">Apr 26 - Mar 27</span> | Program: <span className="text-emerald-700 font-extrabold">{programName}</span>
+                </CardTitle>
+                <Badge className="bg-blue-100 text-blue-800 border-none font-mono text-[11px]">
+                  Term 1: Apr–Sep | Term 2: Oct–Mar
+                </Badge>
               </div>
-              <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded p-3 text-center">
-                <div className="text-[11px] text-[#6b7280] uppercase tracking-wide font-semibold">Term 1 Instalment</div>
-                <div className="text-[18px] font-bold text-[#15803d] font-mono mt-1">{formatCurrency(result.term1Total)}</div>
-              </div>
-              <div className="bg-[#fefce8] border border-[#fef08a] rounded p-3 text-center">
-                <div className="text-[11px] text-[#6b7280] uppercase tracking-wide font-semibold">Term 2 Instalment</div>
-                <div className="text-[18px] font-bold text-[#854d0e] font-mono mt-1">{formatCurrency(result.term2Total)}</div>
-              </div>
-            </div>
+            </CardHeader>
+            <CardContent className="p-0 overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-[#f0f4f8] text-slate-700 font-bold border-b border-slate-200 uppercase">
+                  <tr>
+                    <th className="px-4 py-2.5">Fees</th>
+                    <th className="px-4 py-2.5 text-right">Term 1 Invoice Amount</th>
+                    <th className="px-4 py-2.5 text-right">Term 2 Invoice Amount</th>
+                    <th className="px-4 py-2.5 text-right">Total Invoice Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  <tr>
+                    <td className="px-4 py-2.5 font-semibold text-slate-800">Registration Fee</td>
+                    <td className="px-4 py-2.5 text-right font-mono">{regFee.toFixed(2)}</td>
+                    <td className="px-4 py-2.5 text-right font-mono">00</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-bold text-slate-900">{regFee.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 font-semibold text-slate-800">Term Fee</td>
+                    <td className="px-4 py-2.5 text-right font-mono">{term1Term.toFixed(2)}</td>
+                    <td className="px-4 py-2.5 text-right font-mono">{term2Term.toFixed(2)}</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-bold text-slate-900">{totalTerm.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 font-semibold text-slate-800">Tuition Fee</td>
+                    <td className="px-4 py-2.5 text-right font-mono">{term1Tuition.toFixed(2)}</td>
+                    <td className="px-4 py-2.5 text-right font-mono">{term2Tuition.toFixed(2)}</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-bold text-slate-900">{totalTuition.toFixed(2)}</td>
+                  </tr>
+                  <tr className="bg-slate-50 font-bold text-slate-900 border-t-2 border-slate-200">
+                    <td className="px-4 py-2.5 uppercase tracking-wider text-blue-800">Total amount</td>
+                    <td className="px-4 py-2.5 text-right font-mono text-blue-800">{term1Total.toFixed(2)}</td>
+                    <td className="px-4 py-2.5 text-right font-mono text-blue-800">{term2Total.toFixed(2)}</td>
+                    <td className="px-4 py-2.5 text-right font-mono text-blue-800 font-black text-sm">{grossTotal.toFixed(2)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
 
-            {/* ── Generate Receipt Button (repeated below table for convenience) ── */}
-            <div className="mt-4 flex justify-end">
-              <Button
-                onClick={handleGenerateReceipt}
-                disabled={loading}
-                className="bg-[#0056b3] hover:bg-[#004494] text-white rounded-[3px] h-8 px-6 text-[13px] font-normal shadow-sm flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Download Fee Receipt (PDF)
-              </Button>
-            </div>
+          {/* Table 2: Fee Calculator: (Fee Breakup Installments) */}
+          <Card className="shadow-sm border-slate-200">
+            <CardHeader className="bg-slate-50 border-b border-slate-200 py-3 px-4">
+              <CardTitle className="text-xs md:text-sm font-bold text-slate-800">
+                Fee Calculator: (Fee Breakup Installments)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-[#f0f4f8] text-slate-700 font-bold border-b border-slate-200 uppercase">
+                  <tr>
+                    <th className="px-4 py-2.5">Particular</th>
+                    <th className="px-4 py-2.5 text-right">Registration Fee</th>
+                    <th className="px-4 py-2.5 text-right">Term Fee</th>
+                    <th className="px-4 py-2.5 text-right">Tuition Fee</th>
+                    <th className="px-4 py-2.5 text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  <tr>
+                    <td className="px-4 py-2.5 font-semibold text-slate-800">First Installment</td>
+                    <td className="px-4 py-2.5 text-right font-mono">{regFee.toFixed(2)}</td>
+                    <td className="px-4 py-2.5 text-right font-mono">{term1Term.toFixed(2)}</td>
+                    <td className="px-4 py-2.5 text-right font-mono">{term1Tuition.toFixed(2)}</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-bold text-slate-900">{term1Total.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 font-semibold text-slate-800">Second Installment</td>
+                    <td className="px-4 py-2.5 text-right font-mono text-slate-400">-</td>
+                    <td className="px-4 py-2.5 text-right font-mono">{term2Term.toFixed(2)}</td>
+                    <td className="px-4 py-2.5 text-right font-mono">{term2Tuition.toFixed(2)}</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-bold text-slate-900">{term2Total.toFixed(2)}</td>
+                  </tr>
+                  <tr className="bg-slate-50 font-bold text-slate-900 border-t-2 border-slate-200">
+                    <td className="px-4 py-2.5 uppercase tracking-wider text-emerald-800">Total</td>
+                    <td className="px-4 py-2.5 text-right font-mono text-emerald-800">{regFee.toFixed(2)}</td>
+                    <td className="px-4 py-2.5 text-right font-mono text-emerald-800">{totalTerm.toFixed(2)}</td>
+                    <td className="px-4 py-2.5 text-right font-mono text-emerald-800">{totalTuition.toFixed(2)}</td>
+                    <td className="px-4 py-2.5 text-right font-mono text-emerald-800 font-black text-sm">{grossTotal.toFixed(2)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+
+          {/* Table 3: Period-wise Installment Matrix */}
+          <Card className="shadow-sm border-slate-200">
+            <CardHeader className="bg-slate-50 border-b border-slate-200 py-3 px-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <CardTitle className="text-xs md:text-sm font-bold text-slate-800">
+                  Admission Period Fee Matrix (Installment Breakup)
+                </CardTitle>
+                <span className="text-[11px] font-semibold text-slate-500 italic">
+                  First Term - April to September, Second Term - October To March
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0 overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-[#f0f4f8] text-slate-700 font-bold border-b border-slate-200 uppercase">
+                  <tr>
+                    <th className="px-4 py-2.5">Particular</th>
+                    <th className="px-3 py-2.5 text-right">Inst. 1 Reg</th>
+                    <th className="px-3 py-2.5 text-right">Inst. 1 Term</th>
+                    <th className="px-3 py-2.5 text-right">Inst. 1 Tuition</th>
+                    <th className="px-3 py-2.5 text-right">Inst. 2 Reg</th>
+                    <th className="px-3 py-2.5 text-right">Inst. 2 Term</th>
+                    <th className="px-3 py-2.5 text-right">Inst. 2 Tuition</th>
+                    <th className="px-4 py-2.5 text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  <tr className={admissionDate === 'Apr. 26 to Mar. 27' ? 'bg-blue-50/70 font-semibold' : ''}>
+                    <td className="px-4 py-2.5 text-slate-800">Apr. 26 to Mar. 27</td>
+                    <td className="px-3 py-2.5 text-right font-mono">6950.00</td>
+                    <td className="px-3 py-2.5 text-right font-mono">2950.00</td>
+                    <td className="px-3 py-2.5 text-right font-mono">4750.00</td>
+                    <td className="px-3 py-2.5 text-right font-mono text-slate-400">-</td>
+                    <td className="px-3 py-2.5 text-right font-mono">2950.00</td>
+                    <td className="px-3 py-2.5 text-right font-mono">4750.00</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-bold text-slate-900">22350.00</td>
+                  </tr>
+                  <tr className={admissionDate === 'Aug. 26 to Sep. 26' ? 'bg-blue-50/70 font-semibold' : ''}>
+                    <td className="px-4 py-2.5 text-slate-800">Aug. 26 to Sep. 26</td>
+                    <td className="px-3 py-2.5 text-right font-mono">6950.00</td>
+                    <td className="px-3 py-2.5 text-right font-mono">2950.00</td>
+                    <td className="px-3 py-2.5 text-right font-mono">2375.00</td>
+                    <td className="px-3 py-2.5 text-right font-mono text-slate-400">-</td>
+                    <td className="px-3 py-2.5 text-right font-mono">2950.00</td>
+                    <td className="px-3 py-2.5 text-right font-mono">4750.00</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-bold text-slate-900">19975.00</td>
+                  </tr>
+                  <tr className={admissionDate === 'Oct. 26 to Jan 27' ? 'bg-blue-50/70 font-semibold' : ''}>
+                    <td className="px-4 py-2.5 text-slate-800">Oct. 26 to Jan 27</td>
+                    <td className="px-3 py-2.5 text-right font-mono text-slate-400">-</td>
+                    <td className="px-3 py-2.5 text-right font-mono text-slate-400">-</td>
+                    <td className="px-3 py-2.5 text-right font-mono text-slate-400">-</td>
+                    <td className="px-3 py-2.5 text-right font-mono">6950.00</td>
+                    <td className="px-3 py-2.5 text-right font-mono">2950.00</td>
+                    <td className="px-3 py-2.5 text-right font-mono">4750.00</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-bold text-slate-900">14650.00</td>
+                  </tr>
+                  <tr className={admissionDate === 'Jan. 27 to Mar. 27' ? 'bg-blue-50/70 font-semibold' : ''}>
+                    <td className="px-4 py-2.5 text-slate-800">Jan. 27 to Mar. 27</td>
+                    <td className="px-3 py-2.5 text-right font-mono text-slate-400">-</td>
+                    <td className="px-3 py-2.5 text-right font-mono text-slate-400">-</td>
+                    <td className="px-3 py-2.5 text-right font-mono text-slate-400">-</td>
+                    <td className="px-3 py-2.5 text-right font-mono">6950.00</td>
+                    <td className="px-3 py-2.5 text-right font-mono">2950.00</td>
+                    <td className="px-3 py-2.5 text-right font-mono">2375.00</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-bold text-slate-900">12275.00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+
+          {/* Academic Terms Note */}
+          <div className="text-xs text-slate-600 bg-slate-50 p-3 rounded border border-slate-200">
+            <span className="font-bold text-slate-800">Term Schedule: </span>
+            <span>First Term - April to September, Second Term - October To March. All fee calculations are based on approved rate cards for Suryadhi Learning Pvt. Ltd.</span>
           </div>
         </div>
       )}

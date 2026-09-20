@@ -16,6 +16,7 @@ export default function ProgramChangePage() {
   const [programs, setPrograms] = useState<any[]>([]);
   const [newProgramId, setNewProgramId] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(false);
+  const [welcomeKitUsed, setWelcomeKitUsed] = useState('no');
 
   const [isLoadingStudent, setIsLoadingStudent] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -199,7 +200,7 @@ export default function ProgramChangePage() {
                 Welcome kit used by student?
               </label>
               <div className="w-[65%]">
-                <Select disabled={!studentData || !isUnlocked}>
+                <Select value={welcomeKitUsed} onValueChange={setWelcomeKitUsed} disabled={!studentData || !isUnlocked}>
                   <SelectTrigger className={`h-8 rounded-sm border-[#ccc] text-[13px] w-full ${!isUnlocked ? 'bg-[#eee] cursor-not-allowed text-gray-500' : 'bg-white'}`}>
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>

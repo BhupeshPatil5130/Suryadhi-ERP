@@ -218,30 +218,20 @@ export default function AdmissionDetailsReportPage() {
                   onChange={(e) => setSelectedProgram(e.target.value)}
                   className="border rounded px-3 py-1.5 text-xs bg-background h-8 font-medium"
                 >
-                  <option value="All">All Programs</option>
+                  <option value="All">All</option>
                   <option value="Play Group">Play Group</option>
                   <option value="Nursery">Nursery</option>
                   <option value="Sunoia Junior">Sunoia Junior</option>
-                  <option value="Sunoia Senior">Sunoia Senior</option>
+                  <option value="Sunoia Senior">Sunoia Senior KG</option>
                 </select>
               </div>
 
               <Button
                 size="sm"
-                className="h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white gap-1"
-                onClick={fetchAdmissions}
-              >
-                OK
-              </Button>
-
-              <Button
-                size="sm"
-                className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+                className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 font-semibold"
                 onClick={handleDownloadExcel}
-                disabled={filteredData.length === 0}
               >
-                <Download className="w-3.5 h-3.5" />
-                Download To Excel
+                <Download className="w-3.5 h-3.5" /> Admission Report Download
               </Button>
             </div>
           </div>

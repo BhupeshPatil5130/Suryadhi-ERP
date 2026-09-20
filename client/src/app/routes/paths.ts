@@ -18,6 +18,7 @@ export const PATHS = {
     CONVERT: (id = ':id') => `/enquiry/${id}/convert`,
     RECEIPTS: (id = ':id') => `/enquiry/${id}/receipts`,
     ADD_RECEIPT: (id = ':id') => `/enquiry/${id}/receipts/add`,
+    LSQ: '/enquiry/lsq',
   },
 
   // ── Admission ──────────────────────────────────────────

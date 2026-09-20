@@ -54,9 +54,40 @@ export default function TransferRequestPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto pb-12 pt-2 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-[24px] font-normal text-[#333]">Transfer Out Management</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Process campus relocation and transfer-out requests for students</p>
+        </div>
+      </div>
+
+      {/* Transfer Out Dashboard Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-white border border-slate-200 p-3 shadow-sm rounded-sm">
+          <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-1">Total Transfer Out</div>
+          <div className="text-2xl font-bold text-slate-700">8</div>
+          <div className="mt-2 h-1 w-full bg-blue-500 rounded"></div>
+        </div>
+        <div className="bg-white border border-slate-200 p-3 shadow-sm rounded-sm">
+          <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-1">Pending Clearance</div>
+          <div className="text-2xl font-bold text-amber-600">3</div>
+          <div className="mt-2 h-1 w-full bg-amber-500 rounded"></div>
+        </div>
+        <div className="bg-white border border-slate-200 p-3 shadow-sm rounded-sm">
+          <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-1">Relocated / Completed</div>
+          <div className="text-2xl font-bold text-emerald-600">4</div>
+          <div className="mt-2 h-1 w-full bg-emerald-500 rounded"></div>
+        </div>
+        <div className="bg-white border border-slate-200 p-3 shadow-sm rounded-sm">
+          <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-1">Rejected / Cancelled</div>
+          <div className="text-2xl font-bold text-rose-600">1</div>
+          <div className="mt-2 h-1 w-full bg-rose-500 rounded"></div>
+        </div>
+      </div>
+
       <div className="bg-white border border-slate-300 shadow-sm rounded-sm p-4">
         <div className="bg-[#f2f2f2] px-4 py-2 border border-slate-300 border-b-0 rounded-t-sm flex items-center">
-          <span className="font-semibold text-[13px] text-slate-700">≡ School Transfer Request Form</span>
+          <span className="font-semibold text-[13px] text-slate-700">≡ School Transfer Out Request Form</span>
         </div>
 
         <div className="border border-slate-300 p-6">

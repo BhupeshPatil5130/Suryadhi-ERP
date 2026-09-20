@@ -24,22 +24,22 @@ export default function AdmissionActionButtons({ id }: AdmissionActionButtonsPro
         </Link>
       </div>
 
-      {/* Row 2: Online Payment | Transfer Out */}
+      {/* Row 2: Invoice | Graduate to */}
       <div className="flex items-center justify-between relative">
         <Link to={`/fees/add-receipt?admissionId=${id}`}>
-          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Add Online Payment">
+          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Invoice">
             <CreditCard className="h-[14px] w-[14px] text-black stroke-[2.5]" />
           </Button>
         </Link>
         <div className="w-[1px] h-[14px] bg-slate-300"></div>
-        <Link to={`/transfer-out?admissionId=${id}`}>
-          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Transfer Student">
+        <Link to={`/graduation/homebuddy?admissionId=${id}`}>
+          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Graduate to">
             <Forward className="h-[14px] w-[14px] text-black stroke-[2.5]" />
           </Button>
         </Link>
       </div>
 
-      {/* Row 3: Quit | Transfer/Relocate */}
+      {/* Row 3: Quit | Transfer Out */}
       <div className="flex items-center justify-between relative pl-1">
         <div className="w-[1px] h-[14px] bg-slate-300 absolute left-0"></div>
         <Link to={`/quit-admission?admissionId=${id}`}>
@@ -48,14 +48,14 @@ export default function AdmissionActionButtons({ id }: AdmissionActionButtonsPro
           </Button>
         </Link>
         <div className="w-[1px] h-[14px] bg-slate-300"></div>
-        <Link to={`/transfers/manage?admissionId=${id}`}>
-          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Relocation/Transfer">
+        <Link to={`/transfer-out?admissionId=${id}`}>
+          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Transfer Out">
             <Plane className="h-[14px] w-[14px] text-black stroke-[2.5]" />
           </Button>
         </Link>
       </div>
 
-      {/* Row 4: Name/DOB Change | Forecasted Royalty */}
+      {/* Row 4: Name/DOB Change | View Royalty */}
       <div className="flex items-center justify-between relative pl-1">
         <div className="w-[1px] h-[14px] bg-slate-300 absolute left-0"></div>
         <Link to={`/name-change?admissionId=${id}`}>
@@ -65,7 +65,7 @@ export default function AdmissionActionButtons({ id }: AdmissionActionButtonsPro
         </Link>
         <div className="w-[1px] h-[14px] bg-slate-300"></div>
         <Link to={`/franchisee/royalty-forecast?admissionId=${id}`}>
-          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Forecasted Royalty">
+          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="View Royalty">
             <Info className="h-[14px] w-[14px] text-black stroke-[2.5]" />
           </Button>
         </Link>
