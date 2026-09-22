@@ -74,6 +74,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
         if (data.data.refreshToken) {
           localStorage.setItem('refreshToken', data.data.refreshToken);
         }
+        if (data.data.csrfToken) {
+          localStorage.setItem('csrfToken', data.data.csrfToken);
+        }
         set({ user: data.data.user, isAuthenticated: true, isLoading: false });
         showToast(`Welcome back, ${data.data.user?.firstName || username}!`, 'success');
       } else {
@@ -99,6 +102,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
         if (data.data.refreshToken) {
           localStorage.setItem('refreshToken', data.data.refreshToken);
         }
+        if (data.data.csrfToken) {
+          localStorage.setItem('csrfToken', data.data.csrfToken);
+        }
         set({ user: data.data.user, isAuthenticated: true, isLoading: false });
         showToast('Account created successfully! Welcome to SEMS.', 'success');
       } else {
@@ -123,6 +129,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     }
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('csrfToken');
     set({ user: null, isAuthenticated: false, isLoading: false });
     showToast('Logged out successfully', 'info');
   },
@@ -141,9 +148,16 @@ export const useAuthStore = create<AuthStore>((set) => ({
           if (data.data.refreshToken) {
             localStorage.setItem('refreshToken', data.data.refreshToken);
           }
+          if (data.data.csrfToken) {
+            localStorage.setItem('csrfToken', data.data.csrfToken);
+          }
         }
-      } catch {
-        // Refresh token invalid/expired
+      } catch (err) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('csrfToken');
+        set({ user: null, isAuthenticated: false, isLoading: false });
+        return;
       }
     }
 

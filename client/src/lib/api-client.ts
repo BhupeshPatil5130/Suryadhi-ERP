@@ -29,9 +29,12 @@ apiClient.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  const csrfToken = getCookie('csrfToken') || getCookie('XSRF-TOKEN');
+  const csrfToken = localStorage.getItem('csrfToken') || getCookie('csrfToken') || getCookie('XSRF-TOKEN');
   if (csrfToken) {
     config.headers['x-csrf-token'] = csrfToken;
+    config.headers['X-CSRF-Token'] = csrfToken;
+    config.headers['x-xsrf-token'] = csrfToken;
+    config.headers['X-XSRF-Token'] = csrfToken;
   }
 
   return config;

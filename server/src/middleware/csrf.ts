@@ -46,13 +46,35 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
     return next();
   }
 
-  // If request is authenticated via Bearer token in Authorization header,
+  // 1. Exempt authentication, public, and health endpoints from CSRF verification.
+  // Auth endpoints (login, signup, refresh, logout) establish/clear credentials and must not be blocked
+  // by stale or absent session cookies from prior visits.
+  const rawPath = (req.originalUrl || req.url || req.path || '').split('?')[0].toLowerCase();
+  const exemptPaths = [
+    '/api/auth/login',
+    '/api/auth/signup',
+    '/api/auth/register',
+    '/api/auth/refresh',
+    '/api/auth/logout',
+    '/api/auth/forgot-password',
+    '/api/auth/reset-password',
+    '/api/auth/csrf-token',
+    '/api/health',
+    '/health',
+    '/api/seed',
+  ];
+
+  if (exemptPaths.some((exempt) => rawPath === exempt || rawPath.endsWith(exempt))) {
+    return next();
+  }
+
+  // 2. If request is authenticated via Bearer token in Authorization header,
   // it is immune to standard browser cross-site request forgery.
   if (req.headers.authorization?.startsWith('Bearer ')) {
     return next();
   }
 
-  // If the request was authenticated using cookies, enforce CSRF token check
+  // 3. If the request was authenticated using cookies, enforce CSRF token check
   if (req.cookies?.accessToken || req.authMode === 'cookie') {
     const expectedToken = req.cookies?.csrfToken || req.cookies?.['XSRF-TOKEN'];
     const providedToken =
