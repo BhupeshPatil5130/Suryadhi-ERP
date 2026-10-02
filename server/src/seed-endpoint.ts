@@ -50,7 +50,7 @@ router.get('/trigger-seed', async (req: Request, res: Response) => {
 
     // ── School ─────────────────────────────────────────────────
     const school = await prisma.school.upsert({
-      where: { code: 'EK-DEMO-001' },
+      where: { code: 'SK-DEMO-001' },
       update: {},
       create: { code: 'SL-DEMO-001', name: 'SŪNOIAKIDS™ Demo Pre-School', address: '123 Education Lane, Sector 5', city: 'Pune', state: 'Maharashtra', postalCode: '411001', country: 'India', email: 'demo@suryadhi.local', phone: '9876543210' }
     });

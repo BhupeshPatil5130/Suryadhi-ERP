@@ -110,7 +110,7 @@ async function main() {
 
   // ── Batches ────────────────────────────────────────────────
   for (const program of programs) {
-    const batchTimes = ['9:00 AM - 11:30 AM', '11:30 AM - 2:00 PM', '2:00 PM - 4:30 PM'];
+    const batchTimes = ['Early Morning Shift', 'Late Morning Shift'];
     for (const timeSlot of batchTimes) {
       const existingBatch = await prisma.batch.findFirst({
         where: { programId: program.id, schoolId: school.id, timeSlot },

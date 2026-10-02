@@ -244,7 +244,7 @@ model Program {
 
 model Batch {
   id         String   @id @default(cuid())
-  timeSlot   String   @map("time_slot") // e.g., "9:00 AM - 11:30 AM"
+  timeSlot   String   @map("time_slot") // e.g., "Early Morning Shift"
   capacity   Int      @default(25)
   programId  String   @map("program_id")
   program    Program  @relation(fields: [programId], references: [id])
