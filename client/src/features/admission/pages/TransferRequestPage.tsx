@@ -73,7 +73,7 @@ export default function TransferRequestPage() {
 
             <div className="grid grid-cols-[160px_1fr] items-center gap-4">
               <Label className="text-right text-[13px] text-slate-700 font-normal">From School Name</Label>
-              <Input type="text" value="EK-Demo School" className="h-8 text-[13px] border-slate-300 rounded-sm bg-[#f5f5f5] max-w-lg" readOnly />
+              <Input type="text" value="SK-Demo School" className="h-8 text-[13px] border-slate-300 rounded-sm bg-[#f5f5f5] max-w-lg" readOnly />
             </div>
 
             <div className="grid grid-cols-[160px_1fr] items-center gap-4">

@@ -27,12 +27,12 @@ const PROGRAM_COLORS: Record<string, string> = {
 };
 
 const dummyAdmissions: AdmissionRecord[] = [
-  { id: '1', admissionDate: '01-04-2026', uin: 'SLPL3201/0071/2027', name: 'Shourya Sachin Bhoyar', fatherName: 'Sachin Bhoyar', program: 'SUNOIA Junior', batchTime: 'Early Morning Shift', mobile1: '8149811545', mobile2: '8999313214', type: 'ONLINE' },
-  { id: '2', admissionDate: '01-04-2026', uin: 'SLPL3201/0002/2027', name: 'Aarohi Santosh Sonare', fatherName: 'Santosh Sonare', program: 'SUNOIA Junior', batchTime: 'Early Morning Shift', mobile1: '9370005720', mobile2: '9325944111', type: 'OFFLINE' },
-  { id: '3', admissionDate: '01-04-2026', uin: 'SLPL3201/0014/2027', name: 'Dnyanda Nandkishor Bawane', fatherName: 'Nandkishor Bawane', program: 'SUNOIA Junior', batchTime: 'Early Morning Shift', mobile1: '9552407021', mobile2: '9145460195', type: 'OFFLINE' },
-  { id: '4', admissionDate: '01-04-2026', uin: 'SLPL3201/0023/2027', name: 'Alfaz Baig Mirza', fatherName: 'Furhan Baig Mirza', program: 'SUNOIA Junior', batchTime: 'Early Morning Shift', mobile1: '7721024102', mobile2: '7400051112', type: 'OFFLINE' },
-  { id: '5', admissionDate: '01-04-2026', uin: 'SLPL3201/0035/2027', name: 'Ananya Rahul Sharma', fatherName: 'Rahul Sharma', program: 'Nursery', batchTime: 'Late Morning Shift', mobile1: '9822114455', mobile2: '9822114456', type: 'ONLINE' },
-  { id: '6', admissionDate: '01-04-2026', uin: 'SLPL3201/0068/2027', name: 'Rudransh Vaibhav Deshmukh', fatherName: 'Vaibhav Deshmukh', program: 'SUNOIA Senior', batchTime: 'Early Morning Shift', mobile1: '9673966580', mobile2: '8208466635', type: 'OFFLINE' },
+  { id: '1', admissionDate: '01-04-2026', uin: 'SLPL3201/0071/2027', name: 'Shourya Sachin Bhoyar', fatherName: 'Sachin Bhoyar', program: 'SUNOIA Junior', batchTime: 'Morning Shift', mobile1: '8149811545', mobile2: '8999313214', type: 'ONLINE' },
+  { id: '2', admissionDate: '01-04-2026', uin: 'SLPL3201/0002/2027', name: 'Aarohi Santosh Sonare', fatherName: 'Santosh Sonare', program: 'SUNOIA Junior', batchTime: 'Morning Shift', mobile1: '9370005720', mobile2: '9325944111', type: 'OFFLINE' },
+  { id: '3', admissionDate: '01-04-2026', uin: 'SLPL3201/0014/2027', name: 'Dnyanda Nandkishor Bawane', fatherName: 'Nandkishor Bawane', program: 'SUNOIA Junior', batchTime: 'Morning Shift', mobile1: '9552407021', mobile2: '9145460195', type: 'OFFLINE' },
+  { id: '4', admissionDate: '01-04-2026', uin: 'SLPL3201/0023/2027', name: 'Alfaz Baig Mirza', fatherName: 'Furhan Baig Mirza', program: 'SUNOIA Junior', batchTime: 'Morning Shift', mobile1: '7721024102', mobile2: '7400051112', type: 'OFFLINE' },
+  { id: '5', admissionDate: '01-04-2026', uin: 'SLPL3201/0035/2027', name: 'Ananya Rahul Sharma', fatherName: 'Rahul Sharma', program: 'Nursery', batchTime: 'Evening Shift', mobile1: '9822114455', mobile2: '9822114456', type: 'ONLINE' },
+  { id: '6', admissionDate: '01-04-2026', uin: 'SLPL3201/0068/2027', name: 'Rudransh Vaibhav Deshmukh', fatherName: 'Vaibhav Deshmukh', program: 'SUNOIA Senior', batchTime: 'Morning Shift', mobile1: '9673966580', mobile2: '8208466635', type: 'OFFLINE' },
 ];
 
 const dummyProgramCounts: ProgramCount[] = [

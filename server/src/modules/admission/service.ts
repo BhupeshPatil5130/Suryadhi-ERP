@@ -263,7 +263,7 @@ export class AdmissionService {
           hasSibling: input.hasSibling,
           studentId: student.id,
           programId: input.programId,
-          batchId: input.batchId || null,
+          batchId: (input.batchId && !input.batchId.startsWith('batch-') && !['early', 'late', 'morning', 'evening'].includes(input.batchId)) ? input.batchId : null,
           academicYearId: input.academicYearId,
           schoolId,
           discountTypeId: input.discountTypeId || null,

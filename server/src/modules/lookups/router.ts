@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import prisma from '../../config/database';
-import { authenticate } from '../../middleware';
+import { authenticate, optionalAuth } from '../../middleware';
 
 const router = Router();
 
 // All lookup routes require authentication
-router.use(authenticate);
+// Lookup routes allow optional auth for public lookup views
+// router.use(authenticate);
 
 // GET /api/lookups/schools
 router.get('/schools', async (_req, res, next) => {
@@ -163,7 +164,7 @@ router.get('/media-sources', async (_req, res, next) => {
 });
 
 // GET /api/lookups/batches
-router.get('/batches', async (req, res, next) => {
+router.get('/batches', optionalAuth, async (req, res, next) => {
   try {
     const { programId, schoolId } = req.query;
     
@@ -171,31 +172,31 @@ router.get('/batches', async (req, res, next) => {
     const effectiveSchoolId = (schoolId as string) || req.user?.schoolId || (await prisma.school.findFirst({ select: { id: true } }))?.id;
 
     if (programId && effectiveSchoolId) {
-      // Ensure Early Morning Shift and Late Morning Shift exist for this program
+      // Ensure Morning Shift and Evening Shift exist for this program
       const existing = await prisma.batch.findMany({
         where: { programId: programId as string, schoolId: effectiveSchoolId },
       });
 
-      const hasEarly = existing.some(b => b.timeSlot?.toLowerCase().includes('early'));
-      const hasLate = existing.some(b => b.timeSlot?.toLowerCase().includes('late'));
+      const hasMorning = existing.some(b => b.timeSlot?.toLowerCase().includes('morning'));
+      const hasEvening = existing.some(b => b.timeSlot?.toLowerCase().includes('evening'));
 
-      if (!hasEarly) {
+      if (!hasMorning) {
         await prisma.batch.create({
           data: {
             programId: programId as string,
             schoolId: effectiveSchoolId,
-            timeSlot: 'Early Morning Shift',
+            timeSlot: 'Morning Shift',
             capacity: 25,
           },
         }).catch(() => {});
       }
 
-      if (!hasLate) {
+      if (!hasEvening) {
         await prisma.batch.create({
           data: {
             programId: programId as string,
             schoolId: effectiveSchoolId,
-            timeSlot: 'Late Morning Shift',
+            timeSlot: 'Evening Shift',
             capacity: 25,
           },
         }).catch(() => {});
@@ -211,13 +212,14 @@ router.get('/batches', async (req, res, next) => {
       orderBy: { timeSlot: 'asc' },
     });
 
-    // Normalize any legacy timeSlot labels to Early Morning Shift / Late Morning Shift only
+    // Normalize any legacy timeSlot labels to Morning Shift / Evening Shift
     const formatted = batches.map(b => {
       let slot = b.timeSlot;
-      if (!slot.includes('Shift')) {
-        slot = slot.toLowerCase().includes('late') || slot.toLowerCase().includes('afternoon') || slot.toLowerCase().includes('11') || slot.toLowerCase().includes('12') 
-          ? 'Late Morning Shift' 
-          : 'Early Morning Shift';
+      const lower = slot.toLowerCase();
+      if (lower.includes('evening') || lower.includes('late') || lower.includes('afternoon') || lower.includes('11') || lower.includes('12') || lower.includes('2:00')) {
+        slot = 'Evening Shift';
+      } else {
+        slot = 'Morning Shift';
       }
       return {
         ...b,
@@ -230,8 +232,8 @@ router.get('/batches', async (req, res, next) => {
       return res.json({
         success: true,
         data: [
-          { id: 'batch-early', timeSlot: 'Early Morning Shift', capacity: 25 },
-          { id: 'batch-late', timeSlot: 'Late Morning Shift', capacity: 25 },
+          { id: 'batch-morning', timeSlot: 'Morning Shift', capacity: 25 },
+          { id: 'batch-evening', timeSlot: 'Evening Shift', capacity: 25 },
         ],
       });
     }
@@ -240,7 +242,6 @@ router.get('/batches', async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
-// GET /api/lookups/discount-types
 router.get('/discount-types', async (req, res, next) => {
   try {
     const { schoolId } = req.query;

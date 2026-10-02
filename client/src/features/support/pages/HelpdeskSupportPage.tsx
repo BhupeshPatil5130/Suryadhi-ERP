@@ -204,7 +204,7 @@ export default function HelpdeskSupportPage() {
                         <SelectValue placeholder="Select Franchisee" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="yavatmal">EK-Yavatmal-Arni_8...</SelectItem>
+                        <SelectItem value="yavatmal">SK-Yavatmal-Arni_8...</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

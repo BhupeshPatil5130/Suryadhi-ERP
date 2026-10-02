@@ -37,7 +37,7 @@ router.get('/trigger-seed', async (_req, res) => {
 
     // ── School ─────────────────────────────────────────────────
     const school = await prisma.school.upsert({
-      where: { code: 'EK-DEMO-001' },
+      where: { code: 'SK-DEMO-001' },
       update: {},
       create: { code: 'SL-DEMO-001', name: 'SŪNOIAKIDS™ Demo Pre-School', address: '123 Education Lane, Sector 5', city: 'Pune', state: 'Maharashtra', postalCode: '411001', country: 'India', email: 'demo@suryadhi.local', phone: '9876543210' }
     });
@@ -50,7 +50,7 @@ router.get('/trigger-seed', async (_req, res) => {
 
     // ── Batches ────────────────────────────────────────────────
     for (const program of programs) {
-      const batchTimes = ['9:00 AM - 11:30 AM', '11:30 AM - 2:00 PM', '2:00 PM - 4:30 PM'];
+      const batchTimes = ['Morning Shift', 'Evening Shift'];
       for (const timeSlot of batchTimes) {
         const existingBatch = await prisma.batch.findFirst({
           where: { programId: program.id, schoolId: school.id, timeSlot },

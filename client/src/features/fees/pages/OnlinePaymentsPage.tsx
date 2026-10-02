@@ -211,7 +211,7 @@ export default function OnlinePaymentsPage() {
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">Franchisee</label>
-                  <Input value="EK-Yavatmal-Arni" readOnly className="h-9 bg-muted/20" />
+                  <Input value="SK-Yavatmal-Arni" readOnly className="h-9 bg-muted/20" />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
