@@ -7,6 +7,18 @@ import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { apiDownload } from '@/lib/downloadUtils';
 
+
+// Normalize legacy batch timeSlot labels
+const normalizeSlot = (slot?: string | null): string => {
+  if (!slot) return 'N/A';
+  const lower = slot.toLowerCase();
+  if (lower.includes('evening') || lower.includes('late') || lower.includes('afternoon') ||
+      lower.includes('12') || lower.includes('1:') || lower.includes('2:') || lower.includes('3:')) {
+    return 'Evening Shift';
+  }
+  return 'Morning Shift';
+};
+
 interface AdmissionRecord {
   id: string;
   admissionDate: string;
@@ -85,7 +97,7 @@ export default function AdmissionListPage() {
             name: `${item.student?.firstName || ''} ${item.student?.middleName || ''} ${item.student?.lastName || ''}`.trim(),
             fatherName: item.student?.parent?.fatherName || 'N/A',
             program: item.program?.name || 'N/A',
-            batchTime: item.batch?.timeSlot || 'N/A',
+            batchTime: normalizeSlot(item.batch?.timeSlot),
             mobile1: item.student?.parent?.fatherMobile || 'N/A',
             mobile2: item.student?.parent?.motherMobile || 'N/A',
             type: item.admissionType || 'OFFLINE',

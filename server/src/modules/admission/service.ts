@@ -1,4 +1,5 @@
 import prisma from '../../config/database';
+import { normalizeTimeSlot } from '../../utils/helpers';
 import { AppError } from '../../middleware/errorHandler';
 import { createAuditLog } from '../../utils/helpers';
 import {
@@ -70,8 +71,13 @@ export class AdmissionService {
       prisma.admission.count({ where }),
     ]);
 
+    const normalizedAdmissions = admissions.map((a: any) => ({
+      ...a,
+      batch: a.batch ? { ...a.batch, timeSlot: normalizeTimeSlot(a.batch.timeSlot) } : null,
+    }));
+
     return {
-      data: admissions,
+      data: normalizedAdmissions,
       pagination: {
         page,
         limit,

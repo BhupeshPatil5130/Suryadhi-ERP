@@ -82,7 +82,7 @@ export default function AdmissionListPage() {
             name: `${item.student?.firstName || ''} ${item.student?.middleName || ''} ${item.student?.lastName || ''}`.trim(),
             fatherName: item.student?.parent?.fatherName || 'N/A',
             program: item.program?.name || 'N/A',
-            batchTime: item.batch?.timeSlot || 'N/A',
+            batchTime: (() => { const s = item.batch?.timeSlot; if (!s) return 'N/A'; const l = s.toLowerCase(); return (l.includes('evening') || l.includes('late') || l.includes('afternoon') || l.includes('12') || l.includes('1:') || l.includes('2:') || l.includes('3:')) ? 'Evening Shift' : 'Morning Shift'; })(),
             mobile1: item.student?.parent?.fatherMobile || 'N/A',
             mobile2: item.student?.parent?.motherMobile || 'N/A',
             type: item.admissionType || 'OFFLINE',

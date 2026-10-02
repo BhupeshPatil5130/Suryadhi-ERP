@@ -100,3 +100,23 @@ export function getEffectiveSchoolId(req: any): string | undefined {
   return req.user.schoolId || undefined;
 }
 
+
+/**
+ * Normalize legacy batch timeSlot labels to standard 'Morning Shift' / 'Evening Shift'
+ */
+export function normalizeTimeSlot(slot: string | null | undefined): string {
+  if (!slot) return 'N/A';
+  const lower = slot.toLowerCase();
+  if (
+    lower.includes('evening') ||
+    lower.includes('late') ||
+    lower.includes('afternoon') ||
+    lower.includes('12') ||
+    lower.includes('1:') ||
+    lower.includes('2:') ||
+    lower.includes('3:')
+  ) {
+    return 'Evening Shift';
+  }
+  return 'Morning Shift';
+}
