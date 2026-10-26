@@ -214,7 +214,7 @@ export default function SOADetailsPage() {
                         onClick={() => selectStudent(res)}
                       >
                         <div className="font-semibold text-sm text-slate-800">{res.studentFirstName} {res.studentLastName}</div>
-                        <div className="text-xs text-slate-500 font-mono mt-0.5">{res.uin}</div>
+                        <div className="text-xs text-slate-500 font-mono mt-0.5">{res.uin ? res.uin.replace(/^EK\//i, 'SK/') : ''}</div>
                       </div>
                     ))}
                   </div>
@@ -226,6 +226,7 @@ export default function SOADetailsPage() {
                   <p className="text-xs text-muted-foreground uppercase font-medium">Student Info</p>
                   <p className="font-bold text-base mt-1">{admission.studentFirstName} {admission.studentLastName}</p>
                   <p className="text-sm">{admission.program?.name}</p>
+                  <p className="text-xs font-mono text-muted-foreground mt-0.5">UIN: {admission.uin ? admission.uin.replace(/^EK\//i, 'SK/') : 'N/A'}</p>
                   <Badge variant="outline" className="mt-2">{admission.status}</Badge>
                 </div>
               )}

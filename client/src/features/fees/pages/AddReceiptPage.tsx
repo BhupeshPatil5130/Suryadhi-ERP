@@ -26,6 +26,9 @@ export default function AddReceiptPage() {
   const [amount, setAmount] = useState('0');
   const [paymentMode, setPaymentMode] = useState('ONLINE');
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [feeMonth, setFeeMonth] = useState('April');
+  const monthsList = ['April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'Term 1 (Apr - Sep)', 'Term 2 (Oct - Mar)', 'Annual (Full Year)'];
+
   const [referenceId, setReferenceId] = useState('');
   // Cheque-specific
   const [bankName, setBankName] = useState('');
@@ -124,7 +127,7 @@ export default function AddReceiptPage() {
         paymentMode,
         paymentDate: paymentDate || undefined,
         transactionId: referenceId || undefined,
-        remarks: remarks || undefined,
+        remarks: [feeMonth ? `Fee for ${feeMonth}` : '', remarks].filter(Boolean).join(' - ') || undefined,
       };
 
       if (paymentMode === 'CHEQUE') {
@@ -195,7 +198,7 @@ export default function AddReceiptPage() {
                       onClick={() => selectStudent(res)}
                     >
                       <div className="font-semibold text-sm">{res.studentFirstName} {res.studentLastName}</div>
-                      <div className="text-xs text-muted-foreground font-mono mt-0.5">{res.uin} • {res.program?.name}</div>
+                      <div className="text-xs text-muted-foreground font-mono mt-0.5">{res.uin ? res.uin.replace(/^EK\//i, 'SK/') : ''} • {res.program?.name}</div>
                     </div>
                   ))}
                 </div>
@@ -207,7 +210,7 @@ export default function AddReceiptPage() {
                   <p className="font-bold text-lg text-foreground mt-1">
                     {admission.studentFirstName} {admission.studentLastName}
                   </p>
-                  <p className="text-sm text-muted-foreground font-mono">{admission.uin} • {admission.program?.name}</p>
+                  <p className="text-sm text-muted-foreground font-mono">{admission.uin ? admission.uin.replace(/^EK\//i, 'SK/') : ''} • {admission.program?.name}</p>
                 </div>
               )}
             </CardContent>

@@ -84,6 +84,7 @@ export default function SOASummaryPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [month, setMonth] = useState('');
+  const [school, setSchool] = useState<any>(null);
 
   const fetchSOA = async () => {
     setIsLoading(true);
@@ -91,6 +92,7 @@ export default function SOASummaryPage() {
       const res = await api.get('/soa/summary', { params: { month: month || undefined } });
       if (res.data.success) {
         setStats(res.data.data.feeRoyaltyStatement);
+        if (res.data.data.school) setSchool(res.data.data.school);
         
         const apiData = res.data.data.soaEntries.map((item: any) => ({
           id: item.id,

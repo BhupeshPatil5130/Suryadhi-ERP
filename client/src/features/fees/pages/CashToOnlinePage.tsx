@@ -29,6 +29,7 @@ export default function CashToOnlinePage() {
   const [data, setData] = useState<CashReceipt[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('ALL');
   const [isLoading, setIsLoading] = useState(true);
   const [step, setStep] = useState<Step>('select');
   const [paymentGateway, setPaymentGateway] = useState<PaymentGateway>('HDFC_ONLINE');
@@ -212,6 +213,7 @@ export default function CashToOnlinePage() {
                     <th className="p-3 text-left font-semibold">Student Name</th>
                     <th className="p-3 text-center font-semibold">Program</th>
                     <th className="p-3 text-center font-semibold">Receipt Number</th>
+                    <th className="p-3 text-center font-semibold">Month</th>
                     <th className="p-3 text-center font-semibold">Receipt Date</th>
                     <th className="p-3 text-right font-semibold">Amount</th>
                     <th className="p-3 text-center font-semibold">Admission Type</th>

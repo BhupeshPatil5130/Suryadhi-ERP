@@ -8,10 +8,10 @@ import StatCard from '@/components/shared/StatCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import { Search, IndianRupee, Wallet, FileText, ArrowUpRight, ArrowDownRight, Loader2 } from 'lucide-react';
-import { formatDate, formatCurrency } from '@/lib/utils';
 
 interface SOARecord {
   id: string;
@@ -84,6 +84,7 @@ export default function SOASummaryPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [month, setMonth] = useState('');
+  const [school, setSchool] = useState<any>(null);
 
   const fetchSOA = async () => {
     setIsLoading(true);
@@ -91,6 +92,7 @@ export default function SOASummaryPage() {
       const res = await api.get('/soa/summary', { params: { month: month || undefined } });
       if (res.data.success) {
         setStats(res.data.data.feeRoyaltyStatement);
+        if (res.data.data.school) setSchool(res.data.data.school);
         
         const apiData = res.data.data.soaEntries.map((item: any) => ({
           id: item.id,
@@ -134,7 +136,7 @@ export default function SOASummaryPage() {
           <div className="p-4 border-b border-border bg-muted/20 flex flex-wrap gap-4 items-end">
             <div className="space-y-1.5 flex-1 min-w-[200px]">
               <label className="text-xs font-medium text-muted-foreground">Select Month (Optional Filter)</label>
-              <Input type="month" className="h-10" value={month} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMonth(e.target.value)} />
+              <Input type="month" className="h-10" value={month} onChange={(e) => setMonth(e.target.value)} />
             </div>
             
             <Button className="w-full sm:w-auto h-10" onClick={fetchSOA} disabled={isLoading}>

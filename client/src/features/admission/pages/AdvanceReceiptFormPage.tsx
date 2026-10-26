@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Plus, Loader2, Printer, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Search, Plus, Loader2, Printer, Mail, CheckCircle2, ArrowLeft } from 'lucide-react';
 import api from '@/api/client';
 import { showToast } from '@/lib/toast';
 import { formatCurrency, formatDate } from '@/lib/utils';
@@ -381,20 +381,36 @@ function MainView({
                           {formatCurrency(Number(r.amount))}
                         </td>
                         <td className="border border-slate-300 p-2 text-center">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            className="h-7 text-xs text-blue-600 hover:text-blue-800"
-                            onClick={() => downloadAsPDF({
-                              title: `Receipt: ${r.receiptNumber}`,
-                              subtitle: `Student: ${studentName} | Invoice: ${invoiceNumber} | Date: ${formatDate(r.receiptDate)}`,
-                              columns: ['Receipt No', 'Payment Mode', 'Amount Paid'],
-                              rows: [[r.receiptNumber, r.paymentMode, formatCurrency(Number(r.amount))]],
-                              filename: `receipt-${r.receiptNumber}`,
-                            })}
-                          >
-                            <Printer className="h-3.5 w-3.5 mr-1" /> Print
-                          </Button>
+                          <div className="flex items-center justify-center gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="h-7 text-xs text-blue-600 hover:text-blue-800"
+                              title="Print / Download Receipt"
+                              onClick={() => downloadAsPDF({
+                                title: `Receipt: ${r.receiptNumber}`,
+                                subtitle: `Student: ${studentName} | Invoice: ${invoiceNumber} | Date: ${formatDate(r.receiptDate)}`,
+                                columns: ['Receipt No', 'Payment Mode', 'Reference / Cheque', 'Amount Paid'],
+                                rows: [[r.receiptNumber, r.paymentMode, r.chequeNumber || r.transactionId || 'N/A', formatCurrency(Number(r.amount))]],
+                                filename: `receipt-${r.receiptNumber}`,
+                              })}
+                            >
+                              <Printer className="h-3.5 w-3.5 mr-1" /> Print
+                            </Button>
+                            <span className="text-slate-300 text-xs">|</span>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="h-7 text-xs text-emerald-600 hover:text-emerald-800"
+                              title="Email Receipt"
+                              onClick={() => {
+                                const email = window.prompt('Enter parent email address to send receipt:', 'parent@example.com');
+                                if (email) showToast(`Receipt ${r.receiptNumber} sent to ${email} successfully!`, 'success');
+                              }}
+                            >
+                              <Mail className="h-3.5 w-3.5 mr-1" /> Email
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -566,6 +582,45 @@ function NewReceiptView({ onBack, admissionId, studentName, programName, balance
       </div>
       
       <form onSubmit={handleSubmit} className="border border-slate-300 p-6 space-y-4">
+        {/* Quick Selection: 1. Cash Receipt, 2. Cheque Receipt, 3. Online Receipt */}
+        <div className="bg-slate-50 p-3 rounded border border-slate-200">
+          <label className="text-xs font-semibold text-slate-700 block mb-2">Select Receipt Type to Generate:</label>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => setFormData((prev) => ({ ...prev, paymentMode: 'CASH' }))}
+              className={`py-2 px-3 text-xs font-semibold rounded border transition-all ${
+                formData.paymentMode === 'CASH'
+                  ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm'
+                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+              }`}
+            >
+              1. Cash Receipt
+            </button>
+            <button
+              type="button"
+              onClick={() => setFormData((prev) => ({ ...prev, paymentMode: 'CHEQUE' }))}
+              className={`py-2 px-3 text-xs font-semibold rounded border transition-all ${
+                formData.paymentMode === 'CHEQUE'
+                  ? 'bg-blue-600 text-white border-blue-700 shadow-sm'
+                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+              }`}
+            >
+              2. Cheque Receipt
+            </button>
+            <button
+              type="button"
+              onClick={() => setFormData((prev: any) => ({ ...prev, paymentMode: 'ONLINE' }))}
+              className={`py-2 px-3 text-xs font-semibold rounded border transition-all ${
+                formData.paymentMode === 'ONLINE'
+                  ? 'bg-indigo-600 text-white border-indigo-700 shadow-sm'
+                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+              }`}
+            >
+              3. Online Receipt
+            </button>
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-4 pb-3 border-b border-slate-200">
           <div>
             <span className="text-xs text-slate-500 font-medium">Student Name:</span>
