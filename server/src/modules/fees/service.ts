@@ -160,6 +160,33 @@ export class FeeService {
     };
   }
 
+  async getReceiptById(receiptId: string, schoolId?: string) {
+    const receipt = await prisma.receipt.findFirst({
+      where: {
+        id: receiptId,
+        deletedAt: null,
+        ...(schoolId ? { schoolId } : {}),
+      },
+      include: {
+        admission: {
+          include: {
+            student: true,
+            program: true,
+            academicYear: true,
+            school: true,
+          },
+        },
+        invoice: true,
+      },
+    });
+
+    if (!receipt) {
+      throw new AppError('Receipt not found', 404);
+    }
+
+    return receipt;
+  }
+
   /**
    * Add a receipt
    */
