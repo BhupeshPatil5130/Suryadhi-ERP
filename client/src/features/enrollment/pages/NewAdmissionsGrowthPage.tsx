@@ -1,14 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import PageHeader from '@/components/shared/PageHeader';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2 } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { downloadAsPDF } from '@/lib/downloadUtils';
-import api from '@/api/client';
 
-const initialTableData = [
+const tableData = [
   { program: 'Play Group', currentYear: 6, lastYear: 2, growthPercent: '200%', isNegative: false },
   { program: 'Nursery', currentYear: 32, lastYear: 31, growthPercent: '3%', isNegative: false },
   { program: 'SUNOIA Junior', currentYear: 10, lastYear: 6, growthPercent: '67%', isNegative: false },
@@ -18,25 +17,6 @@ const initialTableData = [
 
 export default function NewAdmissionsGrowthPage() {
   const [academicYear, setAcademicYear] = useState('ay1');
-  const [data, setData] = useState(initialTableData);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchGrowth = async () => {
-      setIsLoading(true);
-      try {
-        const res = await api.get('/dashboard/enrollment-analytics');
-        if (res.data.success && res.data.data?.newAdmissionsGrowth) {
-          setData(res.data.data.newAdmissionsGrowth);
-        }
-      } catch (err) {
-        console.warn('Failed to load new admissions growth analytics', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchGrowth();
-  }, [academicYear]);
 
   return (
     <div className="space-y-6">
@@ -46,7 +26,7 @@ export default function NewAdmissionsGrowthPage() {
       >
         <div className="flex items-center gap-3">
           <Select value={academicYear} onValueChange={setAcademicYear}>
-            <SelectTrigger className="w-[180px] h-9 bg-white">
+            <SelectTrigger className="w-[180px] h-9">
               <SelectValue placeholder="Academic Year" />
             </SelectTrigger>
             <SelectContent>
@@ -58,7 +38,7 @@ export default function NewAdmissionsGrowthPage() {
             title: 'New Business Growth Report',
             subtitle: `Academic Year: ${academicYear === 'ay1' ? 'Apr 26 - Mar 27' : 'Apr 25 - Mar 26'}`,
             columns: ['Program', 'Current Year', 'Last Year', 'Growth %'],
-            rows: data.map((r) => [r.program, r.currentYear, r.lastYear, r.growthPercent]),
+            rows: tableData.map((r) => [r.program, r.currentYear, r.lastYear, r.growthPercent]),
             filename: 'new-admissions-growth',
           })}>
             <Download className="h-4 w-4 mr-2" />
@@ -74,7 +54,7 @@ export default function NewAdmissionsGrowthPage() {
         <div className="bg-white border border-t-0 border-slate-200 rounded-b-xl overflow-x-auto">
           <table className="w-full text-sm text-center">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50">
+              <tr className="border-b border-slate-200">
                 <th className="py-4 px-6 text-left font-bold text-slate-700 w-1/3">Program</th>
                 <th className="py-4 px-6 font-bold text-slate-700 w-1/4">Current Year</th>
                 <th className="py-4 px-6 font-bold text-slate-700 w-1/4">Last Year</th>
@@ -82,36 +62,37 @@ export default function NewAdmissionsGrowthPage() {
               </tr>
             </thead>
             <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan={4} className="py-12 text-center text-slate-500">
-                    <Loader2 className="h-5 w-5 animate-spin mx-auto text-blue-600 mb-1" />
-                    Loading growth metrics...
+              {tableData.map((row) => (
+                <tr 
+                  key={row.program} 
+                  className={cn(
+                    "border-b border-slate-100 last:border-0",
+                    row.isTotal && "bg-[#f0f4ff] font-bold border-t border-slate-200"
+                  )}
+                >
+                  <td className="py-4 px-6 text-left font-semibold text-[#243c84]">
+                    {row.program}
+                  </td>
+                  <td className={cn("py-4 px-6", row.isTotal ? "font-bold text-[#243c84]" : "text-slate-700")}>
+                    {row.currentYear}
+                  </td>
+                  <td className={cn("py-4 px-6", row.isTotal ? "font-bold text-[#243c84]" : "text-slate-700")}>
+                    {row.lastYear}
+                  </td>
+                  <td className="py-4 px-6">
+                    <span 
+                      className={cn(
+                        "px-3 py-1 rounded-md text-xs font-semibold",
+                        row.isNegative 
+                          ? "bg-red-100 text-red-600 border border-red-200" 
+                          : "bg-green-100 text-green-700 border border-green-200"
+                      )}
+                    >
+                      {row.growthPercent}
+                    </span>
                   </td>
                 </tr>
-              ) : (
-                data.map((row, idx) => (
-                  <tr
-                    key={idx}
-                    className={cn(
-                      "border-b border-slate-100 hover:bg-slate-50/80 transition-colors",
-                      row.isTotal && "bg-[#5c72a6] text-white hover:bg-[#5c72a6] font-bold"
-                    )}
-                  >
-                    <td className={cn("py-4 px-6 text-left font-medium", row.isTotal ? "text-white font-bold" : "text-slate-800")}>
-                      {row.program}
-                    </td>
-                    <td className="py-4 px-6 font-semibold">{row.currentYear}</td>
-                    <td className="py-4 px-6 font-semibold">{row.lastYear}</td>
-                    <td className={cn(
-                      "py-4 px-6 font-bold",
-                      row.isTotal ? "text-white" : (row.isNegative ? "text-rose-500" : "text-emerald-600")
-                    )}>
-                      {row.growthPercent}
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
         </div>

@@ -95,8 +95,8 @@ export default function HomebuddyFeePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Fee Collection through HomeBuddy App"
-        description="Track payments received through the HomeBuddy mobile app"
+        title="Fee Collection through HomeSunny App"
+        description="Track payments received through the HomeSunny mobile app"
       />
 
       {/* Summary Cards */}
@@ -123,11 +123,11 @@ export default function HomebuddyFeePage() {
           <div className="mb-4">
             <Button
               className="bg-slate-700 hover:bg-slate-800 text-white"
-              onClick={() => downloadCSV(filtered, 'homebuddy_payment_report.csv')}
+              onClick={() => downloadCSV(filtered, 'homesunny_payment_report.csv')}
               disabled={filtered.length === 0}
             >
               <FileDown className="h-4 w-4 mr-2" />
-              Download HomeBuddy Payment Report
+              Download HomeSunny Payment Report
             </Button>
           </div>
 
@@ -160,6 +160,7 @@ export default function HomebuddyFeePage() {
                 <option value={10}>10</option>
                 <option value={25}>25</option>
                 <option value={50}>50</option>
+                <option value={100}>100</option>
               </select>
               entries
             </div>

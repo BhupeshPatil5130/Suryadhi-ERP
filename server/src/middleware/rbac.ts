@@ -40,8 +40,13 @@ export const schoolScope = (
     return;
   }
 
-  // Super admins can access all school data
+  // Super admins can access all school data or pass a target schoolId
   if (req.user.role === 'SUPER_ADMIN') {
+    const targetSchoolId = (req.query?.schoolId as string) || (req.body?.schoolId as string);
+    if (targetSchoolId) {
+      if (req.query) req.query.schoolId = targetSchoolId;
+      if (req.body && typeof req.body === 'object') req.body.schoolId = targetSchoolId;
+    }
     next();
     return;
   }
@@ -52,9 +57,12 @@ export const schoolScope = (
     return;
   }
 
-  // Inject schoolId into query/body for automatic scoping
+  // Inject schoolId into query AND body to prevent parameter tampering
   if (req.query) {
     req.query.schoolId = req.user.schoolId;
+  }
+  if (req.body && typeof req.body === 'object') {
+    req.body.schoolId = req.user.schoolId;
   }
 
   next();

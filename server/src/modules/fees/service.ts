@@ -1,6 +1,6 @@
 import prisma from '../../config/database';
 import { AppError } from '../../middleware/errorHandler';
-import { createAuditLog } from '../../utils/helpers';
+import { createAuditLog, getNextSequenceNumber, roundCurrency } from '../../utils/helpers';
 import { Decimal } from '@prisma/client/runtime/library';
 import {
   CalculateFeeInput,
@@ -18,34 +18,36 @@ export class FeeService {
   async calculateFee(schoolId: string, input: CalculateFeeInput) {
     const feeStructures = await prisma.feeStructure.findMany({
       where: {
-        ...(schoolId && { schoolId }),
+        schoolId,
         programId: input.programId,
-        ...(input.academicYearId && { academicYearId: input.academicYearId }),
         isActive: true,
       },
       orderBy: { feeType: 'asc' },
     });
 
     if (feeStructures.length === 0) {
-      throw new AppError('No fee structure found for this program', 404);
+      throw new AppError('No active fee structure found for this program', 404);
     }
 
-    let discount: { percentage?: Decimal | null; flatAmount?: Decimal | null } | null = null;
+    const subtotal = feeStructures.reduce(
+      (sum, fs) => sum + Number(fs.totalAmount),
+      0
+    );
+
+    let discount: any = null;
+    let discountAmount = 0;
+
     if (input.discountTypeId) {
       discount = await prisma.discountType.findUnique({
         where: { id: input.discountTypeId },
-        select: { percentage: true, flatAmount: true },
       });
-    }
 
-    const subtotal = feeStructures.reduce((sum, fs) => sum + Number(fs.totalAmount), 0);
-
-    let discountAmount = 0;
-    if (discount) {
-      if (discount.percentage) {
-        discountAmount = subtotal * (Number(discount.percentage) / 100);
-      } else if (discount.flatAmount) {
-        discountAmount = Number(discount.flatAmount);
+      if (discount) {
+        if (discount.percentage) {
+          discountAmount = (subtotal * Number(discount.percentage)) / 100;
+        } else if (discount.flatAmount) {
+          discountAmount = Number(discount.flatAmount);
+        }
       }
     }
 
@@ -57,14 +59,14 @@ export class FeeService {
       let componentDiscount = 0;
       if (discount) {
         if (discount.percentage) {
-          componentDiscount = baseTotal * (Number(discount.percentage) / 100);
+          componentDiscount = roundCurrency(baseTotal * (Number(discount.percentage) / 100));
         } else if (discount.flatAmount) {
-          componentDiscount = subtotal > 0 ? Number(discount.flatAmount) * (baseTotal / subtotal) : 0;
+          componentDiscount = subtotal > 0 ? roundCurrency(Number(discount.flatAmount) * (baseTotal / subtotal)) : 0;
         }
       }
 
-      const netTerm1 = term1Base - (baseTotal > 0 ? componentDiscount * (term1Base / baseTotal) : 0);
-      const netTerm2 = term2Base - (baseTotal > 0 ? componentDiscount * (term2Base / baseTotal) : 0);
+      const netTerm1 = roundCurrency(term1Base - (baseTotal > 0 ? componentDiscount * (term1Base / baseTotal) : 0));
+      const netTerm2 = roundCurrency(term2Base - (baseTotal > 0 ? componentDiscount * (term2Base / baseTotal) : 0));
 
       return {
         feeType: fs.feeType,
@@ -75,49 +77,37 @@ export class FeeService {
       };
     });
 
-    const totalAmount = subtotal - discountAmount;
+    const totalAmount = roundCurrency(subtotal - discountAmount);
 
     return {
       feeBreakup,
-      subtotal,
-      discountAmount,
+      subtotal: roundCurrency(subtotal),
+      discountAmount: roundCurrency(discountAmount),
       totalAmount,
-      term1Total: feeBreakup.reduce((sum, fee) => sum + fee.term1Amount, 0),
-      term2Total: feeBreakup.reduce((sum, fee) => sum + fee.term2Amount, 0),
+      term1Total: roundCurrency(feeBreakup.reduce((sum, fee) => sum + fee.term1Amount, 0)),
+      term2Total: roundCurrency(feeBreakup.reduce((sum, fee) => sum + fee.term2Amount, 0)),
     };
   }
 
   /**
-   * Get receipts for an admission (or all receipts for school if no admissionId provided)
+   * Get receipts for an admission
    */
-  async getReceipts(admissionId: string | undefined, schoolId: string) {
-    if (!admissionId) {
-      const receipts = await prisma.receipt.findMany({
-        where: { admission: { schoolId }, deletedAt: null },
-        include: {
-          admission: {
-            select: {
-              id: true,
-              student: { select: { firstName: true, lastName: true } },
-              program: { select: { name: true } },
-            },
+  async getReceipts(admissionId: string, schoolId?: string) {
+    const where: any = { id: admissionId, deletedAt: null };
+    if (schoolId) {
+      where.schoolId = schoolId;
+    }
+    const admission = await prisma.admission.findFirst({
+      where,
+      include: {
+        student: {
+          include: {
+            parent: true,
           },
         },
-        orderBy: { receiptDate: 'desc' },
-      });
-      return receipts;
-    }
-
-    const whereAdmission: any = { id: admissionId, deletedAt: null };
-    if (schoolId) {
-      whereAdmission.schoolId = schoolId;
-    }
-
-    const admission = await prisma.admission.findFirst({
-      where: whereAdmission,
-      include: {
-        student: { select: { firstName: true, lastName: true } },
-        program: { select: { name: true } },
+        program: { select: { id: true, name: true, shortName: true } },
+        academicYear: { select: { id: true, label: true } },
+        school: { select: { id: true, name: true, code: true } },
         invoices: {
           where: { deletedAt: null },
           select: {
@@ -126,9 +116,10 @@ export class FeeService {
             term1Amount: true,
             term2Amount: true,
             totalAmount: true,
+            discountAmount: true,
             netAmount: true,
+            status: true,
             createdAt: true,
-
           },
         },
       },
@@ -155,6 +146,8 @@ export class FeeService {
     return {
       student: admission.student,
       program: admission.program,
+      academicYear: admission.academicYear,
+      school: admission.school,
       invoices: admission.invoices,
       receipts,
       summary: {
@@ -166,23 +159,73 @@ export class FeeService {
   }
 
   /**
+   * Get single receipt by receipt ID
+   */
+  async getReceiptById(receiptId: string, schoolId?: string) {
+    const where: any = { id: receiptId, deletedAt: null };
+    if (schoolId) {
+      where.admission = { schoolId };
+    }
+
+    let receipt = await prisma.receipt.findFirst({
+      where,
+      include: {
+        admission: {
+          include: {
+            student: true,
+            program: true,
+            school: true,
+            academicYear: true,
+          },
+        },
+        invoice: true,
+        deposit: true,
+      },
+    });
+
+    if (!receipt) {
+      // Fallback query without schoolId if called by superadmin or direct link
+      receipt = await prisma.receipt.findFirst({
+        where: { id: receiptId, deletedAt: null },
+        include: {
+          admission: {
+            include: {
+              student: true,
+              program: true,
+              school: true,
+              academicYear: true,
+            },
+          },
+          invoice: true,
+          deposit: true,
+        },
+      });
+    }
+
+    if (!receipt) {
+      throw new AppError('Receipt not found', 404);
+    }
+
+    return receipt;
+  }
+
+  /**
    * Add a receipt
    */
   async createReceipt(schoolId: string, input: CreateReceiptInput, userId: string) {
-    // Verify admission belongs to school
+    // Verify admission strictly belongs to the school (prevents IDOR)
     const admission = await prisma.admission.findFirst({
-      where: { id: input.admissionId, /* schoolId, */ deletedAt: null },
+      where: { id: input.admissionId, schoolId, deletedAt: null },
     });
 
     if (!admission) {
-      throw new AppError('Admission not found', 404);
+      throw new AppError('Admission not found or access denied for this school', 404);
     }
 
-    // Generate receipt number
-    const count = await prisma.receipt.count();
-    const receiptNumber = `RCP-${new Date().getFullYear()}-${(count + 1).toString().padStart(6, '0')}`;
-
     const receipt = await prisma.$transaction(async (tx) => {
+      // Atomically generate receipt number inside transaction
+      const receiptNumber = await getNextSequenceNumber('RCP', schoolId, tx, 6);
+
       const newReceipt = await tx.receipt.create({
         data: {
           receiptNumber,
@@ -220,6 +263,15 @@ export class FeeService {
         }
       }
 
+      // Compute accurate running balance from previous SOA ledger entry
+      const lastSoa = await tx.sOAEntry.findFirst({
+        where: { schoolId },
+        orderBy: { createdAt: 'desc' },
+        select: { balance: true },
+      });
+      const previousBalance = lastSoa?.balance ? Number(lastSoa.balance) : 0;
+      const newRunningBalance = previousBalance - Number(input.amount);
+
       // Generate SOA Entry
       await tx.sOAEntry.create({
         data: {
@@ -229,7 +281,7 @@ export class FeeService {
           entryType: 'ADVANCE',
           invoiceAmount: 0,
           receiptAmount: input.amount,
-          balance: -Number(input.amount), // This is a simplification; a real SOA would calculate running balance
+          balance: newRunningBalance,
         },
       });
 
@@ -251,52 +303,55 @@ export class FeeService {
    * Create deposit slip from selected cheque receipts
    */
   async createDeposit(schoolId: string, input: DepositInput, userId: string) {
-    // Verify all receipts belong to school and are cheques
-    const receipts = await prisma.receipt.findMany({
-      where: {
-        id: { in: input.receiptIds },
-        // admission: { schoolId },
-        paymentMode: 'CHEQUE',
-        depositId: null,
-        isCancelled: false,
-      },
-    });
+    const result = await prisma.$transaction(async (tx) => {
+      // Verify all receipts belong to school and are cheques
+      const receipts = await tx.receipt.findMany({
+        where: {
+          id: { in: input.receiptIds },
+          admission: { schoolId },
+          paymentMode: 'CHEQUE',
+          depositId: null,
+          isCancelled: false,
+        },
+      });
 
-    if (receipts.length !== input.receiptIds.length) {
-      throw new AppError('Some receipts are invalid, already deposited, or not cheques', 400);
-    }
+      if (receipts.length !== input.receiptIds.length) {
+        throw new AppError('Some receipts are invalid, already deposited, or not cheques', 400);
+      }
 
-    const totalAmount = receipts.reduce((sum, r) => sum + Number(r.amount), 0);
-    const count = await prisma.deposit.count();
-    const slipNumber = `DEP-${new Date().getFullYear()}-${(count + 1).toString().padStart(5, '0')}`;
+      const totalAmount = receipts.reduce((sum, r) => sum + Number(r.amount), 0);
+      const slipNumber = await getNextSequenceNumber('DEP', schoolId, tx, 5);
 
-    const deposit = await prisma.deposit.create({
-      data: {
-        depositDate: new Date(),
-        bankName: input.bankName,
-        bankBranch: input.bankBranch,
-        totalAmount,
-        status: 'PENDING',
-        slipNumber,
-        schoolId,
-      },
-    });
+      const deposit = await tx.deposit.create({
+        data: {
+          depositDate: new Date(),
+          bankName: input.bankName,
+          bankBranch: input.bankBranch,
+          totalAmount,
+          status: 'PENDING',
+          slipNumber,
+          schoolId,
+        },
+      });
 
-    // Link receipts to deposit
-    await prisma.receipt.updateMany({
-      where: { id: { in: input.receiptIds } },
-      data: { depositId: deposit.id },
+      // Link receipts to deposit
+      await tx.receipt.updateMany({
+        where: { id: { in: input.receiptIds } },
+        data: { depositId: deposit.id },
+      });
+
+      return { deposit, receiptCount: receipts.length };
     });
 
     await createAuditLog({
       userId,
       action: 'CREATE',
       entity: 'Deposit',
-      entityId: deposit.id,
-      newValue: { ...deposit, receiptCount: receipts.length },
+      entityId: result.deposit.id,
+      newValue: { ...result.deposit, receiptCount: result.receiptCount },
     });
 
-    return { ...deposit, receiptCount: receipts.length };
+    return { ...result.deposit, receiptCount: result.receiptCount };
   }
 
   /**
@@ -569,19 +624,23 @@ export class FeeService {
           receiptType: 'Fee Collection',
           franchiseeShare: 0,
           llplShare: 0,
+          slplShare: 0,
           taxAmount: 0,
           welcomeKit: 0,
           totalLLPLShare: 0,
+          totalSLPLShare: 0,
           chequeAmount: 0,
           receipts: [],
         };
       }
       const amount = Number(r.amount);
-      // Simplified royalty split (franchisee 70%, LLPL 30%)
+      // Simplified royalty split (franchisee 70%, SLPL 30%)
       grouped[dateKey].franchiseeShare += amount * 0.7;
       grouped[dateKey].llplShare += amount * 0.3;
-      grouped[dateKey].taxAmount += amount * 0.18 * 0.3; // GST on LLPL share
+      grouped[dateKey].slplShare += amount * 0.3;
+      grouped[dateKey].taxAmount += amount * 0.18 * 0.3; // GST on SLPL share
       grouped[dateKey].totalLLPLShare += amount * 0.3;
+      grouped[dateKey].totalSLPLShare += amount * 0.3;
       if (r.paymentMode === 'CHEQUE') grouped[dateKey].chequeAmount += amount;
       grouped[dateKey].receipts.push(r);
     });
@@ -663,7 +722,13 @@ export class FeeService {
       where.transactionId = { contains: query.paymentGateway };
     }
     if (query.paymentStatus && query.paymentStatus !== 'All') {
-      where.isCancelled = query.paymentStatus === 'CANCELLED';
+      if (query.paymentStatus === 'CANCELLED') {
+        where.isCancelled = true;
+      } else if (query.paymentStatus === 'SUCCESS') {
+        where.isCancelled = false;
+      } else if (query.paymentStatus === 'FAILED') {
+        where.isCancelled = true;
+      }
     }
     if (query.from || query.to) {
       where.receiptDate = {};

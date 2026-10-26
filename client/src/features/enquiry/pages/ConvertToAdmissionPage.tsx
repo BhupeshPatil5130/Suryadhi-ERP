@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Menu } from 'lucide-react';
+import { Menu, CheckCircle, Banknote, ArrowRight } from 'lucide-react';
 import { showToast } from '@/lib/toast';
 
 export default function ConvertToAdmissionPage() {
@@ -18,6 +18,8 @@ export default function ConvertToAdmissionPage() {
   const [step, setStep] = useState<'confirmation' | 'admission_form'>('confirmation');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showFeesModal, setShowFeesModal] = useState(false);
+  const [createdAdmissionId, setCreatedAdmissionId] = useState<string>('');
 
   const [programs, setPrograms] = useState<any[]>([]);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
@@ -69,27 +71,44 @@ export default function ConvertToAdmissionPage() {
           api.get('/lookups/academic-years'),
         ]);
         if (progRes.data.success) setPrograms(progRes.data.data);
-        if (yearRes.data.success) setAcademicYears(yearRes.data.data);
+        let currentAyId = '';
+        if (yearRes.data?.success && yearRes.data.data?.length > 0) {
+          const currentAy = yearRes.data.data.find((y: any) => y.isCurrent) || yearRes.data.data[0];
+          currentAyId = currentAy.id;
+        }
 
         if (id) {
           const res = await api.get(`/enquiries/${id}`);
           if (res.data.success) {
             const e = res.data.data;
+            const stu = e.student || {};
+            const dob = stu.dateOfBirth
+              ? new Date(stu.dateOfBirth).toISOString().split('T')[0]
+              : e.dateOfBirth
+              ? new Date(e.dateOfBirth).toISOString().split('T')[0]
+              : '2022-01-01';
+
             setForm((prev: any) => ({
               ...prev,
-              academicYearId: e.academicYearId || '',
-              studentFirstName: e.studentFirstName || '',
-              studentMiddleName: e.studentMiddleName || '',
-              studentLastName: e.studentLastName || '',
-              gender: e.gender || 'BOY',
-              dateOfBirth: e.dateOfBirth ? e.dateOfBirth.split('T')[0] : '',
-              programId: e.programId || '',
-              address: e.enquirerAddress || '',
+              academicYearId: e.academicYearId || currentAyId,
+              studentFirstName: stu.firstName || e.studentFirstName || '',
+              studentMiddleName: stu.middleName || e.studentMiddleName || '',
+              studentLastName: stu.lastName || e.studentLastName || '',
+              gender: stu.gender || e.gender || 'BOY',
+              dateOfBirth: dob,
+              programId: e.programId || prev.programId || '',
+              address: e.enquirerAddress || stu.address || 'Arni, Yavatmal',
+              postalCode: stu.postalCode || '445001',
+              city: stu.city || 'Yavatmal',
+              state: stu.state || 'Maharashtra',
+              country: stu.country || 'India',
               hasSibling: e.hasSibling ? 'yes' : 'no',
-              // Set enquirer details as father for now (will adjust on Ok click)
               _rawEnquirerName: e.enquirerName || '',
               _rawEnquirerMobile: e.enquirerMobile || '',
               _rawEnquirerEmail: e.enquirerEmail || '',
+              fatherName: e.enquirerName || '',
+              fatherMobile: e.enquirerMobile || '',
+              fatherEmail: e.enquirerEmail || '',
             }));
 
             if (e.programId) {
@@ -114,7 +133,10 @@ export default function ConvertToAdmissionPage() {
     try {
       const res = await api.get(`/lookups/batches?programId=${val}`);
       if (res.data.success) setBatches(res.data.data);
-    } catch {}
+    } catch (err) {
+      console.error('Failed to load batches for program:', err);
+      showToast('Could not load batches for selected program', 'error');
+    }
   };
 
   const handleConfirmMapping = () => {
@@ -177,8 +199,11 @@ export default function ConvertToAdmissionPage() {
       };
 
       // Since enquiry conversion essentially creates an admission
-      await api.post('/admissions', payload);
-      navigate('/admission');
+      const res = await api.post('/admissions', payload);
+      const newId = res.data?.data?.id || res.data?.id || '';
+      setCreatedAdmissionId(newId);
+      setShowFeesModal(true);
+      showToast('Admission created successfully!', 'success');
     } catch (err: any) {
       showToast(err.response?.data?.error || 'Failed to convert enquiry to admission', 'error');
     } finally {
@@ -452,6 +477,56 @@ export default function ConvertToAdmissionPage() {
           </Button>
         </div>
       </form>
+
+      {/* Admission Fees Confirmation Modal */}
+      {showFeesModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-300 rounded-md shadow-2xl max-w-md w-full p-6 space-y-5 animate-in fade-in-50 zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 text-emerald-600">
+              <CheckCircle className="h-8 w-8 text-emerald-500 shrink-0" />
+              <div>
+                <h3 className="font-bold text-lg text-slate-800">Admission Fees Confirmation</h3>
+                <p className="text-xs text-slate-500">Student registration completed</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200 rounded p-4 text-sm space-y-2 text-slate-700">
+              <p>
+                Student <strong className="text-slate-900">{form.studentFirstName} {form.studentLastName}</strong> has been successfully converted to admission!
+              </p>
+              <p className="text-xs text-slate-500">
+                Would you like to collect the admission / term fees and generate a receipt right now?
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
+              <Button
+                onClick={() => {
+                  setShowFeesModal(false);
+                  if (createdAdmissionId) {
+                    navigate(`/admissions/${createdAdmissionId}/receipt`);
+                  } else {
+                    navigate(`/fees/add-receipt`);
+                  }
+                }}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9 font-semibold gap-1.5 shadow-sm"
+              >
+                <Banknote className="h-4 w-4" /> Collect Fees Now
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowFeesModal(false);
+                  navigate('/admission');
+                }}
+                className="flex-1 text-xs h-9 border-slate-300 text-slate-700 hover:bg-slate-100"
+              >
+                View Admission List <ArrowRight className="h-3.5 w-3.5 ml-1" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -79,7 +79,8 @@ export default function ViewReceiptPage() {
         ['Cheque Date', r.chequeDate ? new Date(r.chequeDate).toLocaleDateString('en-IN') : 'N/A'],
         ['Amount Paid (Rs.)', INR ],
       ],
-      filename: eceipt_,
+      filename: 
+eceipt_,
     });
   };
 

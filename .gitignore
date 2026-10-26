@@ -10,11 +10,6 @@ build/
 
 # Environment
 .env
-.env.*
-*.env
-*.env.*
-server/.env
-client/.env
 .env.local
 .env.*.local
 
@@ -43,3 +38,5 @@ coverage/
 # Temp
 tmp/
 temp/
+.npm-cache/
+*.tsbuildinfo

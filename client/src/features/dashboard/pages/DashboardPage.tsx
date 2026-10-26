@@ -46,57 +46,55 @@ const purchaseOrders = [
 ];
 
 // ─── Fee Rate Card Accordion ───────────────────────────────
-function FeeRateAccordion({ card }: { card: any }) {
+function FeeRateAccordion({ card }: { card: typeof feeRateCards[0] }) {
   const [open, setOpen] = useState(false);
-  const feesList = card.fees || [];
-  const total = feesList.reduce((s: number, f: any) => s + (Number(f.total) || (Number(f.term1 || 0) + Number(f.term2 || 0))), 0);
+  const total = card.fees.reduce((s, f) => s + f.total, 0);
 
   return (
-    <div className="rounded-lg border border-border overflow-hidden bg-white">
+    <div className="rounded-lg border border-border overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-emerald-50 hover:bg-emerald-100/70 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 bg-success/10 hover:bg-success/15 transition-colors"
       >
         <div className="flex items-center gap-2">
-          {open ? <ChevronDown className="h-4 w-4 text-emerald-700" /> : <ChevronRight className="h-4 w-4 text-emerald-700" />}
-          <span className="font-semibold text-sm text-emerald-900">{card.program}</span>
-          <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px]">{card.status || 'HO Approved'}</Badge>
+          {open ? <ChevronDown className="h-4 w-4 text-success" /> : <ChevronRight className="h-4 w-4 text-success" />}
+          <span className="font-semibold text-sm text-success">{card.program}</span>
+          <Badge variant="success" className="text-[10px]">{card.status}</Badge>
         </div>
-        <span className="text-sm font-bold text-emerald-800 font-mono">{formatCurrency(total)}</span>
+        <span className="text-sm font-bold text-success">{formatCurrency(total)}</span>
       </button>
-      {open && (
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/30">
-                <TableHead>Fee Type</TableHead>
-                <TableHead className="text-right">Term 1</TableHead>
-                <TableHead className="text-right">Term 2</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {feesList.map((fee: any, idx: number) => {
-                const feeTotal = Number(fee.total) || (Number(fee.term1 || 0) + Number(fee.term2 || 0));
-                return (
-                  <TableRow key={idx}>
-                    <TableCell className="font-medium text-sm">{fee.type || fee.feeType}</TableCell>
-                    <TableCell className="text-right font-mono text-sm">{formatCurrency(Number(fee.term1 || fee.term1Amount || 0))}</TableCell>
-                    <TableCell className="text-right font-mono text-sm">{formatCurrency(Number(fee.term2 || fee.term2Amount || 0))}</TableCell>
-                    <TableCell className="text-right font-mono text-sm font-semibold">{formatCurrency(feeTotal)}</TableCell>
+        {open && (
+          <div
+            className="overflow-x-auto"
+          >
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/30">
+                  <TableHead>Fee Type</TableHead>
+                  <TableHead className="text-right">Term 1</TableHead>
+                  <TableHead className="text-right">Term 2</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {card.fees.map((fee) => (
+                  <TableRow key={fee.type}>
+                    <TableCell className="font-medium text-sm">{fee.type}</TableCell>
+                    <TableCell className="text-right font-mono text-sm">{formatCurrency(fee.term1)}</TableCell>
+                    <TableCell className="text-right font-mono text-sm">{formatCurrency(fee.term2)}</TableCell>
+                    <TableCell className="text-right font-mono text-sm font-semibold">{formatCurrency(fee.total)}</TableCell>
                   </TableRow>
-                );
-              })}
-              <TableRow className="bg-muted/20 font-bold">
-                <TableCell>Total</TableCell>
-                <TableCell className="text-right font-mono">{formatCurrency(feesList.reduce((s: number, f: any) => s + Number(f.term1 || f.term1Amount || 0), 0))}</TableCell>
-                <TableCell className="text-right font-mono">{formatCurrency(feesList.reduce((s: number, f: any) => s + Number(f.term2 || f.term2Amount || 0), 0))}</TableCell>
-                <TableCell className="text-right font-mono text-primary">{formatCurrency(total)}</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
-      )}
+                ))}
+                <TableRow className="bg-muted/20 font-bold">
+                  <TableCell>Total</TableCell>
+                  <TableCell className="text-right font-mono">{formatCurrency(card.fees.reduce((s, f) => s + f.term1, 0))}</TableCell>
+                  <TableCell className="text-right font-mono">{formatCurrency(card.fees.reduce((s, f) => s + f.term2, 0))}</TableCell>
+                  <TableCell className="text-right font-mono text-primary">{formatCurrency(total)}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        )}
     </div>
   );
 }
@@ -104,86 +102,14 @@ function FeeRateAccordion({ card }: { card: any }) {
 // ─── Dashboard Page ────────────────────────────────────────
 export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
-  const [feeRateCards, setFeeRateCards] = useState<any[]>([]);
-  const [purchaseOrders, setPurchaseOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [dashRes, feeRes, poRes] = await Promise.all([
-          api.get('/dashboard'),
-          api.get('/fees/structures').catch(() => ({ data: { success: false } })),
-          api.get('/operations/purchase-orders').catch(() => ({ data: { success: false } })),
-        ]);
-
-        if (dashRes.data.success) {
-          setData(dashRes.data.data);
-        }
-
-        if (feeRes.data.success && Array.isArray(feeRes.data.data) && feeRes.data.data.length > 0) {
-          const grouped: Record<string, any> = {};
-          feeRes.data.data.forEach((item: any) => {
-            const pName = item.program?.name || 'Program';
-            if (!grouped[pName]) {
-              grouped[pName] = { program: pName, status: 'HO Approved', fees: [] };
-            }
-            grouped[pName].fees.push({
-              type: item.feeType?.replace('_', ' ') || 'Tuition Fee',
-              term1: Number(item.term1Amount || 0),
-              term2: Number(item.term2Amount || 0),
-              total: Number(item.totalAmount || 0),
-            });
-          });
-          setFeeRateCards(Object.values(grouped));
-        } else {
-          setFeeRateCards([
-            {
-              program: 'Play Group',
-              status: 'HO Approved',
-              fees: [
-                { type: 'Registration Fee', term1: 5000, term2: 0, total: 5000 },
-                { type: 'Tuition Fee', term1: 15000, term2: 15000, total: 30000 },
-              ],
-            },
-            {
-              program: 'Nursery',
-              status: 'HO Approved',
-              fees: [
-                { type: 'Registration Fee', term1: 5000, term2: 0, total: 5000 },
-                { type: 'Tuition Fee', term1: 18000, term2: 18000, total: 36000 },
-              ],
-            },
-            {
-              program: 'SUNOIA Junior',
-              status: 'HO Approved',
-              fees: [
-                { type: 'Registration Fee', term1: 5000, term2: 0, total: 5000 },
-                { type: 'Tuition Fee', term1: 20000, term2: 20000, total: 40000 },
-              ],
-            },
-            {
-              program: 'SUNOIA Senior',
-              status: 'HO Approved',
-              fees: [
-                { type: 'Registration Fee', term1: 5000, term2: 0, total: 5000 },
-                { type: 'Tuition Fee', term1: 22000, term2: 22000, total: 44000 },
-              ],
-            },
-          ]);
-        }
-
-        if (poRes.data.success && Array.isArray(poRes.data.data) && poRes.data.data.length > 0) {
-          setPurchaseOrders(poRes.data.data.map((po: any) => ({
-            poNo: po.orderNumber || `PO-${po.id.slice(-6).toUpperCase()}`,
-            value: Number(po.totalAmount || 50000),
-            status: po.status || 'SUBMITTED',
-          })));
-        } else {
-          setPurchaseOrders([
-            { poNo: 'PO-2026-001', value: 125000, status: 'DELIVERED' },
-            { poNo: 'PO-2026-002', value: 78000, status: 'DISPATCHED' },
-          ]);
+        const res = await api.get('/dashboard');
+        if (res.data.success) {
+          setData(res.data.data);
         }
       } catch (error) {
         console.warn('Dashboard API failed', error);
@@ -201,7 +127,7 @@ export default function DashboardPage() {
 
   const enrollmentKPIs = [
     { title: 'Enquiries', value: data?.kpis?.enquiries || 0, icon: Users, color: 'green' as const, link: '/enquiry' },
-    { title: 'LSQ Enquiries', value: 0, icon: BarChart3, color: 'cyan' as const, link: '/reports/lsq-enquiries' },
+    { title: 'LeadSuryadhi Enquiries', value: 0, icon: BarChart3, color: 'cyan' as const, link: '/reports/lsq-enquiries' },
     { title: 'Gross Admission', value: data?.kpis?.grossAdmission || 0, icon: UserPlus, color: 'blue' as const, link: '/admission' },
     { title: 'Transfer In', value: data?.kpis?.transferIn || 0, icon: ArrowRightLeft, color: 'indigo' as const, link: '/transfers/manage' },
     { title: 'Transfer Out', value: data?.kpis?.transferOut || 0, icon: ArrowRightLeft, color: 'amber' as const, link: '/transfer-out' },

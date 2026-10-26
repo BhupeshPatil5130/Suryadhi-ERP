@@ -35,8 +35,8 @@ export default function AddReceiptPage() {
   const [chequeDate, setChequeDate] = useState('');
 
   useEffect(() => {
-    if (!id) return;
     const fetchEnquiry = async () => {
+      if (!id) return;
       setIsLoading(true);
       try {
         const res = await api.get(`/enquiries/${id}`);
@@ -48,19 +48,38 @@ export default function AddReceiptPage() {
           setProgramName(eq.program?.name || 'Nursery');
           setFatherEmail(eq.enquirerEmail || '');
         }
-      } catch (err) {
-        console.warn('Failed to load enquiry details', err);
+      } catch (err: any) {
+        console.error('Failed to load enquiry data', err);
+        showToast('Could not load enquiry details', 'error');
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchEnquiry();
   }, [id]);
+
+  const studentName = enquiry?.student
+    ? `${enquiry.student.firstName} ${enquiry.student.middleName || ''} ${enquiry.student.lastName}`.trim()
+    : enquiry?.studentFirstName
+    ? `${enquiry.studentFirstName} ${enquiry.studentLastName || ''}`.trim()
+    : enquiry?.enquirerName
+    ? `Child of ${enquiry.enquirerName}`
+    : 'N/A';
+
+  const programName = enquiry?.program?.name || 'N/A';
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const amt = Number(amount) || 0;
     if (amt <= 0) { showToast('Please enter a valid receipt amount', 'error'); return; }
+
+    if (numAmount !== numConfirm) {
+      showToast('Receipt Amount and Confirm Receipt Amount must match', 'error');
+      return;
+    }
+
+    if (!id) return;
 
     setIsSubmitting(true);
     try {
@@ -76,7 +95,7 @@ export default function AddReceiptPage() {
         notes: feeType,
       };
 
-      const res = await api.post(`/enquiries/${id}/receipts`, payload);
+      const res = await api.post(`/enquiries/${id}/advance-receipts`, payload);
       if (res.data.success) {
         showToast('Receipt saved successfully!', 'success');
         navigate(`/enquiry/${id}/receipts`);
@@ -87,6 +106,15 @@ export default function AddReceiptPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600 mr-2" />
+        <span className="text-sm text-slate-500">Loading enquiry details...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12 pt-4">
@@ -140,6 +168,7 @@ export default function AddReceiptPage() {
                       <td className="px-6 py-3">
                         <Input
                           type="number"
+                          step="0.01"
                           min="0"
                           value={amount}
                           onChange={(e) => setAmount(e.target.value)}
@@ -159,19 +188,44 @@ export default function AddReceiptPage() {
                   <Label className="text-xs font-normal text-slate-600">Receipt Date</Label>
                   <Input type="date" value={receiptDate} onChange={(e) => setReceiptDate(e.target.value)} className="h-8 text-[13px] border-slate-300 shadow-none rounded-sm" required />
                 </div>
+
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-normal text-slate-600">Mode of Payment</Label>
+                  <Label className="text-xs font-normal text-slate-600">Mode of Payment *</Label>
                   <Select value={paymentMode} onValueChange={setPaymentMode}>
                     <SelectTrigger className="h-8 text-[13px] border-slate-300 shadow-none rounded-sm w-full bg-white"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="cheque">Cheque</SelectItem>
-                      <SelectItem value="online">Online Transfer</SelectItem>
+                      <SelectItem value="CASH">Cash</SelectItem>
+                      <SelectItem value="CHEQUE">Cheque</SelectItem>
+                      <SelectItem value="ONLINE">Online Transfer / UPI</SelectItem>
+                      <SelectItem value="PAYTM_POS">PayTM / POS</SelectItem>
+                      <SelectItem value="BANK_TRANSFER">Bank Transfer / NEFT</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 {paymentMode === 'cheque' && (
                   <>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-normal text-slate-600">Bank Name *</Label>
+                      <Input 
+                        type="text" 
+                        value={bankName}
+                        onChange={(e) => setBankName(e.target.value)}
+                        placeholder="Enter Bank Name"
+                        className="h-8 text-[13px] border-slate-300 shadow-none rounded-sm block w-full bg-white" 
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-normal text-slate-600">Branch Name *</Label>
+                      <Input 
+                        type="text" 
+                        value={branchName}
+                        onChange={(e) => setBranchName(e.target.value)}
+                        placeholder="Enter Branch Name"
+                        className="h-8 text-[13px] border-slate-300 shadow-none rounded-sm block w-full bg-white" 
+                        required
+                      />
+                    </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs font-normal text-slate-600">Cheque Number</Label>
                       <Input value={chequeNumber} onChange={(e) => setChequeNumber(e.target.value)} placeholder="e.g. 000124" className="h-8 text-[13px] border-slate-300 shadow-none rounded-sm w-full bg-white" required />
@@ -180,8 +234,50 @@ export default function AddReceiptPage() {
                       <Label className="text-xs font-normal text-slate-600">Cheque Date</Label>
                       <Input type="date" value={chequeDate} onChange={(e) => setChequeDate(e.target.value)} className="h-8 text-[13px] border-slate-300 shadow-none rounded-sm w-full bg-white" required />
                     </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-normal text-slate-600">Transfer Date</Label>
+                      <Input 
+                        type="date" 
+                        value={transferDate}
+                        onChange={(e) => setTransferDate(e.target.value)}
+                        className="h-8 text-[13px] border-slate-300 shadow-none rounded-sm block w-full bg-white" 
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-normal text-slate-600">Payment Reference</Label>
+                      <Input 
+                        type="text" 
+                        value={transferReference}
+                        onChange={(e) => setTransferReference(e.target.value)}
+                        placeholder="Enter Reference Number"
+                        className="h-8 text-[13px] border-slate-300 shadow-none rounded-sm block w-full bg-white" 
+                      />
+                    </div>
+                    {paymentMode === 'ONLINE' && (
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-normal text-slate-600">UPI ID (optional)</Label>
+                        <Input 
+                          type="text" 
+                          value={upiId}
+                          onChange={(e) => setUpiId(e.target.value)}
+                          placeholder="e.g. name@upi"
+                          className="h-8 text-[13px] border-slate-300 shadow-none rounded-sm block w-full bg-white" 
+                        />
+                      </div>
+                    )}
                   </>
                 )}
+
+                <div className="space-y-1.5 md:col-span-2">
+                  <Label className="text-xs font-normal text-slate-600">Notes / Particulars</Label>
+                  <Input 
+                    type="text" 
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Optional notes or reference number"
+                    className="h-8 text-[13px] border-slate-300 shadow-none rounded-sm block w-full bg-white" 
+                  />
+                </div>
               </div>
             </div>
 
@@ -193,8 +289,8 @@ export default function AddReceiptPage() {
                 Cancel
               </Button>
             </div>
-          </CardContent>
-        </form>
+          </form>
+        </CardContent>
       </Card>
     </div>
   );

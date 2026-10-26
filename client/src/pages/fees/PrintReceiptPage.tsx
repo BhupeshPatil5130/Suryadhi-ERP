@@ -52,7 +52,8 @@ export default function PrintReceiptPage() {
           <Button variant=outline size=sm onClick={() => downloadAsPDF({
             title: Fee Receipt — ,
             subtitle: Student:   (),
-            filename: eceipt-,
+            filename: 
+eceipt-,
             columns: ['Description', 'Receipt No', 'Date', 'Payment Mode', 'Amount'],
             rows: [[
               'Fee Installment',

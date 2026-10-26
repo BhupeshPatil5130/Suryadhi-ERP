@@ -7,12 +7,10 @@ import api from '@/api/client';
 import { showToast } from '@/lib/toast';
 import { downloadAsPDF } from '@/lib/downloadUtils';
 
-interface AdvanceReceiptRow {
+interface AdvanceReceipt {
   id: string;
-  receiptDate: string;
   receiptNumber: string;
-  chequeNumber?: string;
-  chequeDate?: string;
+  receiptDate: string;
   amount: number;
   paymentMode?: string;
   bankName?: string;
@@ -79,7 +77,8 @@ export default function ViewReceiptPage() {
         ['Cheque Date', r.chequeDate ? new Date(r.chequeDate).toLocaleDateString('en-IN') : 'N/A'],
         ['Amount Paid (Rs.)', INR ],
       ],
-      filename: eceipt_,
+      filename: 
+eceipt_,
     });
   };
 
@@ -245,6 +244,14 @@ export default function ViewReceiptPage() {
             >
               Back
             </Button>
+            <Link to={`/enquiry/${id}/receipts/add`}>
+              <Button 
+                className="bg-[#0056b3] hover:bg-[#004494] text-white h-8 px-6 text-[13px] shadow-none rounded-sm font-semibold flex items-center gap-1.5"
+              >
+                <Plus className="h-4 w-4" />
+                Add New Advance Receipt
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>

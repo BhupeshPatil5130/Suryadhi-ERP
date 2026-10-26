@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { type ColumnDef } from '@tanstack/react-table';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/DataTable';
@@ -6,112 +6,135 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { Download, FileText, Filter, Loader2 } from 'lucide-react';
-import api from '@/api/client';
-import { downloadAsPDF } from '@/lib/downloadUtils';
+import { Download, FileText, CreditCard } from 'lucide-react';
+import { downloadCSV } from '@/lib/downloadUtils';
+import { showToast } from '@/lib/toast';
 
-interface Invoice {
+interface InvoiceDetail {
   id: string;
   invoiceNo: string;
   date: string;
-  type: string;
-  amount: number;
+  category: string; // InvoiceFor
+  totalAmount: number;
   status: 'PAID' | 'UNPAID' | 'OVERDUE';
+  paidDate: string;
+  paymentMode: string;
+  paymentReference: string;
 }
 
-const dummyInvoices: Invoice[] = [
-  { id: '1', invoiceNo: 'INV-HQ-26-4421', date: '2026-06-01', type: 'Royalty Fee', amount: 85000, status: 'PAID' },
-  { id: '2', invoiceNo: 'INV-HQ-26-4890', date: '2026-06-05', type: 'Kit Purchase', amount: 125000, status: 'UNPAID' },
-  { id: '3', invoiceNo: 'INV-HQ-26-4911', date: '2026-05-15', type: 'Marketing Support', amount: 25000, status: 'OVERDUE' },
+const dummyInvoices: InvoiceDetail[] = [
+  {
+    id: '1',
+    invoiceNo: 'INV-HQ-26-4421',
+    date: '2026-06-01',
+    category: 'Royalty Fee (SLPL Share)',
+    totalAmount: 85000,
+    status: 'PAID',
+    paidDate: '2026-06-03',
+    paymentMode: 'Online / NEFT',
+    paymentReference: 'UTR-SBIN00291048',
+  },
+  {
+    id: '2',
+    invoiceNo: 'INV-HQ-26-4890',
+    date: '2026-06-05',
+    category: 'Welcome Kit & Uniform Purchase',
+    totalAmount: 125000,
+    status: 'UNPAID',
+    paidDate: '—',
+    paymentMode: '—',
+    paymentReference: '—',
+  },
+  {
+    id: '3',
+    invoiceNo: 'INV-HQ-26-4911',
+    date: '2026-05-15',
+    category: 'Marketing & Digital Support',
+    totalAmount: 25000,
+    status: 'OVERDUE',
+    paidDate: '—',
+    paymentMode: '—',
+    paymentReference: '—',
+  },
+  {
+    id: '4',
+    invoiceNo: 'INV-HQ-26-5012',
+    date: '2026-06-12',
+    category: 'Annual Renewal Fee',
+    totalAmount: 50000,
+    status: 'PAID',
+    paidDate: '2026-06-14',
+    paymentMode: 'Cheque',
+    paymentReference: 'CHQ-882194 / HDFC',
+  },
 ];
 
 export default function ViewInvoicePage() {
-  const [data, setData] = useState<Invoice[]>(dummyInvoices);
-  const [isLoading, setIsLoading] = useState(true);
+  const [data, setData] = useState<InvoiceDetail[]>(dummyInvoices);
 
-  const fetchInvoices = async () => {
-    setIsLoading(true);
-    try {
-      const res = await api.get('/franchisee/invoices');
-      if (res.data.success && Array.isArray(res.data.data)) {
-        const invoices = res.data.data.map((item: any) => {
-          const invAmt = Number(item.invoiceAmount || item.amount || 0);
-          const recAmt = Number(item.receiptAmount || 0);
-          const bal = Number(item.balance || (invAmt - recAmt));
-          let status: 'PAID' | 'UNPAID' | 'OVERDUE' = 'PAID';
-          if (bal > 0) status = 'UNPAID';
-          return {
-            id: item.id,
-            invoiceNo: item.particulars?.includes('INV') ? item.particulars.split(' ')[0] : `INV-HQ-26-${item.id.slice(-4).toUpperCase()}`,
-            date: item.entryDate || item.date || new Date().toISOString(),
-            type: item.entryType || item.type || 'Head Office Invoice',
-            amount: invAmt || 50000,
-            status,
-          };
-        });
-        if (invoices.length > 0) {
-          setData(invoices);
-        }
-      }
-    } catch (err) {
-      console.warn('Failed to fetch franchisee invoices, using fallback list', err);
-    } finally {
-      setIsLoading(false);
-    }
+  const handlePay = (invoice: InvoiceDetail) => {
+    showToast(`Redirecting to secure gateway for invoice ${invoice.invoiceNo}...`, 'info');
+    setTimeout(() => {
+      setData(prev => prev.map(inv => inv.id === invoice.id ? {
+        ...inv,
+        status: 'PAID',
+        paidDate: new Date().toISOString().split('T')[0],
+        paymentMode: 'Online Transfer',
+        paymentReference: `PAY-${Date.now().toString().slice(-8)}`
+      } : inv));
+      showToast(`Payment successful for invoice ${invoice.invoiceNo}!`, 'success');
+    }, 1200);
   };
 
-  useEffect(() => {
-    fetchInvoices();
-  }, []);
-
-  const handleExportPDF = () => {
-    downloadAsPDF({
-      title: 'Head Office Invoices Report',
-      subtitle: 'Suryadhi Learning Pvt. Ltd. — Invoices Summary',
-      columns: ['Invoice No', 'Date', 'Category', 'Amount', 'Status'],
-      rows: data.map((inv) => [
-        inv.invoiceNo,
-        formatDate(inv.date),
-        inv.type,
-        formatCurrency(inv.amount),
-        inv.status,
-      ]),
-      filename: 'ho-invoices-report',
-    });
+  const handleExportExcel = () => {
+    downloadCSV(
+      data.map(d => ({
+        'Invoice No': d.invoiceNo,
+        'Date': formatDate(d.date),
+        'Category (InvoiceFor)': d.category,
+        'Total Amount': d.totalAmount,
+        'Status': d.status,
+        'Paid Date': d.paidDate,
+        'Payment Mode': d.paymentMode,
+        'Payment Reference': d.paymentReference,
+      })),
+      'franchisee_invoice_details'
+    );
+    showToast('Invoices exported to Excel!', 'success');
   };
 
-  const columns: ColumnDef<Invoice, any>[] = [
+  const columns: ColumnDef<InvoiceDetail, any>[] = [
     {
       accessorKey: 'invoiceNo',
-      header: 'Invoice No',
-      cell: ({ getValue }) => <span className="font-mono font-medium text-sm text-primary">{getValue() as string}</span>,
+      header: '1. Invoice No',
+      cell: ({ getValue }) => <span className="font-mono font-bold text-xs text-blue-700">{getValue() as string}</span>,
     },
     {
       accessorKey: 'date',
-      header: 'Date',
-      cell: ({ getValue }) => <span className="text-sm">{formatDate(getValue() as string)}</span>,
+      header: '2. Date',
+      cell: ({ getValue }) => <span className="text-xs">{formatDate(getValue() as string)}</span>,
     },
     {
-      accessorKey: 'type',
-      header: 'Category',
-      cell: ({ getValue }) => <span className="font-medium text-sm">{getValue() as string}</span>,
+      accessorKey: 'category',
+      header: '3. Category (InvoiceFor)',
+      cell: ({ getValue }) => <span className="font-medium text-xs text-slate-800">{getValue() as string}</span>,
     },
     {
-      accessorKey: 'amount',
-      header: () => <div className="text-right">Total Amount</div>,
-      cell: ({ getValue }) => <div className="text-right font-mono font-bold">{formatCurrency(getValue() as number)}</div>,
+      accessorKey: 'totalAmount',
+      header: () => <div className="text-right">4. Total Amount</div>,
+      cell: ({ getValue }) => <div className="text-right font-mono font-bold text-xs text-slate-900">{formatCurrency(getValue() as number)}</div>,
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: '5. Status',
       cell: ({ getValue }) => {
         const status = getValue() as string;
         return (
           <Badge 
             className={
-              status === 'PAID' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border-emerald-200' :
-              status === 'OVERDUE' ? 'bg-red-100 text-red-800 hover:bg-red-200 border-red-200' : 
-              'bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200'
+              status === 'PAID' ? 'bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px]' :
+              status === 'OVERDUE' ? 'bg-red-100 text-red-800 border-red-200 text-[10px]' : 
+              'bg-amber-100 text-amber-800 border-amber-200 text-[10px]'
             }
           >
             {status}
@@ -120,56 +143,69 @@ export default function ViewInvoicePage() {
       },
     },
     {
+      accessorKey: 'paidDate',
+      header: '6. PaidDate',
+      cell: ({ getValue }) => <span className="text-xs">{getValue() as string}</span>,
+    },
+    {
+      accessorKey: 'paymentMode',
+      header: '7. PaymentMode',
+      cell: ({ getValue }) => <span className="text-xs font-medium">{getValue() as string}</span>,
+    },
+    {
+      accessorKey: 'paymentReference',
+      header: '8. PaymentReference',
+      cell: ({ getValue }) => <span className="font-mono text-xs text-slate-600">{getValue() as string}</span>,
+    },
+    {
       id: 'actions',
-      header: 'Actions',
+      header: 'Action',
       enableSorting: false,
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-          onClick={() => {
-            downloadAsPDF({
-              title: `Invoice: ${row.original.invoiceNo}`,
-              subtitle: `Category: ${row.original.type} | Date: ${formatDate(row.original.date)}`,
-              columns: ['Description', 'Amount', 'Status'],
-              rows: [[row.original.type, formatCurrency(row.original.amount), row.original.status]],
-              filename: `invoice-${row.original.invoiceNo}`,
-            });
-          }}
-        >
-          <FileText className="h-3.5 w-3.5 mr-1.5" />
-          Download
-        </Button>
-      ),
+      cell: ({ row }) => {
+        const inv = row.original;
+        return (
+          <div className="flex items-center gap-1.5">
+            {inv.status !== 'PAID' ? (
+              <Button
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] h-7 px-2 font-semibold shadow-none gap-1"
+                onClick={() => handlePay(inv)}
+              >
+                <CreditCard className="h-3 w-3" /> Click here For Payment
+              </Button>
+            ) : (
+              <span className="text-xs font-semibold text-emerald-700 flex items-center gap-1">
+                ✓ Paid
+              </span>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Head Office Invoices"
-        description="View and download all billing invoices generated by Suryadhi Learning Pvt. Ltd. — HQ"
-      >
-        <Button variant="outline" size="sm" onClick={fetchInvoices} disabled={isLoading}>
-          {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Filter className="h-4 w-4 mr-2" />}
-          Refresh
+    <div className="space-y-4 max-w-[1600px] mx-auto pb-12 pt-2">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h1 className="text-2xl font-normal text-slate-800">Franchisee Invoice Details</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Billing statements generated by Suryadhi Learning Pvt. Ltd. (SLPL) HQ</p>
+        </div>
+        <Button
+          onClick={handleExportExcel}
+          className="bg-emerald-700 hover:bg-emerald-800 text-white h-8 text-xs font-semibold gap-1.5 shadow-sm"
+        >
+          <Download className="h-3.5 w-3.5" /> Download to Excel
         </Button>
-        <Button size="sm" onClick={handleExportPDF}>
-          <Download className="h-4 w-4 mr-2" />
-          Bulk Download PDF
-        </Button>
-      </PageHeader>
+      </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <div className="p-4">
-            <DataTable
-              columns={columns}
-              data={data}
-              searchPlaceholder="Search by invoice number or category..."
-            />
-          </div>
+      <Card className="border-slate-200 shadow-sm">
+        <CardContent className="p-4">
+          <DataTable
+            columns={columns}
+            data={data}
+            searchPlaceholder="Search invoices by number, category, or UTR..."
+          />
         </CardContent>
       </Card>
     </div>

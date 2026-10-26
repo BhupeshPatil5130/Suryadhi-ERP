@@ -6,6 +6,17 @@ interface AdmissionActionButtonsProps {
   id: string;
 }
 
+/**
+ * 8 Action Buttons as per ERP spec:
+ * 1. Edit & View
+ * 2. Receipt
+ * 3. Add Online Payment (Invoice)
+ * 4. Transfer Student (Graduate to)
+ * 5. Quit Admission
+ * 6. Relocation / Transfer (Transfer Out)
+ * 7. Name / DOB Change
+ * 8. Forecasted Royalty (View Royalty)
+ */
 export function AdmissionActionButtons({ id }: AdmissionActionButtonsProps) {
   return (
     <div className=flex flex-col gap-1 w-[80px]>
@@ -70,7 +81,7 @@ export function AdmissionActionButtons({ id }: AdmissionActionButtonsProps) {
           </Button>
         </Link>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
 

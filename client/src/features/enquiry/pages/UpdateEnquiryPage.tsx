@@ -68,15 +68,22 @@ export default function UpdateEnquiryPage() {
 
         if (enquiryRes.data.success) {
           const e = enquiryRes.data.data;
+          const stu = e.student || {};
+          const dob = stu.dateOfBirth
+            ? new Date(stu.dateOfBirth).toISOString().split('T')[0]
+            : e.dateOfBirth
+            ? new Date(e.dateOfBirth).toISOString().split('T')[0]
+            : '';
+
           setValue('enquirerMobile', e.enquirerMobile || '');
           setValue('enquirerName', e.enquirerName || '');
           setValue('enquirerEmail', e.enquirerEmail || '');
           setValue('enquirerAddress', e.enquirerAddress || '');
-          setValue('studentFirstName', e.studentFirstName || '');
-          setValue('studentMiddleName', e.studentMiddleName || '');
-          setValue('studentLastName', e.studentLastName || '');
-          setValue('dateOfBirth', e.dateOfBirth ? e.dateOfBirth.split('T')[0] : '');
-          setValue('gender', e.gender || 'BOY');
+          setValue('studentFirstName', stu.firstName || e.studentFirstName || '');
+          setValue('studentMiddleName', stu.middleName || e.studentMiddleName || '');
+          setValue('studentLastName', stu.lastName || e.studentLastName || '');
+          setValue('dateOfBirth', dob);
+          setValue('gender', stu.gender || e.gender || 'BOY');
           setValue('programId', e.programId || '');
           setValue('hasSibling', e.hasSibling || false);
           setValue('isTrialClass', e.isTrialClass || false);

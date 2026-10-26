@@ -20,6 +20,13 @@ router.post('/refresh', (req, res, next) =>
   authController.refresh(req, res, next)
 );
 
+// GET /api/auth/csrf-token
+router.get('/csrf-token', (req, res) => {
+  const { setCsrfCookie } = require('../../middleware');
+  const csrfToken = setCsrfCookie(res);
+  res.json({ success: true, csrfToken });
+});
+
 // POST /api/auth/logout
 router.post('/logout', authenticate, (req, res, next) =>
   authController.logout(req, res, next)
@@ -56,3 +63,4 @@ router.delete('/users/:id', authenticate, authorize('SUPER_ADMIN', 'SCHOOL_ADMIN
 );
 
 export default router;
+

@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import api from '@/api/client';
+import { showToast } from '@/lib/toast';
 
 interface FormState {
   academicYearId: string;
@@ -161,7 +162,10 @@ export default function UpdateAdmissionPage() {
     try {
       const batchRes = await api.get(`/lookups/batches?programId=${programId}`);
       if (batchRes.data.success) setBatches(batchRes.data.data);
-    } catch {}
+    } catch (err) {
+      console.error('Failed to load batches for program:', err);
+      showToast('Failed to load batches for selected program', 'error');
+    }
   };
 
   const handleConfirm = async (e: React.FormEvent) => {

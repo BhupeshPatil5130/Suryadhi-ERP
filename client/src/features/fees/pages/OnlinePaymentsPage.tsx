@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { feesApi } from '../api';
 import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,7 @@ function downloadCSV(data: OnlinePayment[], filename: string) {
 }
 
 export default function OnlinePaymentsPage() {
+  const navigate = useNavigate();
   const [data, setData] = useState<OnlinePayment[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -98,8 +100,7 @@ export default function OnlinePaymentsPage() {
   const buildParamsAndFetch = useCallback(() => {
     const params: Record<string, string> = {};
     if (paymentGateway !== 'All') params.paymentGateway = paymentGateway;
-    // ✅ FIX: only send paymentStatus when 'CANCELLED'; server only filters on this value
-    if (paymentStatus === 'CANCELLED') params.paymentStatus = 'CANCELLED';
+    if (paymentStatus !== 'All') params.paymentStatus = paymentStatus;
     if (fromDate) params.from = fromDate;
     if (toDate) params.to = toDate;
     if (search) params.search = search;
@@ -206,6 +207,7 @@ export default function OnlinePaymentsPage() {
                   >
                     <option value="All">All</option>
                     <option value="SUCCESS">Success</option>
+                    <option value="FAILED">Failed</option>
                     <option value="CANCELLED">Cancelled</option>
                   </select>
                 </div>
@@ -282,6 +284,7 @@ export default function OnlinePaymentsPage() {
                 <option value={10}>10</option>
                 <option value={25}>25</option>
                 <option value={50}>50</option>
+                <option value={100}>100</option>
               </select>
               entries
             </div>
@@ -312,18 +315,19 @@ export default function OnlinePaymentsPage() {
                   <th className="p-3 text-right font-semibold">Amount</th>
                   <th className="p-3 text-center font-semibold">Status</th>
                   <th className="p-3 text-center font-semibold">Txn ID</th>
+                  <th className="p-3 text-center font-semibold">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={9} className="p-8 text-center text-muted-foreground">
+                    <td colSpan={10} className="p-8 text-center text-muted-foreground">
                       <Loader2 className="h-5 w-5 animate-spin inline mr-2" />Loading...
                     </td>
                   </tr>
                 ) : paged.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="p-8 text-center text-muted-foreground">No data available</td>
+                    <td colSpan={10} className="p-8 text-center text-muted-foreground">No data available</td>
                   </tr>
                 ) : (
                   paged.map((row) => (
@@ -356,9 +360,9 @@ export default function OnlinePaymentsPage() {
                           {row.orderStatus}
                         </Badge>
                       </td>
-                      {/* ✅ FIX: Copy transaction ID action instead of no-op Eye button */}
                       <td className="p-3 text-center">
                         <button
+                          type="button"
                           title={row.transactionId !== '-' ? `Copy: ${row.transactionId}` : 'No transaction ID'}
                           onClick={() => handleCopyTransactionId(row.transactionId)}
                           className={`inline-flex items-center gap-1 text-xs font-mono px-2 py-1 rounded hover:bg-muted transition-colors max-w-[120px] truncate ${row.transactionId === '-' ? 'text-muted-foreground cursor-default' : 'text-primary cursor-pointer'}`}
@@ -366,6 +370,16 @@ export default function OnlinePaymentsPage() {
                           <Copy className="h-3 w-3 flex-shrink-0" />
                           <span className="truncate">{row.transactionId}</span>
                         </button>
+                      </td>
+                      <td className="p-3 text-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs border-blue-600 text-blue-600 hover:bg-blue-50 hover:text-blue-700 font-semibold px-3 rounded shadow-none"
+                          onClick={() => navigate(`/fees/receipts/${row.id}/print`, { state: { onlinePayment: row } })}
+                        >
+                          View
+                        </Button>
                       </td>
                     </tr>
                   ))

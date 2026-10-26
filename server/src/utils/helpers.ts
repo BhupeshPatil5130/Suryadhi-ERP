@@ -57,34 +57,75 @@ export function parsePaginationParams(query: any): PaginationParams {
 }
 
 /**
+ * Safely rounds monetary amounts to 2 decimal places to prevent floating point precision drift.
+ */
+export function roundCurrency(value: number | string | null | undefined): number {
+  if (value === null || value === undefined) return 0;
+  const num = typeof value === 'number' ? value : parseFloat(String(value));
+  if (isNaN(num)) return 0;
+  return Math.round((num + Number.EPSILON) * 100) / 100;
+}
+
+/**
+ * Atomically generates the next sequence value (integer) using the SequenceCounter table.
+ * Thread-safe and race-condition free even under high concurrent load.
+ */
+export async function getNextSequenceValue(
+  prefix: string,
+  schoolId?: string,
+  client?: any
+): Promise<number> {
+  const db = client || prisma;
+  const year = new Date().getFullYear();
+  const normalizedSchoolId = schoolId || 'GLOBAL';
+
+  const counter = await db.sequenceCounter.upsert({
+    where: {
+      prefix_year_schoolId: {
+        prefix,
+        year,
+        schoolId: normalizedSchoolId,
+      },
+    },
+    update: {
+      currentVal: { increment: 1 },
+    },
+    create: {
+      prefix,
+      year,
+      schoolId: normalizedSchoolId,
+      currentVal: 1,
+    },
+  });
+
+  return counter.currentVal;
+}
+
+/**
+ * Atomically generates the next formatted sequential ID using the SequenceCounter table.
+ * Format: {prefix}-{year}-{paddedNumber}
+ */
+export async function getNextSequenceNumber(
+  prefix: string,
+  schoolId?: string,
+  client?: any,
+  digits: number = 6
+): Promise<string> {
+  const year = new Date().getFullYear();
+  const val = await getNextSequenceValue(prefix, schoolId, client);
+  const paddedNumber = val.toString().padStart(digits, '0');
+  return `${prefix}-${year}-${paddedNumber}`;
+}
+
+/**
  * Generate a sequential ID with prefix (e.g., INV-2024-0001)
  */
 export async function generateSequentialId(
   prefix: string,
-  entity: string,
+  _entity?: string,
   schoolId?: string
 ): Promise<string> {
-  const year = new Date().getFullYear();
-  const key = `${prefix}-${year}`;
-
-  // Find the last entry for this year
-  const lastEntry = await prisma.auditLog.findFirst({
-    where: {
-      entity,
-      action: 'CREATE',
-      newValue: {
-        path: ['sequenceKey'],
-        equals: key,
-      },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
-
-  const sequence = lastEntry ? 
-    parseInt((lastEntry.newValue as any)?.sequence || '0', 10) + 1 : 1;
-  
-  const paddedSequence = sequence.toString().padStart(4, '0');
-  return `${key}-${paddedSequence}`;
+  return getNextSequenceNumber(prefix, schoolId, prisma, 4);
 }
 
 /**

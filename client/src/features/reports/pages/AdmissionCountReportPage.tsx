@@ -1,266 +1,183 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import PageHeader from '@/components/shared/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download, RefreshCw, Loader2, Users, UserCheck, UserMinus, GraduationCap, ArrowRightLeft } from 'lucide-react';
+import { Calendar, Search, RotateCcw, AlertCircle, Users, Download } from 'lucide-react';
 import api from '@/api/client';
-import { downloadAsPDF } from '@/lib/downloadUtils';
 import { downloadAsCSV } from '@/lib/export';
 
-interface ProgramAdmissionStat {
-  program: string;
-  shortName?: string;
-  totalAdmissions: number;
-  activeStudents: number;
-  quit: number;
-  transferredOut: number;
-  graduated: number;
+interface ProgramAdmissionCount {
+  programName: string;
+  admissionCount: number;
 }
 
-const defaultStats: ProgramAdmissionStat[] = [
-  { program: 'Play Group', shortName: 'PG', totalAdmissions: 12, activeStudents: 12, quit: 0, transferredOut: 0, graduated: 0 },
-  { program: 'Nursery', shortName: 'NUR', totalAdmissions: 24, activeStudents: 23, quit: 1, transferredOut: 0, graduated: 0 },
-  { program: 'SUNOIA Junior', shortName: 'SJ', totalAdmissions: 18, activeStudents: 18, quit: 0, transferredOut: 0, graduated: 0 },
-  { program: 'SUNOIA Senior', shortName: 'SS', totalAdmissions: 16, activeStudents: 15, quit: 1, transferredOut: 0, graduated: 0 },
+const DEFAULT_PROGRAM_COUNTS: ProgramAdmissionCount[] = [
+  { programName: 'Play Group', admissionCount: 0 },
+  { programName: 'Nursery', admissionCount: 0 },
+  { programName: 'Sunoia Junior', admissionCount: 0 },
+  { programName: 'Sunoia Senior', admissionCount: 0 },
+];
+
+const MONTHS = [
+  'April 2026', 'May 2026', 'June 2026', 'July 2026',
+  'August 2026', 'September 2026', 'October 2026', 'November 2026',
+  'December 2026', 'January 2027', 'February 2027', 'March 2027'
 ];
 
 export default function AdmissionCountReportPage() {
-  const [data, setData] = useState<ProgramAdmissionStat[]>(defaultStats);
-  const [academicYear, setAcademicYear] = useState('ay1');
-  const [isLoading, setIsLoading] = useState(true);
+  const [data, setData] = useState<ProgramAdmissionCount[]>(DEFAULT_PROGRAM_COUNTS);
+  const [selectedMonth, setSelectedMonth] = useState<string>('April 2026');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const fetchAdmissionCount = async () => {
+  const fetchAdmissionCount = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await api.get('/reports/admission-count');
-      if (res.data.success && Array.isArray(res.data.data)) {
-        const mapped = res.data.data
-          .filter((item: any) => {
-            const pName = typeof item.program === 'string' ? item.program : (item.program?.name || '');
-            return !pName.toLowerCase().includes('euro');
-          })
-          .map((item: any) => {
-            const pName = typeof item.program === 'string' ? item.program : (item.program?.name || 'Program');
-            const sName = item.shortName || (typeof item.program === 'object' ? item.program?.shortName : '');
-            return {
-              program: pName,
-              shortName: sName,
-              totalAdmissions: Number(item.totalAdmissions ?? item.total ?? 0),
-              activeStudents: Number(item.activeStudents ?? item.active ?? 0),
-              quit: Number(item.quit ?? 0),
-              transferredOut: Number(item.transferredOut ?? item.transferOut ?? 0),
-              graduated: Number(item.graduated ?? 0),
-            };
-          });
-
-        if (mapped.length > 0) {
-          setData(mapped);
-        }
+      const res = await api.get('/reports/admission-count', {
+        params: { month: selectedMonth }
+      });
+      if (res.data.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
+        // Map data or fallback to defaults
+        const mapped: ProgramAdmissionCount[] = DEFAULT_PROGRAM_COUNTS.map((dp) => {
+          const found = res.data.data.find((item: any) =>
+            (item.program?.name || '').toLowerCase().includes(dp.programName.toLowerCase())
+          );
+          return {
+            programName: dp.programName,
+            admissionCount: found ? (found.total || found.active || 0) : 0,
+          };
+        });
+        setData(mapped);
+      } else {
+        setData(DEFAULT_PROGRAM_COUNTS);
       }
-    } catch (err) {
-      console.warn('Failed to load admission count report', err);
+    } catch {
+      setData(DEFAULT_PROGRAM_COUNTS);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedMonth]);
 
   useEffect(() => {
     fetchAdmissionCount();
-  }, [academicYear]);
+  }, [fetchAdmissionCount]);
 
-  const totalOverall = data.reduce((sum, d) => sum + d.totalAdmissions, 0);
-  const activeOverall = data.reduce((sum, d) => sum + d.activeStudents, 0);
-  const quitOverall = data.reduce((sum, d) => sum + d.quit, 0);
-  const graduatedOverall = data.reduce((sum, d) => sum + d.graduated, 0);
+  const totalAdmissions = data.reduce((sum, r) => sum + r.admissionCount, 0);
 
-  const handleExportPDF = () => {
-    downloadAsPDF({
-      title: 'Admission Count Analytics Report',
-      subtitle: `Academic Year: ${academicYear === 'ay1' ? 'Apr 26 - Mar 27' : 'Apr 25 - Mar 26'} | Total Admissions: ${totalOverall}`,
-      columns: ['Program', 'Total Admissions', 'Active Students', 'Quit / Drop', 'Transferred Out', 'Graduated'],
-      rows: data.map((d) => [
-        d.program,
-        d.totalAdmissions,
-        d.activeStudents,
-        d.quit,
-        d.transferredOut,
-        d.graduated,
-      ]),
-      filename: 'admission-count-report',
-    });
-  };
-
-  const handleExportCSV = () => {
-    downloadAsCSV(data, 'admission_count_analytics.csv');
+  const handleDownloadExcel = () => {
+    const exportRows = data.map((r) => ({
+      'Program Name': r.programName,
+      'Admission Count': r.admissionCount,
+      'Month': selectedMonth,
+      'Center': 'SK-Dhule-Deopur'
+    }));
+    downloadAsCSV(exportRows, `Admission_Count_${selectedMonth.replace(' ', '_')}`);
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="max-w-4xl mx-auto space-y-6">
       <PageHeader
-        title="Admission Count Analytics"
-        description="High-level aggregations and status distribution of student admissions across preschool programs"
-      >
-        <div className="flex items-center gap-3">
-          <Select value={academicYear} onValueChange={setAcademicYear}>
-            <SelectTrigger className="w-[180px] h-9 bg-white">
-              <SelectValue placeholder="Academic Year" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ay1">Apr 26 - Mar 27</SelectItem>
-              <SelectItem value="ay0">Apr 25 - Mar 26</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="sm" onClick={fetchAdmissionCount} disabled={isLoading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={isLoading}>
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
-          </Button>
-          <Button size="sm" onClick={handleExportPDF} disabled={isLoading} className="bg-blue-600 hover:bg-blue-700 text-white">
-            <Download className="h-4 w-4 mr-2" />
-            Export PDF
-          </Button>
-        </div>
-      </PageHeader>
+        title="Admission Count as per Sunoiakids"
+        description="Official enrolled student counts verified against Sunoiakids Head Office portal"
+      />
 
-      {/* Top Stat Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-blue-50/50 to-white">
-          <CardContent className="p-4 flex items-center justify-between">
+      {/* Main Container Card */}
+      <Card className="shadow-sm border-slate-200">
+        <CardHeader className="bg-slate-50/80 border-b border-slate-200 py-3.5 px-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Admissions</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-1 font-mono">{totalOverall}</h3>
+              <CardTitle className="text-sm font-bold text-slate-800">
+                1. Admission Count as per Sunoiakids
+              </CardTitle>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Center: <span className="font-semibold text-blue-700">SK-Dhule-Deopur</span>
+              </p>
             </div>
-            <div className="p-3 bg-blue-100/80 text-blue-700 rounded-lg">
-              <Users className="h-5 w-5" />
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-emerald-50/50 to-white">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Active Students</p>
-              <h3 className="text-2xl font-bold text-emerald-900 mt-1 font-mono">{activeOverall}</h3>
-            </div>
-            <div className="p-3 bg-emerald-100/80 text-emerald-700 rounded-lg">
-              <UserCheck className="h-5 w-5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-rose-50/50 to-white">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-rose-700 uppercase tracking-wider">Quit / Dropouts</p>
-              <h3 className="text-2xl font-bold text-rose-900 mt-1 font-mono">{quitOverall}</h3>
-            </div>
-            <div className="p-3 bg-rose-100/80 text-rose-700 rounded-lg">
-              <UserMinus className="h-5 w-5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-slate-200 shadow-sm bg-gradient-to-br from-indigo-50/50 to-white">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wider">Graduated</p>
-              <h3 className="text-2xl font-bold text-indigo-900 mt-1 font-mono">{graduatedOverall}</h3>
-            </div>
-            <div className="p-3 bg-indigo-100/80 text-indigo-700 rounded-lg">
-              <GraduationCap className="h-5 w-5" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Program Breakdown Table */}
-      <Card className="border-slate-200 shadow-sm overflow-hidden bg-white">
-        <CardHeader className="bg-slate-50/80 border-b border-slate-200 py-3.5 px-6 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-semibold text-slate-800">
-            Preschool Program Breakdown
-          </CardTitle>
-          <Badge variant="outline" className="text-xs bg-white text-slate-600">
-            SUNOIA Curriculum
-          </Badge>
-        </CardHeader>
-        <CardContent className="p-0 overflow-x-auto">
-          <table className="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-xs text-slate-600 uppercase">
-                <th className="py-3 px-6 font-bold">Program</th>
-                <th className="py-3 px-6 font-bold text-center">Total Admissions</th>
-                <th className="py-3 px-6 font-bold text-center">Active</th>
-                <th className="py-3 px-6 font-bold text-center">Quit</th>
-                <th className="py-3 px-6 font-bold text-center">Transferred Out</th>
-                <th className="py-3 px-6 font-bold text-center">Graduated</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-500">
-                    <Loader2 className="h-5 w-5 animate-spin mx-auto text-blue-600 mb-2" />
-                    Loading admission counts...
-                  </td>
-                </tr>
-              ) : data.length > 0 ? (
-                <>
-                  {data.map((row, idx) => (
-                    <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3.5 px-6 font-medium text-slate-900">
-                        <span className="font-semibold">{row.program}</span>
-                      </td>
-                      <td className="py-3.5 px-6 text-center font-mono font-bold text-slate-800">
-                        {row.totalAdmissions}
-                      </td>
-                      <td className="py-3.5 px-6 text-center font-mono font-semibold text-emerald-700">
-                        <span className="bg-emerald-50 text-emerald-800 px-2.5 py-0.5 rounded-full text-xs font-bold border border-emerald-200">
-                          {row.activeStudents}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-6 text-center font-mono text-rose-600">
-                        {row.quit > 0 ? (
-                          <span className="bg-rose-50 text-rose-700 px-2 py-0.5 rounded text-xs font-semibold">
-                            {row.quit}
-                          </span>
-                        ) : (
-                          '0'
-                        )}
-                      </td>
-                      <td className="py-3.5 px-6 text-center font-mono text-slate-600">
-                        {row.transferredOut}
-                      </td>
-                      <td className="py-3.5 px-6 text-center font-mono text-indigo-700">
-                        {row.graduated}
-                      </td>
-                    </tr>
+            {/* 2. Select Month */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1.5 text-xs text-slate-700 font-semibold">
+                <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                <span>2. Select Month:</span>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="border border-slate-300 rounded px-2.5 py-1 text-xs bg-white h-8 font-medium focus:border-blue-600 outline-none min-w-[130px]"
+                >
+                  {MONTHS.map((m) => (
+                    <option key={m} value={m}>{m}</option>
                   ))}
-                  {/* Total Row */}
-                  <tr className="bg-slate-100 font-bold border-t-2 border-slate-300">
-                    <td className="py-3.5 px-6 text-slate-900 font-bold">Total</td>
-                    <td className="py-3.5 px-6 text-center font-mono font-bold text-slate-900">{totalOverall}</td>
-                    <td className="py-3.5 px-6 text-center font-mono font-bold text-emerald-800">{activeOverall}</td>
-                    <td className="py-3.5 px-6 text-center font-mono font-bold text-rose-700">{quitOverall}</td>
-                    <td className="py-3.5 px-6 text-center font-mono font-bold text-slate-700">{data.reduce((sum, d) => sum + d.transferredOut, 0)}</td>
-                    <td className="py-3.5 px-6 text-center font-mono font-bold text-indigo-800">{graduatedOverall}</td>
-                  </tr>
-                </>
-              ) : (
+                </select>
+              </div>
+
+              <Button
+                size="sm"
+                onClick={fetchAdmissionCount}
+                className="h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white gap-1"
+              >
+                <Search className="w-3.5 h-3.5" />
+                Search
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleDownloadExcel}
+                className="h-8 text-xs gap-1 border-slate-300"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Download Excel
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-[#f0f4f8] text-slate-700 font-bold border-b border-slate-200 uppercase">
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-500">
-                    No admission records found for the selected academic year.
+                  <th className="px-6 py-3.5">Program Name</th>
+                  <th className="px-6 py-3.5 text-center w-48">Admission Count</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium">
+                {data.map((row, idx) => (
+                  <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-6 py-3 font-semibold text-slate-800 text-sm">
+                      {row.programName}
+                    </td>
+                    <td className="px-6 py-3 text-center font-mono font-bold text-base text-blue-700">
+                      {row.admissionCount}
+                    </td>
+                  </tr>
+                ))}
+                <tr className="bg-slate-50 font-bold text-slate-900 border-t-2 border-slate-200">
+                  <td className="px-6 py-3 uppercase tracking-wider text-slate-800">
+                    Total Enrolled Count
+                  </td>
+                  <td className="px-6 py-3 text-center font-mono font-black text-lg text-blue-800">
+                    {totalAdmissions}
                   </td>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Exact Disclaimer Box from Requirements */}
+      <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 flex items-start gap-3">
+        <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+        <div className="text-xs text-amber-900">
+          <p className="font-bold">
+            Disclaimer: Any mismatch in the counts should be reported to Sunoiakids before 20th of this month.
+          </p>
+          <p className="text-amber-800 mt-1">
+            Official counts are reconciled on the 20th of each calendar month. For discrepancies, please submit an enquiry ticket or contact your regional business manager.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

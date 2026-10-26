@@ -74,6 +74,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
         if (data.data.refreshToken) {
           localStorage.setItem('refreshToken', data.data.refreshToken);
         }
+        if (data.data.csrfToken) {
+          localStorage.setItem('csrfToken', data.data.csrfToken);
+        }
         set({ user: data.data.user, isAuthenticated: true, isLoading: false });
         showToast(`Welcome back, ${data.data.user?.firstName || username}!`, 'success');
       } else {
@@ -99,6 +102,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
         if (data.data.refreshToken) {
           localStorage.setItem('refreshToken', data.data.refreshToken);
         }
+        if (data.data.csrfToken) {
+          localStorage.setItem('csrfToken', data.data.csrfToken);
+        }
         set({ user: data.data.user, isAuthenticated: true, isLoading: false });
         showToast('Account created successfully! Welcome to SEMS.', 'success');
       } else {
@@ -116,9 +122,14 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   logout: async () => {
-    try { await authApi.logout(); } catch {}
+    try {
+      await authApi.logout();
+    } catch (err) {
+      console.warn('Server logout call failed or session already expired:', err);
+    }
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('csrfToken');
     set({ user: null, isAuthenticated: false, isLoading: false });
     showToast('Logged out successfully', 'info');
   },
@@ -131,16 +142,22 @@ export const useAuthStore = create<AuthStore>((set) => ({
     if (!token && refreshToken) {
       try {
         const { data } = await authApi.refresh();
-        if (data.success && data.data?.accessToken) {
-          const newToken = data.data.accessToken;
-          token = newToken;
-          localStorage.setItem('accessToken', newToken);
+        if (data.success && data.data.accessToken) {
+          token = data.data.accessToken;
+          localStorage.setItem('accessToken', data.data.accessToken);
           if (data.data.refreshToken) {
             localStorage.setItem('refreshToken', data.data.refreshToken);
           }
+          if (data.data.csrfToken) {
+            localStorage.setItem('csrfToken', data.data.csrfToken);
+          }
         }
-      } catch {
-        // Refresh token invalid/expired
+      } catch (err) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('csrfToken');
+        set({ user: null, isAuthenticated: false, isLoading: false });
+        return;
       }
     }
 

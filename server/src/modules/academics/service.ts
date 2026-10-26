@@ -1,10 +1,12 @@
-import prisma from '../../config/database';
+import { PrismaClient } from '@prisma/client';
 import { 
   CreateSubjectInput, 
   CreateExamInput, 
   CreateAssessmentInput, 
   MarksEntryInput 
 } from './schema';
+
+const prisma = new PrismaClient();
 
 export class AcademicsService {
   async createSubject(schoolId: string, data: CreateSubjectInput) {
@@ -19,10 +21,10 @@ export class AcademicsService {
     });
   }
 
-  async getSubjects(schoolId?: string, programId?: string) {
+  async getSubjects(schoolId: string, programId?: string) {
     return prisma.subject.findMany({
       where: {
-        ...(schoolId && { schoolId }),
+        schoolId,
         ...(programId && { programId }),
       },
       include: {
@@ -43,10 +45,10 @@ export class AcademicsService {
     });
   }
 
-  async getExams(schoolId?: string, academicYearId?: string) {
+  async getExams(schoolId: string, academicYearId?: string) {
     return prisma.exam.findMany({
       where: {
-        ...(schoolId && { schoolId }),
+        schoolId,
         ...(academicYearId && { academicYearId }),
       },
       orderBy: { startDate: 'desc' }

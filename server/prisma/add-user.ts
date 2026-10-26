@@ -17,7 +17,7 @@ async function main() {
     data: { name: 'SEMS-Yavatmal-Arni', code: 'SEMS-Yavatmal-Arni' }
   });
 
-  const passwordHash = await bcrypt.hash('Euro@7474', 12);
+  const passwordHash = await bcrypt.hash('Sunoia@7474', 12);
 
   const user = await prisma.user.upsert({
     where: { username: 'Rahul.Khandale' },
@@ -37,7 +37,7 @@ async function main() {
     },
   });
 
-  console.log(`✅ Created/Updated user: ${user.username} with password 'Euro@7474' and linked to school ${school.name}`);
+  console.log(`✅ Created/Updated user: ${user.username} with password 'Sunoia@7474' and linked to school ${school.name}`);
 }
 
 main()

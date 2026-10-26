@@ -43,7 +43,7 @@ const navigation: NavItem[] = [
     children: [
       { label: 'Enquiry', href: '/enquiries' },
       { label: 'Admission', href: '/admissions' },
-      { label: 'Graduation via Homebuddy', href: '/graduation/homebuddy' },
+      { label: 'Graduation via HomeSunny', href: '/graduation/homebuddy' },
       { label: 'Manage Transfers', href: '/transfers' },
       { label: 'Quit Admission', href: '/quit' },
       { label: 'Transfer Out', href: '/transfer-out' },
@@ -67,7 +67,7 @@ const navigation: NavItem[] = [
       { label: 'Convert Cash to Online', href: '/fees/cash-to-online' },
       { label: 'Print & View Deposit Slip', href: '/fees/deposit-history' },
       { label: 'Funds Transfer Summary', href: '/fees/funds-transfer' },
-      { label: 'Fee Collection through Homebuddy', href: '/fees/homebuddy' },
+      { label: 'Fee Collection through HomeSunny', href: '/fees/homebuddy' },
       { label: 'Online Payment Detail', href: '/fees/online-payments' },
     ],
   },

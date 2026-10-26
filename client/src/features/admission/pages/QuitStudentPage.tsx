@@ -42,11 +42,40 @@ export default function QuitStudentPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto pb-12 pt-2 space-y-4">
-      <h1 className="text-2xl font-normal text-slate-800 mb-4">Quit Student</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-normal text-slate-800">Quit Student Management</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Process and track student dropouts, relocations, and admissions cancellation</p>
+        </div>
+      </div>
+
+      {/* Quit Dashboard Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-white border border-slate-200 p-3 shadow-sm rounded-sm">
+          <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-1">Total Quits</div>
+          <div className="text-2xl font-bold text-slate-700">12</div>
+          <div className="mt-2 h-1 w-full bg-blue-500 rounded"></div>
+        </div>
+        <div className="bg-white border border-slate-200 p-3 shadow-sm rounded-sm">
+          <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-1">Relocations</div>
+          <div className="text-2xl font-bold text-amber-600">5</div>
+          <div className="mt-2 h-1 w-full bg-amber-500 rounded"></div>
+        </div>
+        <div className="bg-white border border-slate-200 p-3 shadow-sm rounded-sm">
+          <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-1">School Admission</div>
+          <div className="text-2xl font-bold text-purple-600">4</div>
+          <div className="mt-2 h-1 w-full bg-purple-500 rounded"></div>
+        </div>
+        <div className="bg-white border border-slate-200 p-3 shadow-sm rounded-sm">
+          <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-1">Duplicate Entries</div>
+          <div className="text-2xl font-bold text-slate-600">3</div>
+          <div className="mt-2 h-1 w-full bg-slate-400 rounded"></div>
+        </div>
+      </div>
 
       <div className="bg-white border border-slate-300 shadow-sm rounded-sm p-4">
         <div className="bg-[#f2f2f2] px-4 py-2 border border-slate-300 border-b-0 rounded-t-sm flex items-center">
-          <span className="font-semibold text-[13px] text-slate-700">≡ Quit Student</span>
+          <span className="font-semibold text-[13px] text-slate-700">≡ Quit Student Form</span>
         </div>
 
         <div className="border border-slate-300 p-6">

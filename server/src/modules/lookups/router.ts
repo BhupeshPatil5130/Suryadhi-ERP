@@ -24,11 +24,6 @@ router.get('/schools', async (_req, res, next) => {
 router.get('/programs', async (_req, res, next) => {
   try {
     const programs = await prisma.program.findMany({
-      where: {
-        NOT: {
-          name: { contains: 'Euro', mode: 'insensitive' }
-        }
-      },
       orderBy: { sortOrder: 'asc' },
       select: { id: true, name: true, shortName: true },
     });
@@ -206,10 +201,9 @@ router.get('/batches', optionalAuth, async (req, res, next) => {
     const batches = await prisma.batch.findMany({
       where: {
         ...(programId && { programId: programId as string }),
-        ...(effectiveSchoolId && { schoolId: effectiveSchoolId }),
+        ...(schoolId && { schoolId: schoolId as string }),
       },
       select: { id: true, timeSlot: true, capacity: true, program: { select: { name: true } } },
-      orderBy: { timeSlot: 'asc' },
     });
 
     // Normalize any legacy timeSlot labels to Morning Shift / Evening Shift

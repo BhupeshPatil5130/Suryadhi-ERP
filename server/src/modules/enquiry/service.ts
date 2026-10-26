@@ -1,12 +1,12 @@
 import prisma from '../../config/database';
 import { AppError } from '../../middleware/errorHandler';
-import { createAuditLog } from '../../utils/helpers';
+import { createAuditLog, getNextSequenceNumber } from '../../utils/helpers';
 import {
   CreateEnquiryInput,
   UpdateEnquiryInput,
   EnquiryFollowUpInput,
   EnquiryListQuery,
-  EnquiryReceiptInput,
+  AdvanceReceiptInput,
 } from './schema';
 
 export class EnquiryService {
@@ -41,36 +41,22 @@ export class EnquiryService {
       ];
     }
 
-    const orderBy: any = {};
-    orderBy[query.sortBy || 'createdAt'] = query.sortOrder || 'desc';
-
     const [enquiries, total] = await Promise.all([
       prisma.enquiry.findMany({
         where,
-        skip,
-        take: limit,
-        orderBy,
         include: {
-          student: {
-            select: {
-              id: true,
-              firstName: true,
-              middleName: true,
-              lastName: true,
-              dateOfBirth: true,
-              gender: true,
-            },
-          },
-          program: {
-            select: { id: true, name: true, shortName: true },
-          },
-          mediaSource: {
-            select: { id: true, name: true },
-          },
-          _count: {
-            select: { followUps: true },
+          student: true,
+          program: true,
+          academicYear: true,
+          mediaSource: true,
+          followUps: {
+            orderBy: { contactDate: 'desc' },
+            take: 1,
           },
         },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
       }),
       prisma.enquiry.count({ where }),
     ]);
@@ -84,11 +70,17 @@ export class EnquiryService {
         totalPages: Math.ceil(total / limit),
         hasMore: skip + limit < total,
       },
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 
   /**
-   * Get single enquiry by ID
+   * Get an enquiry by ID with related records
    */
   async getById(id: string, schoolId: string) {
     const enquiry = await prisma.enquiry.findFirst({
@@ -115,39 +107,42 @@ export class EnquiryService {
   }
 
   /**
-   * Create a new enquiry with student record
+   * Create a new enquiry with student record inside a transaction
    */
   async create(schoolId: string, input: CreateEnquiryInput, userId: string) {
-    // Create or find student
-    const student = await prisma.student.create({
-      data: {
-        firstName: input.studentFirstName,
-        middleName: input.studentMiddleName || null,
-        lastName: input.studentLastName,
-        dateOfBirth: new Date(input.dateOfBirth),
-        gender: input.gender as any,
-      },
-    });
+    const enquiry = await prisma.$transaction(async (tx) => {
+      // Create student record
+      const student = await tx.student.create({
+        data: {
+          firstName: input.studentFirstName,
+          middleName: input.studentMiddleName || null,
+          lastName: input.studentLastName,
+          dateOfBirth: new Date(input.dateOfBirth),
+          gender: input.gender as any,
+        },
+      });
 
-    const enquiry = await prisma.enquiry.create({
-      data: {
-        enquirerName: input.enquirerName,
-        enquirerMobile: input.enquirerMobile,
-        enquirerEmail: input.enquirerEmail || null,
-        enquirerAddress: input.enquirerAddress,
-        hasSibling: input.hasSibling,
-        isTrialClass: input.isTrialClass,
-        stage: 'NEW',
-        studentId: student.id,
-        programId: input.programId,
-        academicYearId: input.academicYearId,
-        mediaSourceId: input.mediaSourceId || null,
-        schoolId,
-      },
-      include: {
-        student: true,
-        program: true,
-      },
+      // Create enquiry record linked to student
+      return await tx.enquiry.create({
+        data: {
+          enquirerName: input.enquirerName,
+          enquirerMobile: input.enquirerMobile,
+          enquirerEmail: input.enquirerEmail || null,
+          enquirerAddress: input.enquirerAddress,
+          hasSibling: input.hasSibling,
+          isTrialClass: input.isTrialClass,
+          stage: 'NEW',
+          studentId: student.id,
+          programId: input.programId,
+          academicYearId: input.academicYearId,
+          mediaSourceId: input.mediaSourceId || null,
+          schoolId,
+        },
+        include: {
+          student: true,
+          program: true,
+        },
+      });
     });
 
     await createAuditLog({
@@ -218,16 +213,22 @@ export class EnquiryService {
   /**
    * Add a follow-up entry to an enquiry
    */
-  async addFollowUp(enquiryId: string, schoolId: string, input: EnquiryFollowUpInput, userId: string) {
+  async addFollowUp(enquiryId: string, schoolId: string, input: any, userId: string) {
     // Verify enquiry exists
     await this.getById(enquiryId, schoolId);
+
+    const contactDate = input.contactDate ? new Date(input.contactDate) : new Date();
+    const nextDate = input.nextFollowUp || input.followUpDate;
+    const nextFollowUp = nextDate ? new Date(nextDate) : null;
+    const notes = input.notes || input.comment || '';
+    const newStage = input.stage || 'FOLLOW_UP';
 
     const followUp = await prisma.enquiryFollowUp.create({
       data: {
         enquiryId,
-        contactDate: new Date(input.contactDate),
-        nextFollowUp: input.nextFollowUp ? new Date(input.nextFollowUp) : null,
-        notes: input.notes,
+        contactDate,
+        nextFollowUp,
+        notes,
         contactedBy: input.contactedBy || userId,
       },
     });
@@ -236,9 +237,10 @@ export class EnquiryService {
     await prisma.enquiry.update({
       where: { id: enquiryId },
       data: {
-        lastContacted: new Date(input.contactDate),
-        nextFollowUp: input.nextFollowUp ? new Date(input.nextFollowUp) : null,
-        stage: 'FOLLOW_UP',
+        lastContacted: contactDate,
+        nextFollowUp,
+        stage: newStage as any,
+        subStage: input.subStage || undefined,
       },
     });
 
@@ -287,10 +289,10 @@ export class EnquiryService {
    * Delete enquiry (soft delete)
    */
   async delete(id: string, schoolId: string, userId: string) {
-    await this.getById(id, schoolId);
+    const enquiry = await this.getById(id, schoolId);
 
-    await prisma.enquiry.update({
-      where: { id },
+    const deleted = await prisma.enquiry.update({
+      where: { id: enquiry.id },
       data: { deletedAt: new Date() },
     });
 
@@ -299,47 +301,38 @@ export class EnquiryService {
       action: 'DELETE',
       entity: 'Enquiry',
       entityId: id,
+      oldValue: enquiry,
     });
+
+    return deleted;
   }
 
   /**
-   * Get advance receipts for an enquiry
+   * Create an advance receipt for an enquiry
    */
-  async getReceipts(enquiryId: string, schoolId: string) {
+  async createAdvanceReceipt(enquiryId: string, schoolId: string, input: AdvanceReceiptInput, userId: string) {
+    // Verify enquiry exists and belongs to school
     await this.getById(enquiryId, schoolId);
 
-    const receipts = await prisma.advanceReceipt.findMany({
-      where: { enquiryId },
-      orderBy: { receiptDate: 'desc' },
-    });
+    const receipt = await prisma.$transaction(async (tx) => {
+      // Generate receipt number atomically
+      const receiptNumber = await getNextSequenceNumber('ADV', schoolId, tx, 6);
 
-    return receipts;
-  }
+      const created = await tx.advanceReceipt.create({
+        data: {
+          enquiryId,
+          amount: input.amount,
+          paymentMode: input.paymentMode as any,
+          receiptNumber,
+          receiptDate: input.receiptDate ? new Date(input.receiptDate) : new Date(),
+          bankName: input.bankName || null,
+          chequeNumber: input.chequeNumber || null,
+          chequeDate: input.chequeDate ? new Date(input.chequeDate) : null,
+          notes: input.notes || null,
+        },
+      });
 
-  /**
-   * Add advance receipt to an enquiry
-   */
-  async addReceipt(enquiryId: string, schoolId: string, input: EnquiryReceiptInput, userId: string) {
-    await this.getById(enquiryId, schoolId);
-
-    const count = await prisma.advanceReceipt.count({
-      where: { enquiry: { schoolId } },
-    });
-    const schoolCode = schoolId.slice(-4).toUpperCase();
-    const receiptNumber = `SK/${schoolCode}/REC/${String(count + 1).padStart(4, '0')}`;
-
-    const receipt = await prisma.advanceReceipt.create({
-      data: {
-        enquiryId,
-        amount: input.amount,
-        paymentMode: input.paymentMode as any,
-        receiptNumber,
-        receiptDate: input.receiptDate ? new Date(input.receiptDate) : new Date(),
-        bankName: input.bankName || null,
-        chequeNumber: input.chequeNumber || null,
-        chequeDate: input.chequeDate ? new Date(input.chequeDate) : null,
-        notes: input.notes || null,
-      },
+      return created;
     });
 
     await createAuditLog({
@@ -351,6 +344,21 @@ export class EnquiryService {
     });
 
     return receipt;
+  }
+
+  /**
+   * Get all advance receipts for an enquiry
+   */
+  async getAdvanceReceipts(enquiryId: string, schoolId: string) {
+    // Verify enquiry exists and belongs to school
+    await this.getById(enquiryId, schoolId);
+
+    const receipts = await prisma.advanceReceipt.findMany({
+      where: { enquiryId },
+      orderBy: { receiptDate: 'desc' },
+    });
+
+    return receipts;
   }
 }
 

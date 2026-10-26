@@ -1,1 +1,3 @@
-export { default } from '@/features/enquiry/pages/ConvertToAdmissionPage';
+import ConvertToAdmissionPage from '@/features/enquiry/pages/ConvertToAdmissionPage';
+
+export default ConvertToAdmissionPage;

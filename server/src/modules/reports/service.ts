@@ -63,8 +63,8 @@ export class ReportsService {
     });
 
     const dueData = invoices
-      .map((inv) => {
-        const totalPaid = inv.receipts.reduce((sum, r) => sum + Number(r.amount), 0);
+      .map((inv: any) => {
+        const totalPaid = inv.receipts.reduce((sum: number, r: any) => sum + Number(r.amount), 0);
         const balance = Number(inv.netAmount) - totalPaid;
         return {
           student: inv.admission.student,
@@ -75,7 +75,7 @@ export class ReportsService {
           balance,
         };
       })
-      .filter((d) => d.balance > 0);
+      .filter((d: any) => d.balance > 0);
 
     return { data: dueData, total: dueData.length };
   }
@@ -129,7 +129,7 @@ export class ReportsService {
       orderBy: { receiptDate: 'desc' },
     });
 
-    const totalAmount = receipts.reduce((sum, r) => sum + Number(r.amount), 0);
+    const totalAmount = receipts.reduce((sum: number, r: any) => sum + Number(r.amount), 0);
     return { data: receipts, total: receipts.length, totalAmount };
   }
 
@@ -153,32 +153,10 @@ export class ReportsService {
   async getAdmissionCount(schoolId: string, filters: any) {
     const { academicYearId } = filters;
     const yearFilter: any = academicYearId ? { academicYearId } : {};
-    // Automatically migrate any legacy Euro programs if found
-    const hasEuro = await prisma.program.findFirst({
-      where: {
-        OR: [
-          { name: { contains: 'Euro', mode: 'insensitive' } },
-          { name: 'Euro Junior' },
-          { name: 'Euro Senior' },
-        ],
-      },
-    });
-    if (hasEuro) {
-      const { migrateLegacyEuroPrograms } = await import('../../utils/cleanup-programs');
-      await migrateLegacyEuroPrograms(prisma);
-    }
-
-    const programs = await prisma.program.findMany({
-      where: {
-        NOT: {
-          name: { contains: 'Euro', mode: 'insensitive' }
-        }
-      },
-      orderBy: { sortOrder: 'asc' }
-    });
+    const programs = await prisma.program.findMany({ orderBy: { sortOrder: 'asc' } });
 
     const data = await Promise.all(
-      programs.map(async (program) => {
+      programs.map(async (program: any) => {
         const [total, active, quit, transferOut, graduated] = await Promise.all([
           prisma.admission.count({ where: { schoolId, programId: program.id, deletedAt: null, ...yearFilter } }),
           prisma.admission.count({ where: { schoolId, programId: program.id, status: 'ACTIVE', deletedAt: null, ...yearFilter } }),
@@ -195,33 +173,10 @@ export class ReportsService {
   async getEnquiryCount(schoolId: string, filters: any) {
     const { academicYearId } = filters;
     const yearFilter: any = academicYearId ? { academicYearId } : {};
-    
-    // Automatically migrate any legacy Euro programs if found
-    const hasEuro = await prisma.program.findFirst({
-      where: {
-        OR: [
-          { name: { contains: 'Euro', mode: 'insensitive' } },
-          { name: 'Euro Junior' },
-          { name: 'Euro Senior' },
-        ],
-      },
-    });
-    if (hasEuro) {
-      const { migrateLegacyEuroPrograms } = await import('../../utils/cleanup-programs');
-      await migrateLegacyEuroPrograms(prisma);
-    }
-
-    const programs = await prisma.program.findMany({
-      where: {
-        NOT: {
-          name: { contains: 'Euro', mode: 'insensitive' }
-        }
-      },
-      orderBy: { sortOrder: 'asc' }
-    });
+    const programs = await prisma.program.findMany({ orderBy: { sortOrder: 'asc' } });
 
     const data = await Promise.all(
-      programs.map(async (program) => {
+      programs.map(async (program: any) => {
         const count = await prisma.enquiry.count({ where: { schoolId, programId: program.id, deletedAt: null, ...yearFilter } });
         return { program: { id: program.id, name: program.name, shortName: program.shortName }, count };
       })

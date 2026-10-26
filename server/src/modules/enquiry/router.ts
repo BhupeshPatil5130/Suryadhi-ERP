@@ -6,7 +6,7 @@ import {
   updateEnquirySchema,
   enquiryFollowUpSchema,
   enquiryListQuerySchema,
-  enquiryReceiptSchema,
+  advanceReceiptSchema,
 } from './schema';
 
 const router = Router();
@@ -24,17 +24,6 @@ router.get(
 
 // GET /api/enquiries/:id
 router.get('/:id', (req, res, next) => enquiryController.getById(req, res, next));
-
-// GET /api/enquiries/:id/receipts
-router.get('/:id/receipts', (req, res, next) => enquiryController.getReceipts(req, res, next));
-
-// POST /api/enquiries/:id/receipts
-router.post(
-  '/:id/receipts',
-  authorize('SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER'),
-  validate(enquiryReceiptSchema),
-  (req, res, next) => enquiryController.addReceipt(req, res, next)
-);
 
 // POST /api/enquiries
 router.post(
@@ -60,19 +49,25 @@ router.post(
   (req, res, next) => enquiryController.addFollowUp(req, res, next)
 );
 
-// POST /api/enquiries/:id/follow-ups (alias)
-router.post(
-  '/:id/follow-ups',
-  authorize('SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER'),
-  validate(enquiryFollowUpSchema),
-  (req, res, next) => enquiryController.addFollowUp(req, res, next)
-);
-
 // POST /api/enquiries/:id/convert
 router.post(
   '/:id/convert',
   authorize('SUPER_ADMIN', 'SCHOOL_ADMIN'),
   (req, res, next) => enquiryController.convert(req, res, next)
+);
+
+// GET /api/enquiries/:id/receipts & /api/enquiries/:id/advance-receipts
+router.get(
+  ['/:id/receipts', '/:id/advance-receipts'],
+  (req, res, next) => enquiryController.getAdvanceReceipts(req, res, next)
+);
+
+// POST /api/enquiries/:id/receipts & /api/enquiries/:id/advance-receipts
+router.post(
+  ['/:id/receipts', '/:id/advance-receipts'],
+  authorize('SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER'),
+  validate(advanceReceiptSchema),
+  (req, res, next) => enquiryController.createAdvanceReceipt(req, res, next)
 );
 
 // DELETE /api/enquiries/:id

@@ -1,20 +1,10 @@
-import prisma from '../../config/database';
+  import { PrismaClient } from '@prisma/client';
 import { UploadDocumentInput, VerifyDocumentInput } from './schema';
 
-export class StudentService {
-  async uploadDocument(data: UploadDocumentInput, schoolId?: string) {
-    if (schoolId) {
-      const student = await prisma.student.findFirst({
-        where: {
-          id: data.studentId,
-          admissions: { some: { schoolId, deletedAt: null } }
-        }
-      });
-      if (!student) {
-        throw new Error('Student not found or does not belong to this school');
-      }
-    }
+const prisma = new PrismaClient();
 
+export class StudentService {
+  async uploadDocument(data: UploadDocumentInput) {
     return prisma.studentDocument.create({
       data: {
         studentId: data.studentId,
@@ -24,52 +14,23 @@ export class StudentService {
     });
   }
 
-  async getDocuments(studentId: string, schoolId?: string) {
-    if (schoolId) {
-      const student = await prisma.student.findFirst({
-        where: {
-          id: studentId,
-          admissions: { some: { schoolId, deletedAt: null } }
-        }
-      });
-      if (!student) {
-        throw new Error('Student not found or does not belong to this school');
-      }
-    }
-
+  async getDocuments(studentId: string) {
     return prisma.studentDocument.findMany({
       where: { studentId },
       orderBy: { uploadedAt: 'desc' }
     });
   }
 
-  async verifyDocument(documentId: string, data: VerifyDocumentInput, schoolId?: string) {
-    if (schoolId) {
-      const doc = await prisma.studentDocument.findFirst({
-        where: {
-          id: documentId,
-          student: { admissions: { some: { schoolId, deletedAt: null } } }
-        }
-      });
-      if (!doc) {
-        throw new Error('Document not found or access denied');
-      }
-    }
-
+  async verifyDocument(documentId: string, data: VerifyDocumentInput) {
     return prisma.studentDocument.update({
       where: { id: documentId },
       data: { verified: data.verified }
     });
   }
 
-  async getStudentProfile(studentId: string, schoolId?: string) {
-    const where: any = { id: studentId };
-    if (schoolId) {
-      where.admissions = { some: { schoolId, deletedAt: null } };
-    }
-
-    return prisma.student.findFirst({
-      where,
+  async getStudentProfile(studentId: string) {
+    return prisma.student.findUnique({
+      where: { id: studentId },
       include: {
         parent: true,
         admissions: {

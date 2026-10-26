@@ -6,35 +6,7 @@ import { config } from '../../config';
 import { AppError } from '../../middleware/errorHandler';
 import { createAuditLog } from '../../utils/helpers';
 import { LoginInput, SignupInput, UpdateProfileInput, CreateUserInput, UpdateUserInput } from './schema';
-import fs from 'fs';
-import path from 'path';
 
-const PROFILES_FILE_PATH = path.join(__dirname, '../../data/user-profiles.json');
-
-function readProfiles() {
-  try {
-    if (!fs.existsSync(PROFILES_FILE_PATH)) {
-      return {};
-    }
-    const content = fs.readFileSync(PROFILES_FILE_PATH, 'utf-8');
-    return JSON.parse(content || '{}');
-  } catch (error) {
-    console.error('Error reading profiles JSON:', error);
-    return {};
-  }
-}
-
-function writeProfiles(profiles: any) {
-  try {
-    const dir = path.dirname(PROFILES_FILE_PATH);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(PROFILES_FILE_PATH, JSON.stringify(profiles, null, 2), 'utf-8');
-  } catch (error) {
-    console.error('Error writing profiles JSON:', error);
-  }
-}
 
 export class AuthService {
   /**
@@ -58,16 +30,10 @@ export class AuthService {
     });
 
     if (!user) {
-      console.log('User not found for input:', input.username);
       throw new AppError('Invalid credentials', 401);
     }
 
-    console.log('User found:', user.username);
-    console.log('Provided password length:', input.password.length);
-    console.log('Stored hash length:', user.passwordHash.length);
-    
     const isPasswordValid = await bcrypt.compare(input.password, user.passwordHash);
-    console.log('isPasswordValid:', isPasswordValid);
     if (!isPasswordValid) {
       throw new AppError('Invalid credentials', 401);
     }
@@ -256,6 +222,7 @@ export class AuthService {
         phone: true,
         role: true,
         lastLoginAt: true,
+        profileData: true,
         school: {
           select: { id: true, name: true, code: true },
         },
@@ -266,12 +233,10 @@ export class AuthService {
       throw new AppError('User not found', 404);
     }
 
-    const profiles = readProfiles();
-    const extendedProfile = profiles[userId] || {};
-
+    const { profileData, ...rest } = user;
     return {
-      ...user,
-      profileInfo: extendedProfile,
+      ...rest,
+      profileInfo: (profileData as Record<string, unknown>) ?? {},
     };
   }
 
@@ -374,13 +339,12 @@ export class AuthService {
       updateData.passwordHash = await bcrypt.hash(newPassword, 12);
     }
 
-    // Save extended profile fields to JSON file
-    const profiles = readProfiles();
-    profiles[userId] = {
-      ...(profiles[userId] || {}),
-      ...extendedData,
-    };
-    writeProfiles(profiles);
+    // Merge new extended fields into the existing profileData JSONB column atomically.
+    // Avoids the race conditions inherent in the old read-modify-write JSON file approach.
+    if (Object.keys(extendedData).length > 0) {
+      const existing = (user as any).profileData as Record<string, unknown> | null;
+      updateData.profileData = { ...(existing ?? {}), ...extendedData };
+    }
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
@@ -393,15 +357,17 @@ export class AuthService {
         lastName: true,
         phone: true,
         role: true,
+        profileData: true,
         school: {
           select: { id: true, name: true, code: true },
         },
       },
     });
 
+    const { profileData, ...rest } = updatedUser;
     return {
-      ...updatedUser,
-      profileInfo: profiles[userId] || {},
+      ...rest,
+      profileInfo: (profileData as Record<string, unknown>) ?? {},
     };
   }
 

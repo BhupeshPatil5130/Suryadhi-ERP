@@ -207,7 +207,7 @@ export default function EnrollmentSummaryPage() {
               )}
             >
               <Sparkles className="w-3.5 h-3.5 text-blue-500" />
-              LSQ Form
+              LeadSuryadhi Form
             </button>
           </div>
           <Select value={academicYear} onValueChange={setAcademicYear}>
@@ -312,7 +312,7 @@ export default function EnrollmentSummaryPage() {
             <CardHeader className="border-b border-border/50">
               <CardTitle className="text-base font-bold flex items-center gap-2 text-blue-600">
                 <Sparkles className="w-4 h-4" />
-                Register LSQ Lead
+                Register LeadSuryadhi Lead
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
@@ -477,7 +477,7 @@ export default function EnrollmentSummaryPage() {
             <CardHeader className="border-b border-border/50 flex flex-row items-center justify-between py-4">
               <CardTitle className="text-base font-bold flex items-center gap-2">
                 <ListFilter className="w-4 h-4 text-slate-500" />
-                LSQ Leads Registry
+                LeadSuryadhi Leads Registry
               </CardTitle>
               <Badge variant="outline" className="text-xs bg-slate-100">{lsqLeads.length} Registered Leads</Badge>
             </CardHeader>
@@ -505,7 +505,7 @@ export default function EnrollmentSummaryPage() {
                       </tr>
                     ) : lsqLeads.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="p-8 text-center text-muted-foreground">No LSQ Leads registered yet.</td>
+                        <td colSpan={7} className="p-8 text-center text-muted-foreground">No LeadSuryadhi Leads registered yet.</td>
                       </tr>
                     ) : (
                       lsqLeads.map((lead) => (

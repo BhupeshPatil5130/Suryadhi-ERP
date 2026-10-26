@@ -21,6 +21,7 @@ const EnquiryFollowUpPage = lazy(() => import('@/features/enquiry/pages/EnquiryF
 const ConvertToAdmissionPage = lazy(() => import('@/features/enquiry/pages/ConvertToAdmissionPage'));
 const ViewReceiptPage = lazy(() => import('@/features/enquiry/pages/ViewReceiptPage'));
 const EnquiryAddReceiptPage = lazy(() => import('@/features/enquiry/pages/AddReceiptPage'));
+const LSQEnquiryDetailsPage = lazy(() => import('@/features/enquiry/pages/LSQEnquiryDetailsPage'));
 
 // Admission
 const AdmissionListPage = lazy(() => import('@/features/admission/pages/AdmissionListPage'));
@@ -61,12 +62,15 @@ const OnlinePaymentsPage = lazy(() => import('@/features/fees/pages/OnlinePaymen
 const AddReceiptPage = lazy(() => import('@/features/fees/pages/AddReceiptPage'));
 const PrintReceiptPage = lazy(() => import('@/features/fees/pages/PrintReceiptPage'));
 const FeeCalculatorPage = lazy(() => import('@/features/fees/pages/FeeCalculatorPage'));
+const FeeRateCardPage = lazy(() => import('@/features/fees/pages/FeeRateCardPage'));
 
 // Operations
 const ProgramChangePage = lazy(() => import('@/features/operations/pages/ProgramChangePage'));
 const PurchaseOrderPage = lazy(() => import('@/features/operations/pages/PurchaseOrderPage'));
 const ExchangeOrdersPage = lazy(() => import('@/features/operations/pages/ExchangeOrdersPage'));
 const ReportShortageDamagePage = lazy(() => import('@/features/operations/pages/ReportShortageDamagePage'));
+
+const DownloadShortageReportPage = lazy(() => import('@/features/operations/pages/DownloadShortageReportPage'));
 
 // Franchisee
 const ViewInvoicePage = lazy(() => import('@/features/franchisee/pages/ViewInvoicePage'));
@@ -80,9 +84,17 @@ const VideoLibraryPage = lazy(() => import('@/features/video/pages/VideoLibraryP
 const HelpdeskSupportPage = lazy(() => import('@/features/support/pages/HelpdeskSupportPage'));
 const GenericListPage = lazy(() => import('@/features/shared/pages/GenericListPage'));
 const ManageAcademicYearsPage = lazy(() => import('@/features/shared/pages/ManageAcademicYearsPage'));
+const SystemSettingsPage = lazy(() => import('@/features/shared/pages/SystemSettingsPage'));
 const OnlinePaymentReportPage = lazy(() => import('@/features/reports/pages/OnlinePaymentReportPage'));
 const StudentForecastedRoyaltyReportPage = lazy(() => import('@/features/reports/pages/StudentForecastedRoyaltyReportPage'));
+const AdmissionDetailsReportPage = lazy(() => import('@/features/reports/pages/AdmissionDetailsReportPage'));
+const PaymentDueReportPage = lazy(() => import('@/features/reports/pages/PaymentDueReportPage'));
+const FCRReportPage = lazy(() => import('@/features/reports/pages/FCRReportPage'));
 const AdmissionCountReportPage = lazy(() => import('@/features/reports/pages/AdmissionCountReportPage'));
+const EnquiryDetailsReportPage = lazy(() => import('@/features/reports/pages/EnquiryDetailsReportPage'));
+const LSQReportPage = lazy(() => import('@/features/reports/pages/LSQReportPage'));
+const CancelledReceiptsReportPage = lazy(() => import('@/features/reports/pages/CancelledReceiptsReportPage'));
+const TransferredStudentReportPage = lazy(() => import('@/features/reports/pages/TransferredStudentReportPage'));
 
 const PageLoader = () => (
   <div className="flex h-[50vh] items-center justify-center">
@@ -115,6 +127,7 @@ export default function AppRoutes() {
           <Route path={PATHS.ENQUIRY.CONVERT()} element={<ConvertToAdmissionPage />} />
           <Route path={PATHS.ENQUIRY.RECEIPTS()} element={<ViewReceiptPage />} />
           <Route path={PATHS.ENQUIRY.ADD_RECEIPT()} element={<EnquiryAddReceiptPage />} />
+          <Route path={PATHS.ENQUIRY.LSQ} element={<LSQEnquiryDetailsPage />} />
 
           {/* Admission */}
           <Route path={PATHS.ADMISSION.LIST} element={<AdmissionListPage />} />
@@ -151,7 +164,7 @@ export default function AppRoutes() {
           <Route path={PATHS.OPERATIONS.PURCHASE} element={<PurchaseOrderPage />} />
           <Route path={PATHS.OPERATIONS.EXCHANGE} element={<ExchangeOrdersPage />} />
           <Route path={PATHS.OPERATIONS.SHORTAGE_REPORT} element={<ReportShortageDamagePage />} />
-          <Route path={PATHS.OPERATIONS.SHORTAGE_DOWNLOAD} element={<GenericListPage title="Download Shortage Reports" description="Export history of shortage reports" apiEndpoint="/operations/shortages" />} />
+          <Route path={PATHS.OPERATIONS.SHORTAGE_DOWNLOAD} element={<DownloadShortageReportPage />} />
 
           {/* Accounts & Finance */}
           <Route path={PATHS.SOA.SUMMARY} element={<SOASummaryPage />} />
@@ -164,6 +177,10 @@ export default function AppRoutes() {
           <Route path={PATHS.FEES.FUNDS_TRANSFER} element={<FundsTransferPage />} />
           <Route path={PATHS.FEES.HOMEBUDDY} element={<HomebuddyFeePage />} />
           <Route path={PATHS.FEES.ONLINE_PAYMENTS} element={<OnlinePaymentsPage />} />
+          <Route path="/fees/receipts/:id/print" element={<PrintReceiptPage />} />
+          <Route path="/fees/receipts/:id" element={<PrintReceiptPage />} />
+          <Route path="/fees/receipt/:id/print" element={<PrintReceiptPage />} />
+          <Route path="/fees/receipt/:id" element={<PrintReceiptPage />} />
 
           {/* Franchisee */}
           <Route path={PATHS.FRANCHISEE.INVOICES} element={<ViewInvoicePage />} />
@@ -173,14 +190,14 @@ export default function AppRoutes() {
           <Route path={PATHS.FRANCHISEE.COACH_LIST} element={<CoachListPage />} />
 
           {/* Reports */}
-          <Route path={PATHS.REPORTS.ADMISSIONS} element={<GenericListPage title="Admission Details Report" description="Comprehensive listing of all branch admissions" apiEndpoint="/reports/admissions" />} />
-          <Route path={PATHS.REPORTS.FEE_CARD} element={<GenericListPage title="Fee Card Report" description="Export fee structures and applied discounts" apiEndpoint="/reports/fee-card" />} />
-          <Route path={PATHS.REPORTS.ENQUIRIES} element={<GenericListPage title="Enquiry Details Report" description="Export all enquiry data" apiEndpoint="/reports/enquiries" />} />
-          <Route path={PATHS.REPORTS.LSQ_ENQUIRIES} element={<GenericListPage title="LSQ Enquiry Details" description="Lead squared integrated enquiry exports" apiEndpoint="/reports/lsq-enquiries" />} />
-          <Route path={PATHS.REPORTS.PAYMENT_DUE} element={<GenericListPage title="Payment Due Report" description="Track outstanding balances and defaulters" apiEndpoint="/reports/payment-due" />} />
-          <Route path={PATHS.REPORTS.CANCELLED_RECEIPTS} element={<GenericListPage title="Cancelled Receipts" description="Audit log of all voided financial receipts" apiEndpoint="/reports/cancelled-receipts" />} />
-          <Route path={PATHS.REPORTS.TRANSFERS} element={<GenericListPage title="Transferred Student Report" description="Log of all incoming and outgoing student transfers" apiEndpoint="/reports/transfers" />} />
-          <Route path={PATHS.REPORTS.FCR} element={<GenericListPage title="FCR Report" description="Fee Collection Report analytics" apiEndpoint="/reports/fcr" />} />
+          <Route path={PATHS.REPORTS.ADMISSIONS} element={<AdmissionDetailsReportPage />} />
+          <Route path={PATHS.REPORTS.FEE_CARD} element={<FeeRateCardPage />} />
+          <Route path={PATHS.REPORTS.ENQUIRIES} element={<EnquiryDetailsReportPage />} />
+          <Route path={PATHS.REPORTS.LSQ_ENQUIRIES} element={<LSQReportPage />} />
+          <Route path={PATHS.REPORTS.PAYMENT_DUE} element={<PaymentDueReportPage />} />
+          <Route path={PATHS.REPORTS.CANCELLED_RECEIPTS} element={<CancelledReceiptsReportPage />} />
+          <Route path={PATHS.REPORTS.TRANSFERS} element={<TransferredStudentReportPage />} />
+          <Route path={PATHS.REPORTS.FCR} element={<FCRReportPage />} />
           <Route path={PATHS.REPORTS.ADMISSION_COUNT} element={<AdmissionCountReportPage />} />
           <Route path={PATHS.REPORTS.ONLINE_PAYMENTS} element={<OnlinePaymentReportPage />} />
           <Route path={PATHS.REPORTS.ROYALTY_FORECAST} element={<StudentForecastedRoyaltyReportPage />} />
@@ -189,6 +206,7 @@ export default function AppRoutes() {
           <Route path={PATHS.TOOLS.FEE_CALCULATOR} element={<FeeCalculatorPage />} />
 
           {/* Settings / Admin */}
+          <Route path={PATHS.SETTINGS.SYSTEM} element={<SystemSettingsPage />} />
           <Route path={PATHS.SETTINGS.ACADEMIC_YEARS} element={<ManageAcademicYearsPage />} />
 
           {/* Catch-all */}

@@ -55,6 +55,7 @@ export const createAdmissionSchema = z.object({
 );
 
 export const updateAdmissionSchema = z.object({
+  admissionDate: z.string().refine((val) => !isNaN(Date.parse(val)), 'Valid date required').optional(),
   gender: z.enum(['BOY', 'GIRL']).optional(),
   nationality: z.string().max(100).optional(),
   programId: z.string().optional(),

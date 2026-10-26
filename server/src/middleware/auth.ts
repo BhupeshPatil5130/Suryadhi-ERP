@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import prisma from '../config/database';
+import { redisClient, isRedisReady } from '../config/redis';
 
 export interface JwtPayload {
   userId: string;
@@ -13,6 +14,61 @@ declare global {
   namespace Express {
     interface Request {
       user?: JwtPayload;
+      authMode?: 'bearer' | 'cookie';
+    }
+  }
+}
+
+// In-memory user cache with TTL fallback
+const userMemoryCache = new Map<string, { user: { id: string; role: string; schoolId: string | null }; expiresAt: number }>();
+
+async function getCachedUser(userId: string): Promise<{ id: string; role: string; schoolId: string | null } | null> {
+  // Check Redis if connected
+  if (isRedisReady() && redisClient) {
+    try {
+      const cached = await redisClient.get(`auth:user:${userId}`);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch {
+      // ignore and fallback
+    }
+  }
+
+  // Memory fallback
+  const mem = userMemoryCache.get(userId);
+  if (mem) {
+    if (Date.now() < mem.expiresAt) {
+      return mem.user;
+    }
+    userMemoryCache.delete(userId);
+  }
+
+  return null;
+}
+
+async function setCachedUser(userId: string, user: { id: string; role: string; schoolId: string | null }, ttlSeconds = 60): Promise<void> {
+  if (isRedisReady() && redisClient) {
+    try {
+      await redisClient.set(`auth:user:${userId}`, JSON.stringify(user), 'EX', ttlSeconds);
+    } catch {
+      // ignore
+    }
+  }
+
+  userMemoryCache.set(userId, {
+    user,
+    expiresAt: Date.now() + ttlSeconds * 1000,
+  });
+}
+
+export async function invalidateUserCache(userId: string): Promise<void> {
+  userMemoryCache.delete(userId);
+  if (isRedisReady() && redisClient) {
+    try {
+      await redisClient.del(`auth:user:${userId}`);
+    } catch {
+      // ignore
     }
   }
 }
@@ -26,11 +82,14 @@ export const authenticate = async (
     // Check Authorization header first, then cookies
     const authHeader = req.headers.authorization;
     let token: string | undefined;
+    let authMode: 'bearer' | 'cookie' | undefined;
 
     if (authHeader?.startsWith('Bearer ')) {
       token = authHeader.split(' ')[1];
+      authMode = 'bearer';
     } else if (req.cookies?.accessToken) {
       token = req.cookies.accessToken;
+      authMode = 'cookie';
     }
 
     if (!token) {
@@ -38,21 +97,28 @@ export const authenticate = async (
       return;
     }
 
+    req.authMode = authMode;
     const decoded = jwt.verify(token, config.jwt.secret) as JwtPayload;
 
-    // Verify user still exists and is active
-    const user = await prisma.user.findFirst({
-      where: {
-        id: decoded.userId,
-        isActive: true,
-        deletedAt: null,
-      },
-      select: { id: true, role: true, schoolId: true },
-    });
+    // Verify user with 60s cache to avoid redundant DB roundtrips on every request
+    let user = await getCachedUser(decoded.userId);
 
     if (!user) {
-      res.status(401).json({ error: 'User not found or inactive' });
-      return;
+      user = await prisma.user.findFirst({
+        where: {
+          id: decoded.userId,
+          isActive: true,
+          deletedAt: null,
+        },
+        select: { id: true, role: true, schoolId: true },
+      });
+
+      if (!user) {
+        res.status(401).json({ error: 'User not found or inactive' });
+        return;
+      }
+
+      await setCachedUser(decoded.userId, user, 60);
     }
 
     req.user = {

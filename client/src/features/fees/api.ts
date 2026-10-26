@@ -3,6 +3,7 @@ import apiClient from '@/lib/api-client';
 export const feesApi = {
   calculate: (params: Record<string, any>) => apiClient.get('/fees/calculate', { params }),
   getReceipts: (admissionId: string) => apiClient.get(`/fees/receipts/${admissionId}`),
+  getReceiptById: (receiptId: string) => apiClient.get(`/fees/receipt/${receiptId}`),
   createReceipt: (data: any) => apiClient.post('/fees/receipts', data),
   getCashReceipts: (params?: Record<string, string>) => apiClient.get('/fees/cash-receipts', { params }),
   getPendingDeposits: (params?: Record<string, string>) => apiClient.get('/fees/deposits/pending', { params }),

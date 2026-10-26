@@ -1,1 +1,3 @@
-export { default } from '@/features/admission/pages/AdvanceReceiptFormPage';
+import AdvanceReceiptFormPage from '@/features/admission/pages/AdvanceReceiptFormPage';
+
+export default AdvanceReceiptFormPage;
