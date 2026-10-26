@@ -70,6 +70,13 @@ router.post(
   (req, res, next) => enquiryController.createAdvanceReceipt(req, res, next)
 );
 
+// DELETE /api/enquiries/:id/receipts/:receiptId & /api/enquiries/:id/advance-receipts/:receiptId
+router.delete(
+  ['/:id/receipts/:receiptId', '/:id/advance-receipts/:receiptId'],
+  authorize('SUPER_ADMIN', 'SCHOOL_ADMIN'),
+  (req, res, next) => enquiryController.deleteAdvanceReceipt(req, res, next)
+);
+
 // DELETE /api/enquiries/:id
 router.delete(
   '/:id',

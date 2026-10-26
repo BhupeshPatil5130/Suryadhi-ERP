@@ -17,11 +17,14 @@ interface EnquiryData {
   studentName: string;
   enquirerName: string;
   enquirerContact: string;
+  enquirerEmail?: string;
   stage: string;
   subStage: string;
   nextFollowUp: string;
   lastContacted: string;
   programName: string;
+  receivableAmount: number;
+  collectionAmount: number;
 }
 
 interface ProgramCount {
@@ -87,10 +90,34 @@ const columns: ColumnDef<EnquiryData>[] = [
     cell: ({ row }) => <span className="text-sm">{row.original.lastContacted}</span>,
   },
   {
+    accessorKey: 'receivableAmount',
+    header: 'Receivable',
+    cell: ({ row }) => (
+      <span className="text-sm font-medium text-slate-700">
+        ₹{row.original.receivableAmount.toLocaleString('en-IN')}
+      </span>
+    ),
+  },
+  {
+    accessorKey: 'collectionAmount',
+    header: 'Collection',
+    cell: ({ row }) => (
+      <span className={`text-sm font-semibold ${row.original.collectionAmount > 0 ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
+        ₹{row.original.collectionAmount.toLocaleString('en-IN')}
+      </span>
+    ),
+  },
+  {
     id: 'actions',
     header: 'Action',
     enableSorting: false,
-    cell: ({ row }) => <EnquiryActionButtons id={row.original.id} />,
+    cell: ({ row }) => (
+      <EnquiryActionButtons
+        id={row.original.id}
+        studentName={row.original.studentName}
+        parentEmail={row.original.enquirerEmail}
+      />
+    ),
   },
 ];
 
@@ -122,6 +149,7 @@ export default function EnquiryListPage() {
             studentName: `${item.student?.firstName || ''} ${item.student?.middleName || ''} ${item.student?.lastName || ''}`.trim(),
             enquirerName: item.enquirerName || 'N/A',
             enquirerContact: item.enquirerMobile || 'N/A',
+            enquirerEmail: item.enquirerEmail || item.student?.parent?.fatherEmail || '',
             stage: item.stage || 'NEW',
             subStage: item.subStage || 'Admission Enquiry (New Opportunity)',
             programName: item.program?.name || 'N/A',
@@ -129,6 +157,11 @@ export default function EnquiryListPage() {
             lastContacted: item.lastContacted
               ? new Date(item.lastContacted).toLocaleDateString('en-GB')
               : new Date(item.createdAt).toLocaleDateString('en-GB'),
+            receivableAmount: item.stage === 'CONVERTED' ? 45000 : 500,
+            collectionAmount: (item.advanceReceipts || []).reduce(
+              (sum: number, r: any) => sum + Number(r.amount || 0),
+              0
+            ),
           }));
           setData(apiData);
         }
@@ -241,6 +274,8 @@ export default function EnquiryListPage() {
                   'Stage': d.stage,
                   'Sub Stage': d.subStage,
                   'Last Contacted': d.lastContacted,
+                  'Receivable (₹)': d.receivableAmount,
+                  'Collection (₹)': d.collectionAmount,
                 })),
                 'enquiries-report'
               )}

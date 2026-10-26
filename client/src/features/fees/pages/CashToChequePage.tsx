@@ -33,7 +33,7 @@ export default function CashToChequePage() {
   const [data, setData] = useState<CashReceipt[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState('ALL');
+  const [month, setMonth] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [modal, setModal] = useState<ConvertModalData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -43,6 +43,7 @@ export default function CashToChequePage() {
     try {
       const params: Record<string, string> = {};
       if (searchVal) params.search = searchVal;
+      if (month) params.month = month;
       const res = await feesApi.getCashReceipts(params);
       if (res.data.success && res.data.data) {
         setData(
@@ -70,7 +71,7 @@ export default function CashToChequePage() {
   }, [fetchCashReceipts]);
 
   const handleSearch = () => fetchCashReceipts(search);
-  const handleClearSearch = () => { setSearch(''); fetchCashReceipts(''); };
+  const handleClearSearch = () => { setSearch(''); setMonth(''); fetchCashReceipts(''); };
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
@@ -170,17 +171,6 @@ export default function CashToChequePage() {
 
           {/* Search */}
           <div className="flex items-center gap-2 mb-4 flex-wrap">
-            {/* Month Filter (महिने लावा) */}
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className="h-8 text-xs border border-input rounded px-2 bg-background font-medium"
-            >
-              <option value="ALL">All Months</option>
-              {['April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March'].map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
             <Input
               placeholder="Search by name or receipt no..."
               className="h-8 max-w-xs"
@@ -196,6 +186,20 @@ export default function CashToChequePage() {
                 Clear
               </Button>
             )}
+            <div className="ml-auto flex items-center gap-2">
+              <label className="text-xs font-medium text-muted-foreground">Month:</label>
+              <Input
+                type="month"
+                className="h-8 w-[160px]"
+                value={month}
+                onChange={(e) => { setMonth(e.target.value); }}
+              />
+              {month && (
+                <Button size="sm" onClick={() => fetchCashReceipts(search)} className="h-8">
+                  Filter
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Table */}
@@ -213,7 +217,6 @@ export default function CashToChequePage() {
                   </th>
                   <th className="p-3 text-left font-semibold">Student Name</th>
                   <th className="p-3 text-center font-semibold">Program</th>
-                  <th className="p-3 text-center font-semibold">Month</th>
                   <th className="p-3 text-center font-semibold">Receipt Date</th>
                   <th className="p-3 text-right font-semibold">Amount</th>
                   <th className="p-3 text-center font-semibold">Admission Type</th>

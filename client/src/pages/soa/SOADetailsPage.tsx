@@ -10,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Download, Search, FileText } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { downloadAsPDF, apiDownload } from '@/lib/downloadUtils';
 
 interface SOATransaction {
   id: string;
@@ -214,7 +213,7 @@ export default function SOADetailsPage() {
                         onClick={() => selectStudent(res)}
                       >
                         <div className="font-semibold text-sm text-slate-800">{res.studentFirstName} {res.studentLastName}</div>
-                        <div className="text-xs text-slate-500 font-mono mt-0.5">{res.uin ? res.uin.replace(/^EK\//i, 'SK/') : ''}</div>
+                        <div className="text-xs text-slate-500 font-mono mt-0.5">{res.uin}</div>
                       </div>
                     ))}
                   </div>
@@ -226,7 +225,6 @@ export default function SOADetailsPage() {
                   <p className="text-xs text-muted-foreground uppercase font-medium">Student Info</p>
                   <p className="font-bold text-base mt-1">{admission.studentFirstName} {admission.studentLastName}</p>
                   <p className="text-sm">{admission.program?.name}</p>
-                  <p className="text-xs font-mono text-muted-foreground mt-0.5">UIN: {admission.uin ? admission.uin.replace(/^EK\//i, 'SK/') : 'N/A'}</p>
                   <Badge variant="outline" className="mt-2">{admission.status}</Badge>
                 </div>
               )}
@@ -241,29 +239,8 @@ export default function SOADetailsPage() {
                 <FileText className="h-4 w-4 text-primary" />
                 Transaction Ledger
               </CardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!admission}
-                onClick={() => {
-                  if (!admission) return;
-                  apiDownload(
-                    `soa-ledger/${admission.id}`,
-                    {},
-                    data.map((t) => ({
-                      Date: t.date,
-                      Particulars: t.particulars,
-                      'Receipt No': t.receiptNo ?? '',
-                      Mode: t.mode ?? '',
-                      'Debit (₹)': t.debit,
-                      'Credit (₹)': t.credit,
-                      'Balance (₹)': t.balance,
-                    })),
-                    `soa-${admission.studentFirstName}-${admission.studentLastName}`
-                  );
-                }}
-              >
-                <Download className="h-4 w-4 mr-2" /> Download CSV
+              <Button variant="outline" size="sm" disabled={!admission}>
+                <Download className="h-4 w-4 mr-2" /> Download PDF
               </Button>
             </CardHeader>
             <CardContent className="p-0">

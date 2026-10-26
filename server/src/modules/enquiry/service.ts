@@ -49,6 +49,15 @@ export class EnquiryService {
           program: true,
           academicYear: true,
           mediaSource: true,
+          advanceReceipts: {
+            select: {
+              id: true,
+              amount: true,
+              receiptNumber: true,
+              receiptDate: true,
+              paymentMode: true,
+            },
+          },
           followUps: {
             orderBy: { contactDate: 'desc' },
             take: 1,
@@ -359,6 +368,35 @@ export class EnquiryService {
     });
 
     return receipts;
+  }
+
+  /**
+   * Delete an advance receipt for an enquiry
+   */
+  async deleteAdvanceReceipt(enquiryId: string, receiptId: string, schoolId: string, userId: string) {
+    await this.getById(enquiryId, schoolId);
+
+    const existing = await prisma.advanceReceipt.findFirst({
+      where: { id: receiptId, enquiryId },
+    });
+
+    if (!existing) {
+      throw new AppError('Advance receipt not found', 404);
+    }
+
+    const deleted = await prisma.advanceReceipt.delete({
+      where: { id: receiptId },
+    });
+
+    await createAuditLog({
+      userId,
+      action: 'DELETE',
+      entity: 'AdvanceReceipt',
+      entityId: receiptId,
+      oldValue: existing,
+    });
+
+    return deleted;
   }
 }
 

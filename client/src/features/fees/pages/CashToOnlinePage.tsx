@@ -29,19 +29,20 @@ export default function CashToOnlinePage() {
   const [data, setData] = useState<CashReceipt[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState('ALL');
   const [isLoading, setIsLoading] = useState(true);
   const [step, setStep] = useState<Step>('select');
   const [paymentGateway, setPaymentGateway] = useState<PaymentGateway>('HDFC_ONLINE');
   const [isProcessing, setIsProcessing] = useState(false);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [month, setMonth] = useState('');
 
   const fetchCashReceipts = useCallback(async (searchVal?: string) => {
     setIsLoading(true);
     try {
       const params: Record<string, string> = {};
       if (searchVal) params.search = searchVal;
+      if (month) params.month = month;
       const res = await feesApi.getCashReceipts(params);
       if (res.data.success && res.data.data) {
         setData(
@@ -119,6 +120,7 @@ export default function CashToOnlinePage() {
 
   const handleClearSearch = () => {
     setSearch('');
+    setMonth('');
     setCurrentPage(1);
     fetchCashReceipts('');
   };
@@ -183,6 +185,19 @@ export default function CashToOnlinePage() {
                 )}
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <label className="text-xs font-medium">Month:</label>
+                <Input
+                  type="month"
+                  className="h-8 w-[150px]"
+                  value={month}
+                  onChange={(e) => setMonth(e.target.value)}
+                />
+                {month && (
+                  <Button size="sm" onClick={() => fetchCashReceipts(search)} className="h-8">
+                    Filter
+                  </Button>
+                )}
+                <span className="mx-2">|</span>
                 Show
                 <select
                   value={pageSize}
@@ -213,7 +228,6 @@ export default function CashToOnlinePage() {
                     <th className="p-3 text-left font-semibold">Student Name</th>
                     <th className="p-3 text-center font-semibold">Program</th>
                     <th className="p-3 text-center font-semibold">Receipt Number</th>
-                    <th className="p-3 text-center font-semibold">Month</th>
                     <th className="p-3 text-center font-semibold">Receipt Date</th>
                     <th className="p-3 text-right font-semibold">Amount</th>
                     <th className="p-3 text-center font-semibold">Admission Type</th>

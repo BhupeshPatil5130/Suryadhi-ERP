@@ -118,6 +118,22 @@ export class EnquiryController {
       next(error);
     }
   }
+
+  async deleteAdvanceReceipt(req: Request, res: Response, next: NextFunction) {
+    try {
+      const schoolId = this.getSchoolId(req);
+      const { id, receiptId } = req.params;
+      const result = await enquiryService.deleteAdvanceReceipt(
+        id as string,
+        receiptId as string,
+        schoolId,
+        req.user!.userId
+      );
+      res.json({ success: true, data: result, message: 'Receipt deleted successfully' });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const enquiryController = new EnquiryController();

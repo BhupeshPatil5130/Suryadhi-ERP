@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
-import { ArrowLeft, Loader2, Save, User, CalendarDays, UserSquare2, Info } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, User, CalendarDays, UserSquare2, Info, Printer, Mail, CheckCircle2, X } from 'lucide-react';
 import api from '@/api/client';
 import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,20 @@ export default function CreateEnquiryPage() {
   const [academicYears, setAcademicYears] = useState<any[]>([]);
   const [mediaSources, setMediaSources] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ── Trial Class Receipt Popup State ────────────────────────
+  const [receiptModalOpen, setReceiptModalOpen] = useState(false);
+  const [createdEnquiry, setCreatedEnquiry] = useState<any>(null);
+  const [savedFormData, setSavedFormData] = useState<EnquiryFormData | null>(null);
+  const [formFeeAmount, setFormFeeAmount] = useState('500');
+  const [receiptPaymentMode, setReceiptPaymentMode] = useState('CASH');
+  const [receiptDate, setReceiptDate] = useState(new Date().toISOString().split('T')[0]);
+  const [receiptBankName, setReceiptBankName] = useState('');
+  const [receiptChequeNumber, setReceiptChequeNumber] = useState('');
+  const [receiptChequeDate, setReceiptChequeDate] = useState('');
+  const [receiptTransactionId, setReceiptTransactionId] = useState('');
+  const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
+  const [generatedReceipt, setGeneratedReceipt] = useState<any>(null);
 
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<EnquiryFormData>({
     resolver: zodResolver(enquiryFormSchema),
@@ -90,13 +104,86 @@ export default function CreateEnquiryPage() {
   const onSubmit = async (data: EnquiryFormData) => {
     setIsSubmitting(true);
     try {
-      await api.post('/enquiries', data);
-      navigate('/enquiry');
+      const res = await api.post('/enquiries', data);
+      if (data.isTrialClass) {
+        setCreatedEnquiry(res.data.data);
+        setSavedFormData(data);
+        setReceiptModalOpen(true);
+        showToast('Enquiry saved! Please generate the Admission Form Fee receipt.', 'success');
+      } else {
+        showToast('Enquiry saved successfully!', 'success');
+        navigate('/enquiry');
+      }
     } catch (err: any) {
       showToast(err.response?.data?.error || 'Failed to create enquiry', 'error');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleGenerateReceipt = async () => {
+    if (!createdEnquiry?.id) return;
+    if (!formFeeAmount || Number(formFeeAmount) <= 0) {
+      showToast('Please enter a valid receipt amount', 'error');
+      return;
+    }
+    setIsGeneratingReceipt(true);
+    try {
+      const res = await api.post(`/enquiries/${createdEnquiry.id}/receipts`, {
+        amount: Number(formFeeAmount),
+        paymentMode: receiptPaymentMode,
+        receiptDate,
+        bankName: receiptPaymentMode === 'CHEQUE' ? receiptBankName : undefined,
+        chequeNumber: receiptPaymentMode === 'CHEQUE' ? receiptChequeNumber : undefined,
+        chequeDate: receiptPaymentMode === 'CHEQUE' && receiptChequeDate ? receiptChequeDate : undefined,
+        transactionId: receiptPaymentMode === 'ONLINE' ? receiptTransactionId : undefined,
+        notes: 'Admission Form Fee (Trial Class)',
+      });
+      if (res.data.success) {
+        setGeneratedReceipt(res.data.data);
+        showToast('Admission Form Fee Receipt generated successfully!', 'success');
+      }
+    } catch (err: any) {
+      showToast(err.response?.data?.error || 'Failed to generate receipt', 'error');
+    } finally {
+      setIsGeneratingReceipt(false);
+    }
+  };
+
+  const handlePrintReceipt = () => {
+    if (!generatedReceipt || !savedFormData) return;
+    const studentName = `${savedFormData.studentFirstName} ${savedFormData.studentLastName}`;
+    const programName = programs.find((p) => p.id === savedFormData.programId)?.name || 'N/A';
+    const printContent = `
+      <html><head><title>Admission Form Fee Receipt - ${generatedReceipt.receiptNumber}</title>
+      <style>body{font-family:Arial,sans-serif;padding:30px;color:#333}table{width:100%;border-collapse:collapse;margin-top:15px}td,th{border:1px solid #ddd;padding:10px}h2{color:#1e3a8a;margin-bottom:4px}p{margin:4px 0}</style></head>
+      <body>
+        <h2>SŪNOIAKIDS™ Pre-School</h2>
+        <p style="font-size:12px;color:#666">Admission Form Fee Receipt (Other Receipt)</p>
+        <hr style="border:none;border-top:1px solid #ddd;margin:15px 0" />
+        <table>
+          <tr><td><strong>Receipt No:</strong></td><td>${generatedReceipt.receiptNumber}</td></tr>
+          <tr><td><strong>Receipt Date:</strong></td><td>${receiptDate}</td></tr>
+          <tr><td><strong>Student Name:</strong></td><td>${studentName}</td></tr>
+          <tr><td><strong>Program:</strong></td><td>${programName}</td></tr>
+          <tr><td><strong>Parent Name:</strong></td><td>${savedFormData.enquirerName}</td></tr>
+          <tr><td><strong>Parent Mobile:</strong></td><td>${savedFormData.enquirerMobile}</td></tr>
+          <tr><td><strong>Fee Description:</strong></td><td>Admission Form Fee (Trial Class)</td></tr>
+          <tr><td><strong>Payment Mode:</strong></td><td>${receiptPaymentMode}</td></tr>
+          <tr><td><strong>Amount Paid:</strong></td><td><strong>₹${Number(formFeeAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong></td></tr>
+        </table>
+        <br/><p style="color:#888;font-size:11px">This is an official computer-generated receipt.</p>
+      </body></html>`;
+    const win = window.open('', '_blank');
+    if (win) { win.document.write(printContent); win.document.close(); win.print(); }
+  };
+
+  const handleEmailReceipt = () => {
+    if (!savedFormData || !generatedReceipt) return;
+    const parentEmail = savedFormData.enquirerEmail || '';
+    const studentName = `${savedFormData.studentFirstName} ${savedFormData.studentLastName}`;
+    const mailto = `mailto:${parentEmail}?subject=Admission Form Fee Receipt - ${generatedReceipt.receiptNumber}&body=Dear ${savedFormData.enquirerName},%0D%0A%0D%0AThank you for registering for the Trial Class!%0D%0A%0D%0APlease find the Admission Form Fee Receipt details below:%0D%0A%0D%0AStudent: ${studentName}%0D%0AReceipt No: ${generatedReceipt.receiptNumber}%0D%0ADate: ${receiptDate}%0D%0AAmount: Rs ${formFeeAmount}%0D%0APayment Mode: ${receiptPaymentMode}%0D%0A%0D%0ARegards,%0D%0ASuryadhi Learning Pvt. Ltd.`;
+    window.open(mailto, '_blank');
   };
 
   const labelClass = 'block text-sm font-medium text-foreground/80 mb-1.5';
@@ -312,6 +399,201 @@ export default function CreateEnquiryPage() {
           </Button>
         </div>
       </form>
+
+      {/* ── Admission Form Fee (Other Receipt) Trial Class Popup Modal ── */}
+      {receiptModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full border border-slate-300 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white px-5 py-3.5 flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-base">Admission Form Fee Receipt</h3>
+                <p className="text-xs text-blue-100">Trial Class Selected — Generate Other Receipt</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setReceiptModalOpen(false);
+                  navigate('/enquiry');
+                }}
+                className="text-white/80 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-5 space-y-4">
+              {/* Summary Details */}
+              <div className="bg-blue-50 border border-blue-200 rounded p-3 text-xs space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Student:</span>
+                  <span className="font-semibold text-slate-800">
+                    {savedFormData?.studentFirstName} {savedFormData?.studentLastName}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Parent / Mobile:</span>
+                  <span className="font-medium text-slate-800">
+                    {savedFormData?.enquirerName} ({savedFormData?.enquirerMobile})
+                  </span>
+                </div>
+                {savedFormData?.enquirerEmail && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Parent Email:</span>
+                    <span className="font-medium text-slate-800">{savedFormData?.enquirerEmail}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Fee Category:</span>
+                  <span className="font-bold text-blue-700">Admission Form Fee (Other Receipt)</span>
+                </div>
+              </div>
+
+              {!generatedReceipt ? (
+                <>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="space-y-1">
+                      <label className="font-semibold text-slate-700">Receipt Date *</label>
+                      <Input
+                        type="date"
+                        value={receiptDate}
+                        onChange={(e) => setReceiptDate(e.target.value)}
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-semibold text-slate-700">Amount (₹) *</label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={formFeeAmount}
+                        onChange={(e) => setFormFeeAmount(e.target.value)}
+                        className="h-8 text-xs font-semibold"
+                        placeholder="₹ 500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 text-xs">
+                    <label className="font-semibold text-slate-700">Payment Mode *</label>
+                    <select
+                      value={receiptPaymentMode}
+                      onChange={(e) => setReceiptPaymentMode(e.target.value)}
+                      className="flex h-8 w-full rounded border border-input bg-white px-3 py-1 text-xs"
+                    >
+                      <option value="CASH">Cash</option>
+                      <option value="CHEQUE">Cheque</option>
+                      <option value="ONLINE">Online Payment</option>
+                      <option value="UPI">UPI</option>
+                    </select>
+                  </div>
+
+                  {receiptPaymentMode === 'CHEQUE' && (
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div className="space-y-1">
+                        <label className="text-slate-600">Cheque No.</label>
+                        <Input
+                          value={receiptChequeNumber}
+                          onChange={(e) => setReceiptChequeNumber(e.target.value)}
+                          placeholder="Cheque No."
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-slate-600">Bank Name</label>
+                        <Input
+                          value={receiptBankName}
+                          onChange={(e) => setReceiptBankName(e.target.value)}
+                          placeholder="Bank Name"
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {receiptPaymentMode === 'ONLINE' && (
+                    <div className="space-y-1 text-xs">
+                      <label className="text-slate-600">Transaction / Ref ID</label>
+                      <Input
+                        value={receiptTransactionId}
+                        onChange={(e) => setReceiptTransactionId(e.target.value)}
+                        placeholder="Transaction ID"
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                  )}
+
+                  <div className="pt-2 flex justify-end gap-2 border-t border-slate-200">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setReceiptModalOpen(false);
+                        navigate('/enquiry');
+                      }}
+                      className="h-8 text-xs"
+                    >
+                      Skip / Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleGenerateReceipt}
+                      disabled={isGeneratingReceipt}
+                      className="bg-[#0056b3] hover:bg-[#004494] text-white h-8 text-xs font-semibold px-4"
+                    >
+                      {isGeneratingReceipt ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+                      Generate Receipt
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-4 space-y-4">
+                  <div className="flex flex-col items-center justify-center text-green-700">
+                    <CheckCircle2 className="w-12 h-12 mb-1" />
+                    <span className="font-bold text-sm">Receipt Generated!</span>
+                    <span className="font-mono text-xs text-slate-600 mt-0.5">
+                      Receipt No: {generatedReceipt.receiptNumber}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-center gap-2 pt-2">
+                    <Button
+                      type="button"
+                      onClick={handlePrintReceipt}
+                      className="bg-blue-600 hover:bg-blue-700 text-white h-8 text-xs flex items-center gap-1.5"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      Print Receipt
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleEmailReceipt}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white h-8 text-xs flex items-center gap-1.5"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      Send to Email
+                    </Button>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-200">
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setReceiptModalOpen(false);
+                        navigate('/enquiry');
+                      }}
+                      className="bg-slate-800 hover:bg-slate-900 text-white h-8 text-xs px-6"
+                    >
+                      Done (Go to Enquiries)
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -134,8 +134,10 @@ export class FeeService {
       orderBy: { receiptDate: 'desc' },
     });
 
+    // Only receipts linked to the invoice count towards invoice payment
+    // Independent / Other receipts (admission form fee, uniform, etc.) do NOT reduce invoice balance
     const totalReceived = receipts
-      .filter((r) => !r.isCancelled)
+      .filter((r) => !r.isCancelled && r.invoiceId !== null)
       .reduce((sum, r) => sum + Number(r.amount), 0);
 
     const totalInvoiced = admission.invoices.reduce(
@@ -159,57 +161,6 @@ export class FeeService {
   }
 
   /**
-   * Get single receipt by receipt ID
-   */
-  async getReceiptById(receiptId: string, schoolId?: string) {
-    const where: any = { id: receiptId, deletedAt: null };
-    if (schoolId) {
-      where.admission = { schoolId };
-    }
-
-    let receipt = await prisma.receipt.findFirst({
-      where,
-      include: {
-        admission: {
-          include: {
-            student: true,
-            program: true,
-            school: true,
-            academicYear: true,
-          },
-        },
-        invoice: true,
-        deposit: true,
-      },
-    });
-
-    if (!receipt) {
-      // Fallback query without schoolId if called by superadmin or direct link
-      receipt = await prisma.receipt.findFirst({
-        where: { id: receiptId, deletedAt: null },
-        include: {
-          admission: {
-            include: {
-              student: true,
-              program: true,
-              school: true,
-              academicYear: true,
-            },
-          },
-          invoice: true,
-          deposit: true,
-        },
-      });
-    }
-
-    if (!receipt) {
-      throw new AppError('Receipt not found', 404);
-    }
-
-    return receipt;
-  }
-
-  /**
    * Add a receipt
    */
   async createReceipt(schoolId: string, input: CreateReceiptInput, userId: string) {
@@ -229,7 +180,7 @@ export class FeeService {
       const newReceipt = await tx.receipt.create({
         data: {
           receiptNumber,
-          receiptDate: new Date(),
+          receiptDate: input.receiptDate ? new Date(input.receiptDate) : new Date(),
           amount: input.amount,
           paymentMode: input.paymentMode as any,
           bankName: input.bankName,
@@ -461,6 +412,26 @@ export class FeeService {
       isCancelled: false,
       deletedAt: null,
     };
+
+    if (query.month) {
+      // Month could be "YYYY-MM" (e.g. "2026-04") or "MM" (e.g. "04")
+      if (typeof query.month === 'string' && query.month.includes('-')) {
+        const [yearStr, monthStr] = query.month.split('-');
+        const year = parseInt(yearStr, 10);
+        const month = parseInt(monthStr, 10) - 1;
+        const startDate = new Date(Date.UTC(year, month, 1));
+        const endDate = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
+        where.receiptDate = { gte: startDate, lte: endDate };
+      } else {
+        const monthNum = parseInt(query.month, 10) - 1;
+        if (!isNaN(monthNum)) {
+          const currentYear = new Date().getFullYear();
+          const startDate = new Date(Date.UTC(currentYear, monthNum, 1));
+          const endDate = new Date(Date.UTC(currentYear, monthNum + 1, 0, 23, 59, 59, 999));
+          where.receiptDate = { gte: startDate, lte: endDate };
+        }
+      }
+    }
 
     if (query.search) {
       where.OR = [

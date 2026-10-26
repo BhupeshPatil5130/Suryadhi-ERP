@@ -26,9 +26,6 @@ export default function AddReceiptPage() {
   const [amount, setAmount] = useState('0');
   const [paymentMode, setPaymentMode] = useState('ONLINE');
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
-  const [feeMonth, setFeeMonth] = useState('April');
-  const monthsList = ['April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'Term 1 (Apr - Sep)', 'Term 2 (Oct - Mar)', 'Annual (Full Year)'];
-
   const [referenceId, setReferenceId] = useState('');
   // Cheque-specific
   const [bankName, setBankName] = useState('');
@@ -127,7 +124,7 @@ export default function AddReceiptPage() {
         paymentMode,
         paymentDate: paymentDate || undefined,
         transactionId: referenceId || undefined,
-        remarks: [feeMonth ? `Fee for ${feeMonth}` : '', remarks].filter(Boolean).join(' - ') || undefined,
+        remarks: remarks || undefined,
       };
 
       if (paymentMode === 'CHEQUE') {
@@ -198,7 +195,7 @@ export default function AddReceiptPage() {
                       onClick={() => selectStudent(res)}
                     >
                       <div className="font-semibold text-sm">{res.studentFirstName} {res.studentLastName}</div>
-                      <div className="text-xs text-muted-foreground font-mono mt-0.5">{res.uin ? res.uin.replace(/^EK\//i, 'SK/') : ''} • {res.program?.name}</div>
+                      <div className="text-xs text-muted-foreground font-mono mt-0.5">{res.uin} • {res.program?.name}</div>
                     </div>
                   ))}
                 </div>
@@ -210,7 +207,7 @@ export default function AddReceiptPage() {
                   <p className="font-bold text-lg text-foreground mt-1">
                     {admission.studentFirstName} {admission.studentLastName}
                   </p>
-                  <p className="text-sm text-muted-foreground font-mono">{admission.uin ? admission.uin.replace(/^EK\//i, 'SK/') : ''} • {admission.program?.name}</p>
+                  <p className="text-sm text-muted-foreground font-mono">{admission.uin} • {admission.program?.name}</p>
                 </div>
               )}
             </CardContent>
@@ -255,11 +252,43 @@ export default function AddReceiptPage() {
 
         {/* ── Right Panel: Payment Entry ── */}
         <div className="md:col-span-2">
+          {/* Quick Receipt Type Selector */}
+          <div className="mb-3 bg-muted/30 border border-border rounded-lg px-4 py-2.5 flex items-center gap-3">
+            <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Quick Mode:</span>
+            <Button
+              type="button"
+              size="sm"
+              variant={paymentMode === 'CASH' ? 'default' : 'outline'}
+              className="h-7 text-xs px-3"
+              onClick={() => setPaymentMode('CASH')}
+            >
+              1. Cash Receipt
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={paymentMode === 'CHEQUE' ? 'default' : 'outline'}
+              className="h-7 text-xs px-3"
+              onClick={() => setPaymentMode('CHEQUE')}
+            >
+              2. Cheque Receipt
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={paymentMode === 'ONLINE' ? 'default' : 'outline'}
+              className="h-7 text-xs px-3"
+              onClick={() => setPaymentMode('ONLINE')}
+            >
+              3. Online Receipt
+            </Button>
+          </div>
+
           <Card>
             <CardHeader className="bg-muted/30 border-b border-border/50">
               <CardTitle className="text-base flex items-center gap-2">
                 <CreditCard className="h-4 w-4 text-primary" />
-                Payment Entry
+                Payment Entry — Admission Fee Receipt
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">

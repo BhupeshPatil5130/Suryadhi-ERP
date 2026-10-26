@@ -5,8 +5,7 @@ import api from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Plus, Loader2, Printer, Mail, CheckCircle2, ArrowLeft } from 'lucide-react';
-import api from '@/api/client';
+import { ChevronDown, Search, Plus, Loader2, Receipt, Printer, Mail } from 'lucide-react';
 import { showToast } from '@/lib/toast';
 
 interface AdmissionData {
@@ -60,7 +59,10 @@ export default function AdvanceReceiptFormPage() {
       if (res.data.success) {
         const d = res.data.data;
         const invoice = d.invoices?.[0];
-        const amountReceived = d.receipts?.reduce((sum: number, r: any) => sum + Number(r.amount), 0) || 0;
+        // Only count receipts linked to the invoice towards admission fee amountReceived
+        // Independent / Other receipts (admission form, uniform, etc.) do NOT reduce admission fee balance
+        const invoiceReceipts = (d.receipts || []).filter((r: any) => r.invoiceId && r.invoiceId === invoice?.id);
+        const amountReceived = invoiceReceipts.reduce((sum: number, r: any) => sum + Number(r.amount), 0);
 
         setData({
           studentName: `${d.student?.firstName || ''} ${d.student?.middleName || ''} ${d.student?.lastName || ''}`.trim(),
@@ -223,6 +225,29 @@ function MainView({ data, receipts, onNavigate, onBack }: {
                 </Button>
               </div>
             </div>
+
+            {/* Quick Receipt Type Selector */}
+            <div className="px-4 py-2 bg-[#fafafa] border-b border-slate-300 flex items-center gap-2">
+              <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wide">Quick Add:</span>
+              <Button
+                onClick={() => onNavigate('new')}
+                className="bg-green-600 hover:bg-green-700 text-white h-6 px-2.5 text-[11px] shadow-none rounded-sm font-medium"
+              >
+                1. Cash Receipt
+              </Button>
+              <Button
+                onClick={() => onNavigate('new')}
+                className="bg-blue-600 hover:bg-blue-700 text-white h-6 px-2.5 text-[11px] shadow-none rounded-sm font-medium"
+              >
+                2. Cheque Receipt
+              </Button>
+              <Button
+                onClick={() => onNavigate('new')}
+                className="bg-purple-600 hover:bg-purple-700 text-white h-6 px-2.5 text-[11px] shadow-none rounded-sm font-medium"
+              >
+                3. Online Receipt
+              </Button>
+            </div>
             <div className="p-4 bg-[#f9f9f9]">
               <table className="w-full border-collapse border border-slate-300 text-[13px]">
                 <thead>
@@ -234,62 +259,52 @@ function MainView({ data, receipts, onNavigate, onBack }: {
                     <th className="border border-slate-300 p-2 text-slate-700 font-semibold">Cheque Number</th>
                     <th className="border border-slate-300 p-2 text-slate-700 font-semibold">Cheque Date</th>
                     <th className="border border-slate-300 p-2 text-slate-700 font-semibold">Amount</th>
+                    <th className="border border-slate-300 p-2 text-slate-700 font-semibold">Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {receipts.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="p-4 text-center text-slate-500 bg-white border border-slate-300">
+                      <td colSpan={8} className="p-4 text-center text-slate-500 bg-white border border-slate-300">
                         No receipts recorded yet
                       </td>
                     </tr>
-                  ) : receipts.length > 0 ? (
-                    receipts.map((r: any) => (
-                      <tr key={r.id} className="bg-white hover:bg-slate-50 border border-slate-300">
-                        <td className="border border-slate-300 p-2 text-slate-700">
-                          {formatDate(r.receiptDate)}
-                        </td>
-                        <td className="border border-slate-300 p-2 font-mono font-medium text-blue-700">
-                          {r.receiptNumber}
-                        </td>
-                        <td className="border border-slate-300 p-2 text-slate-700">
-                          {r.paymentMode} {r.bankName ? `(${r.bankName})` : ''}
-                        </td>
-                        <td className="border border-slate-300 p-2 text-slate-600 font-mono text-xs">
-                          {r.chequeNumber || r.transactionId || 'N/A'}
-                        </td>
-                        <td className="border border-slate-300 p-2 text-right font-mono font-bold text-slate-900">
-                          {formatCurrency(Number(r.amount))}
-                        </td>
+                  ) : (
+                    receipts.map((r) => (
+                      <tr key={r.id} className="bg-white hover:bg-slate-50">
+                        <td className="border border-slate-300 p-2">{r.receiptDate}</td>
+                        <td className="border border-slate-300 p-2 font-mono text-xs">{r.receiptNumber}</td>
+                        <td className="border border-slate-300 p-2 capitalize">{r.paymentMode?.toLowerCase()}</td>
+                        <td className="border border-slate-300 p-2">{r.bankName || '—'}</td>
+                        <td className="border border-slate-300 p-2">{r.chequeNumber || '—'}</td>
+                        <td className="border border-slate-300 p-2">{r.chequeDate || '—'}</td>
+                        <td className="border border-slate-300 p-2 text-right font-semibold">₹{r.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                         <td className="border border-slate-300 p-2 text-center">
                           <div className="flex items-center justify-center gap-1">
-                            <Button 
-                              variant="ghost" 
+                            <Button
                               size="sm"
-                              className="h-7 text-xs text-blue-600 hover:text-blue-800"
-                              title="Print / Download Receipt"
-                              onClick={() => downloadAsPDF({
-                                title: `Receipt: ${r.receiptNumber}`,
-                                subtitle: `Student: ${studentName} | Invoice: ${invoiceNumber} | Date: ${formatDate(r.receiptDate)}`,
-                                columns: ['Receipt No', 'Payment Mode', 'Reference / Cheque', 'Amount Paid'],
-                                rows: [[r.receiptNumber, r.paymentMode, r.chequeNumber || r.transactionId || 'N/A', formatCurrency(Number(r.amount))]],
-                                filename: `receipt-${r.receiptNumber}`,
-                              })}
-                            >
-                              <Printer className="h-3.5 w-3.5 mr-1" /> Print
-                            </Button>
-                            <span className="text-slate-300 text-xs">|</span>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              className="h-7 text-xs text-emerald-600 hover:text-emerald-800"
-                              title="Email Receipt"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 hover:bg-blue-50"
+                              title="Print Receipt"
                               onClick={() => {
-                                const email = window.prompt('Enter parent email address to send receipt:', 'parent@example.com');
-                                if (email) showToast(`Receipt ${r.receiptNumber} sent to ${email} successfully!`, 'success');
+                                const printContent = `<html><head><title>Receipt ${r.receiptNumber}</title><style>body{font-family:Arial,sans-serif;padding:40px}h2{color:#333}</style></head><body><h2>Fee Receipt</h2><p><strong>Receipt No:</strong> ${r.receiptNumber}</p><p><strong>Date:</strong> ${r.receiptDate}</p><p><strong>Student:</strong> ${data.studentName}</p><p><strong>Payment Mode:</strong> ${r.paymentMode}</p><p><strong>Amount:</strong> ₹${r.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p><br/><p style="color:#888;font-size:12px">This is a computer-generated receipt.</p></body></html>`;
+                                const win = window.open('', '_blank');
+                                if (win) { win.document.write(printContent); win.document.close(); win.print(); }
                               }}
                             >
-                              <Mail className="h-3.5 w-3.5 mr-1" /> Email
+                              <Printer className="h-3.5 w-3.5 text-blue-600" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 hover:bg-green-50"
+                              title="Email Receipt"
+                              onClick={() => {
+                                const mailto = `mailto:${data.email || ''}?subject=Fee Receipt ${r.receiptNumber}&body=Receipt No: ${r.receiptNumber}%0D%0ADate: ${r.receiptDate}%0D%0AStudent: ${data.studentName}%0D%0AAmount: Rs ${r.amount.toLocaleString('en-IN')}%0D%0APayment Mode: ${r.paymentMode}%0D%0A%0D%0ARegards,%0D%0ASuryadhi Learning Pvt. Ltd.`;
+                                window.open(mailto, '_blank');
+                              }}
+                            >
+                              <Mail className="h-3.5 w-3.5 text-green-600" />
                             </Button>
                           </div>
                         </td>
@@ -488,65 +503,12 @@ function NewReceiptView({ data, admissionId, onBack }: {
   };
 
   return (
-    <div className="bg-white border border-slate-300 shadow-sm rounded-sm p-4">
-      <div className="bg-[#f2f2f2] px-4 py-2 border border-slate-300 border-b-0 rounded-t-sm flex items-center justify-between">
-        <span className="font-semibold text-[13px] text-slate-700">≡ Add Advance / Fee Receipt</span>
-        {balanceAmount > 0 && (
-          <span className="text-xs text-rose-700 font-semibold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-            Outstanding: ₹{Number(balanceAmount).toLocaleString('en-IN')}
-          </span>
-        )}
-      </div>
-      
-      <form onSubmit={handleSubmit} className="border border-slate-300 p-6 space-y-4">
-        {/* Quick Selection: 1. Cash Receipt, 2. Cheque Receipt, 3. Online Receipt */}
-        <div className="bg-slate-50 p-3 rounded border border-slate-200">
-          <label className="text-xs font-semibold text-slate-700 block mb-2">Select Receipt Type to Generate:</label>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => setFormData((prev) => ({ ...prev, paymentMode: 'CASH' }))}
-              className={`py-2 px-3 text-xs font-semibold rounded border transition-all ${
-                formData.paymentMode === 'CASH'
-                  ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm'
-                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-              }`}
-            >
-              1. Cash Receipt
-            </button>
-            <button
-              type="button"
-              onClick={() => setFormData((prev) => ({ ...prev, paymentMode: 'CHEQUE' }))}
-              className={`py-2 px-3 text-xs font-semibold rounded border transition-all ${
-                formData.paymentMode === 'CHEQUE'
-                  ? 'bg-blue-600 text-white border-blue-700 shadow-sm'
-                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-              }`}
-            >
-              2. Cheque Receipt
-            </button>
-            <button
-              type="button"
-              onClick={() => setFormData((prev: any) => ({ ...prev, paymentMode: 'ONLINE' }))}
-              className={`py-2 px-3 text-xs font-semibold rounded border transition-all ${
-                formData.paymentMode === 'ONLINE'
-                  ? 'bg-indigo-600 text-white border-indigo-700 shadow-sm'
-                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-              }`}
-            >
-              3. Online Receipt
-            </button>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4 pb-3 border-b border-slate-200">
-          <div>
-            <span className="text-xs text-slate-500 font-medium">Student Name:</span>
-            <p className="font-bold text-slate-900 text-sm">{studentName || 'Student'}</p>
-          </div>
-          <div>
-            <span className="text-xs text-slate-500 font-medium">Program:</span>
-            <p className="text-blue-700 font-semibold text-sm">{programName || 'Program'}</p>
-          </div>
+    <>
+      <h1 className="text-2xl font-normal text-slate-800 mb-4">New Receipt</h1>
+      <div className="bg-white border border-slate-300 shadow-sm rounded-sm p-4">
+
+        <div className="bg-[#f2f2f2] px-4 py-2 border border-slate-300 border-b-0 rounded-t-sm">
+          <span className="font-semibold text-[13px] text-slate-700">≡ Add Receipt</span>
         </div>
 
         <div className="border border-slate-300 p-6 space-y-6">
@@ -745,7 +707,7 @@ function OtherReceiptView({ data, admissionId, onBack }: {
       for (const ft of entries) {
         await api.post('/fees/receipts', {
           admissionId,
-          invoiceId: data.invoiceId || undefined,
+          invoiceId: undefined, // Independent fee, not linked to admission fee invoice
           amount: Number(amounts[ft]),
           receiptDate,
           paymentMode,

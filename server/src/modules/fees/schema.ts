@@ -17,6 +17,8 @@ export const createReceiptSchema = z.object({
   chequeNumber: z.string().optional(),
   chequeDate: z.string().optional(),
   transactionId: z.string().optional(),
+  receiptDate: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 export const depositSchema = z.object({

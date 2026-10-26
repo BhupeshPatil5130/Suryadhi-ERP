@@ -1,58 +1,76 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Eye, Banknote, Share2, MessageSquare, Printer, Edit } from 'lucide-react';
+import { Eye, Share, Banknote, MessageCircle, Printer } from 'lucide-react';
 
 interface EnquiryActionButtonsProps {
   id: string;
+  studentName?: string;
+  parentEmail?: string;
 }
 
-export default function EnquiryActionButtons({ id }: EnquiryActionButtonsProps) {
+export default function EnquiryActionButtons({ id, studentName = 'Student', parentEmail = '' }: EnquiryActionButtonsProps) {
+  const handlePrintEmail = () => {
+    // Navigate to receipts view or open print
+    const printContent = `
+      <html><head><title>Enquiry Summary - ${studentName}</title>
+      <style>body{font-family:Arial,sans-serif;padding:30px;color:#333}h2{color:#1e3a8a}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:8px}</style></head>
+      <body>
+        <h2>SŪNOIAKIDS™ Pre-School — Enquiry Details</h2>
+        <p><strong>Student Name:</strong> ${studentName}</p>
+        <p><strong>Enquiry ID:</strong> ${id}</p>
+        <p><strong>Date:</strong> ${new Date().toLocaleDateString('en-GB')}</p>
+        <br/>
+        <p>Please visit the center or portal to complete admission.</p>
+        <br/><p style="color:#888;font-size:11px">Generated from SEMS Portal.</p>
+      </body></html>`;
+    const win = window.open('', '_blank');
+    if (win) { win.document.write(printContent); win.document.close(); win.print(); }
+  };
+
   return (
-    <div className="flex flex-col gap-1 w-[100px]">
-      {/* Row 1: View | Edit */}
-      <div className="flex items-center justify-between">
-        <Link to={`/enquiry/${id}`} title="View Enquiry">
-          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none">
-            <Eye className="h-[13px] w-[13px] text-black stroke-[2.5]" />
-          </Button>
-        </Link>
-        <div className="w-[1px] h-[14px] bg-slate-300" />
-        <Link to={`/enquiry/${id}/edit`} title="Edit Enquiry">
-          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none">
-            <Edit className="h-[13px] w-[13px] text-black stroke-[2.5]" />
-          </Button>
-        </Link>
-      </div>
+    <div className="flex items-center gap-1 text-slate-600">
+      {/* 2.1 View */}
+      <Link to={`/enquiry/${id}/edit`}>
+        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-slate-100 text-slate-700" title="1. View / Edit Enquiry">
+          <Eye className="h-3.5 w-3.5" />
+        </Button>
+      </Link>
+      <span className="text-slate-300">|</span>
 
-      {/* Row 2: Fees Receipt | Convert to Admission */}
-      <div className="flex items-center justify-between">
-        <Link to={`/enquiry/${id}/receipts`} title="Fees Receipt">
-          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none">
-            <Banknote className="h-[13px] w-[13px] text-black stroke-[2.5]" />
-          </Button>
-        </Link>
-        <div className="w-[1px] h-[14px] bg-slate-300" />
-        <Link to={`/enquiry/${id}/convert`} title="Convert to Admission">
-          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none">
-            <Share2 className="h-[13px] w-[13px] text-black stroke-[2.5]" />
-          </Button>
-        </Link>
-      </div>
+      {/* 2.2 Fees Receipt */}
+      <Link to={`/enquiry/${id}/receipts`}>
+        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-slate-100 text-emerald-700" title="2. Fees Receipt (View + Print + Delete)">
+          <Banknote className="h-3.5 w-3.5" />
+        </Button>
+      </Link>
+      <span className="text-slate-300">|</span>
 
-      {/* Row 3: Follow Up | Print */}
-      <div className="flex items-center justify-between">
-        <Link to={`/enquiry/${id}/follow-up`} title="Follow Up">
-          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none">
-            <MessageSquare className="h-[13px] w-[13px] text-black stroke-[2.5]" />
-          </Button>
-        </Link>
-        <div className="w-[1px] h-[14px] bg-slate-300" />
-        <Link to={`/enquiry/${id}/receipts`} title="Print Receipt">
-          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none">
-            <Printer className="h-[13px] w-[13px] text-black stroke-[2.5]" />
-          </Button>
-        </Link>
-      </div>
+      {/* 2.3 Convert to Admission */}
+      <Link to={`/enquiry/${id}/convert`}>
+        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-slate-100 text-blue-700" title="3. Convert to Admission">
+          <Share className="h-3.5 w-3.5" />
+        </Button>
+      </Link>
+      <span className="text-slate-300">|</span>
+
+      {/* 2.4 Follow Up */}
+      <Link to={`/enquiry/${id}/follow-up`}>
+        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-slate-100 text-amber-700" title="4. Follow Up">
+          <MessageCircle className="h-3.5 w-3.5" />
+        </Button>
+      </Link>
+      <span className="text-slate-300">|</span>
+
+      {/* 2.5 Print & Email */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 hover:bg-slate-100 text-purple-700"
+        title="5. Print & Send Receipt Email"
+        onClick={handlePrintEmail}
+      >
+        <Printer className="h-3.5 w-3.5" />
+      </Button>
     </div>
   );
 }

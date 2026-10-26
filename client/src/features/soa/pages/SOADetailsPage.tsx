@@ -8,9 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { Download, Search, FileText } from 'lucide-react';
+import { Download, Search, FileText, Building2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { downloadAsPDF, apiDownload } from '@/lib/downloadUtils';
+import { BRAND } from '@/lib/brand';
 
 interface SOATransaction {
   id: string;
@@ -176,6 +177,18 @@ export default function SOADetailsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Franchisee School / FAS ID Banner */}
+      <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg px-5 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Building2 className="h-5 w-5 text-primary" />
+          <div>
+            <p className="text-sm font-semibold text-foreground">Franchisee School</p>
+            <p className="text-xs text-muted-foreground">{BRAND.companyName}</p>
+          </div>
+        </div>
+        <Badge variant="outline" className="text-xs font-mono bg-white/80">FAS ID: FAS-001</Badge>
+      </div>
+
       <PageHeader
         title="Student Statement of Account Details"
         description="Detailed ledger view for individual students"
@@ -214,7 +227,7 @@ export default function SOADetailsPage() {
                         onClick={() => selectStudent(res)}
                       >
                         <div className="font-semibold text-sm text-slate-800">{res.studentFirstName} {res.studentLastName}</div>
-                        <div className="text-xs text-slate-500 font-mono mt-0.5">{res.uin ? res.uin.replace(/^EK\//i, 'SK/') : ''}</div>
+                        <div className="text-xs text-slate-500 font-mono mt-0.5">{res.uin}</div>
                       </div>
                     ))}
                   </div>
@@ -226,7 +239,6 @@ export default function SOADetailsPage() {
                   <p className="text-xs text-muted-foreground uppercase font-medium">Student Info</p>
                   <p className="font-bold text-base mt-1">{admission.studentFirstName} {admission.studentLastName}</p>
                   <p className="text-sm">{admission.program?.name}</p>
-                  <p className="text-xs font-mono text-muted-foreground mt-0.5">UIN: {admission.uin ? admission.uin.replace(/^EK\//i, 'SK/') : 'N/A'}</p>
                   <Badge variant="outline" className="mt-2">{admission.status}</Badge>
                 </div>
               )}
