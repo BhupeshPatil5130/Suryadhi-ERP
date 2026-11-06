@@ -82,7 +82,9 @@ export default function Navbar() {
               {user?.firstName} {user?.lastName}
             </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              {user?.role?.replace('_', ' ')}
+              {user?.role === 'SUPER_ADMIN' || user?.role === 'SCHOOL_ADMIN'
+                ? 'Admin'
+                : (user?.role?.replace('_', ' ') || 'Admin')}
             </p>
           </div>
           <button

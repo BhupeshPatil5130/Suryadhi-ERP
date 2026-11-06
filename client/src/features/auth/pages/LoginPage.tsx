@@ -114,16 +114,16 @@ export default function LoginPage() {
             {/* Logo */}
             <div className="text-center mb-8">
               {/* Suryadhi circular icon */}
-              <div className="w-20 h-20 rounded-full overflow-hidden mx-auto mb-4 border shadow-md bg-white flex items-center justify-center">
+              <div className="w-24 h-24 rounded-2xl overflow-hidden mx-auto mb-4 border shadow-md bg-white p-2 flex items-center justify-center">
                 <img
                   src={BRAND.iconSrc}
                   alt="Suryadhi"
-                  className="w-20 h-20 object-cover rounded-full"
+                  className="w-full h-full object-contain"
                 />
               </div>
-              <h1 className="text-3xl font-bold text-slate-900 mb-1">{BRAND.systemAbbr}</h1>
-              <p className="text-sm text-slate-500">
-                {BRAND.systemName}
+              <h1 className="text-2xl font-bold text-slate-900 mb-1">{BRAND.systemName}</h1>
+              <p className="text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200 inline-block mt-1">
+                Franchisee: {BRAND.franchiseCode}
               </p>
             </div>
 
@@ -230,28 +230,30 @@ export default function LoginPage() {
           <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-lg flex flex-col items-center">
             {/* Header branding */}
             <div className="text-center mb-6">
-              <img
-                src={BRAND.logoSrc}
-                alt={BRAND.companyName}
-                className="h-10 object-contain mx-auto mb-3"
-              />
-              <h2 className="text-xl font-bold text-slate-900">Select Portal / Application</h2>
-              <p className="text-xs text-slate-500 mt-1">Choose the application module you want to access</p>
+              <div className="h-12 px-3 py-1 bg-white border border-slate-200 rounded-lg inline-flex items-center justify-center mb-3 shadow-xs">
+                <img
+                  src={BRAND.logoSrc}
+                  alt={BRAND.companyName}
+                  className="h-9 object-contain"
+                />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900">Select Brand / School</h2>
+              <p className="text-xs text-slate-500 mt-1">Choose the school brand for franchisee ({BRAND.franchiseCode})</p>
             </div>
 
             <div className="w-full space-y-3">
-              {BRAND.portals.map((portal, idx) => (
+              {BRAND.subBrands.map((brand) => (
                 <button
-                  key={portal.name}
-                  onClick={() => handlePortalSelect(portal.name)}
-                  className="w-full text-left p-4 rounded-xl bg-white border border-slate-200 hover:border-blue-600 hover:shadow-md transition-all flex items-start gap-4 group"
+                  key={brand.id}
+                  onClick={() => handlePortalSelect(brand.name)}
+                  className="w-full text-left p-3.5 rounded-xl bg-white border border-slate-200 hover:border-blue-600 hover:shadow-md transition-all flex items-center gap-4 group"
                 >
-                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-black flex items-center justify-center shrink-0">
-                    <img src={portal.logoSrc} alt={portal.name} className="w-10 h-10 object-contain" />
+                  <div className="w-12 h-12 rounded-lg bg-white border border-slate-200 p-1 flex items-center justify-center shrink-0 shadow-xs">
+                    <img src={brand.logoSrc} alt={brand.name} className="w-full h-full object-contain" />
                   </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-slate-800">{portal.name}</h3>
-                    <p className="text-[11px] text-slate-500 mt-0.5">{portal.fullName}</p>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">{brand.name}</h3>
+                    <p className="text-[11px] text-slate-500 mt-0.5">{brand.desc}</p>
                   </div>
                 </button>
               ))}

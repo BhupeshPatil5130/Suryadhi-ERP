@@ -84,11 +84,11 @@ export default function SignupPage() {
             <div className="absolute -inset-4 bg-gradient-to-r from-blue-400/20 via-indigo-400/20 to-purple-400/20 rounded-full blur-xl" />
 
             {/* Main Logo */}
-            <div className="relative w-52 h-52 rounded-full overflow-hidden border-4 border-white shadow-2xl shadow-blue-500/30 bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
+            <div className="relative w-52 h-52 rounded-2xl overflow-hidden border-4 border-white shadow-2xl shadow-blue-500/30 bg-white flex items-center justify-center p-4">
               <img
                 src={BRAND.iconSrc}
                 alt="Suryadhi"
-                className="w-52 h-52 object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
           </div>

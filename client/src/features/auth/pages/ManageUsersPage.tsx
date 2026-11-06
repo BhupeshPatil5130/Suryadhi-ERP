@@ -300,7 +300,9 @@ export default function ManageUsersPage() {
                       </td>
                       <td className="p-3">
                         <Badge variant="outline" className="capitalize text-xs">
-                          {user.role.toLowerCase().replace('_', ' ')}
+                          {user.role === 'SUPER_ADMIN' || user.role === 'SCHOOL_ADMIN'
+                            ? 'Admin'
+                            : user.role.toLowerCase().replace('_', ' ')}
                         </Badge>
                       </td>
                       <td className="p-3">
@@ -482,9 +484,9 @@ export default function ManageUsersPage() {
                     onChange={(e) => setRole(e.target.value)}
                     className="w-full h-10 px-3 border rounded-lg text-sm bg-background"
                   >
-                    {/* ONLY Super Admin can create Super Admins */}
+                    {/* ONLY Admin can create Admins */}
                     {currentUser?.role === 'SUPER_ADMIN' && (
-                      <option value="SUPER_ADMIN">Super Admin</option>
+                      <option value="SUPER_ADMIN">Admin</option>
                     )}
                     <option value="SCHOOL_ADMIN">School Admin</option>
                     <option value="TEACHER">Teacher</option>
