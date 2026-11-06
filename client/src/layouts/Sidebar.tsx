@@ -116,7 +116,7 @@ const navigation: SidebarItem[] = [
       { label: 'Admission Details', href: '/reports/admissions' },
       { label: 'Fee Card Details', href: '/reports/fee-card' },
       { label: 'Enquiry Details', href: '/reports/enquiries' },
-      { label: 'LeadSuryadhi Enquiry Details', href: '/reports/lsq-enquiries' },
+      { label: 'LeadSquared Enquiry Details', href: '/reports/lsq-enquiries' },
       { label: 'Payment Due Report', href: '/reports/payment-due' },
       { label: 'Cancelled Receipt Details', href: '/reports/cancelled-receipts' },
       { label: 'Transferred Student Report', href: '/reports/transfers' },

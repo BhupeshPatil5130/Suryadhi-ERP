@@ -187,7 +187,7 @@ export default function LSQEnquiryDetailsPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-normal text-slate-800">Lead Suryadhi Enquiries (LSQ)</h1>
+          <h1 className="text-2xl font-normal text-slate-800">LeadSquared Enquiries (LSQ)</h1>
           <p className="text-xs text-slate-500 mt-0.5">Track, filter, and convert prospective student enquiries</p>
         </div>
         <div className="flex items-center gap-2">

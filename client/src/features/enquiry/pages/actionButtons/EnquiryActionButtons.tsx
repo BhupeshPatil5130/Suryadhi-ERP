@@ -66,7 +66,7 @@ export default function EnquiryActionButtons({ id, studentName = 'Student', pare
         variant="ghost"
         size="icon"
         className="h-7 w-7 hover:bg-slate-100 text-purple-700"
-        title="5. Print & Send Receipt Email"
+        title="5. Prinr Receipt "
         onClick={handlePrintEmail}
       >
         <Printer className="h-3.5 w-3.5" />

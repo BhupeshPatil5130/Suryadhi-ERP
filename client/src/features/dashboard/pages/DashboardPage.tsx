@@ -16,7 +16,6 @@ import {
   Receipt, BarChart3,
 } from 'lucide-react';
 
-// ─── Dummy Data for things not provided by backend summary
 const feeRateCards = [
   {
     program: 'Play Group',
@@ -45,7 +44,6 @@ const purchaseOrders = [
   { poNo: '221876', poDate: '2026-05-30', value: 50904, quantity: 6, status: 'Dispatch Details', remarks: 'Dispatched on 01-06-2026 through Blue Dart with LR No 51931506200', asOn: '2026-06-01' },
 ];
 
-// ─── Fee Rate Card Accordion ───────────────────────────────
 function FeeRateAccordion({ card }: { card: typeof feeRateCards[0] }) {
   const [open, setOpen] = useState(false);
   const total = card.fees.reduce((s, f) => s + f.total, 0);
@@ -63,38 +61,38 @@ function FeeRateAccordion({ card }: { card: typeof feeRateCards[0] }) {
         </div>
         <span className="text-sm font-bold text-success">{formatCurrency(total)}</span>
       </button>
-        {open && (
-          <div
-            className="overflow-x-auto"
-          >
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/30">
-                  <TableHead>Fee Type</TableHead>
-                  <TableHead className="text-right">Term 1</TableHead>
-                  <TableHead className="text-right">Term 2</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
+      {open && (
+        <div
+          className="overflow-x-auto"
+        >
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/30">
+                <TableHead>Fee Type</TableHead>
+                <TableHead className="text-right">Term 1</TableHead>
+                <TableHead className="text-right">Term 2</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {card.fees.map((fee) => (
+                <TableRow key={fee.type}>
+                  <TableCell className="font-medium text-sm">{fee.type}</TableCell>
+                  <TableCell className="text-right font-mono text-sm">{formatCurrency(fee.term1)}</TableCell>
+                  <TableCell className="text-right font-mono text-sm">{formatCurrency(fee.term2)}</TableCell>
+                  <TableCell className="text-right font-mono text-sm font-semibold">{formatCurrency(fee.total)}</TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {card.fees.map((fee) => (
-                  <TableRow key={fee.type}>
-                    <TableCell className="font-medium text-sm">{fee.type}</TableCell>
-                    <TableCell className="text-right font-mono text-sm">{formatCurrency(fee.term1)}</TableCell>
-                    <TableCell className="text-right font-mono text-sm">{formatCurrency(fee.term2)}</TableCell>
-                    <TableCell className="text-right font-mono text-sm font-semibold">{formatCurrency(fee.total)}</TableCell>
-                  </TableRow>
-                ))}
-                <TableRow className="bg-muted/20 font-bold">
-                  <TableCell>Total</TableCell>
-                  <TableCell className="text-right font-mono">{formatCurrency(card.fees.reduce((s, f) => s + f.term1, 0))}</TableCell>
-                  <TableCell className="text-right font-mono">{formatCurrency(card.fees.reduce((s, f) => s + f.term2, 0))}</TableCell>
-                  <TableCell className="text-right font-mono text-primary">{formatCurrency(total)}</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </div>
-        )}
+              ))}
+              <TableRow className="bg-muted/20 font-bold">
+                <TableCell>Total</TableCell>
+                <TableCell className="text-right font-mono">{formatCurrency(card.fees.reduce((s, f) => s + f.term1, 0))}</TableCell>
+                <TableCell className="text-right font-mono">{formatCurrency(card.fees.reduce((s, f) => s + f.term2, 0))}</TableCell>
+                <TableCell className="text-right font-mono text-primary">{formatCurrency(total)}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 }
@@ -127,7 +125,7 @@ export default function DashboardPage() {
 
   const enrollmentKPIs = [
     { title: 'Enquiries', value: data?.kpis?.enquiries || 0, icon: Users, color: 'green' as const, link: '/enquiry' },
-    { title: 'LeadSuryadhi Enquiries', value: 0, icon: BarChart3, color: 'cyan' as const, link: '/reports/lsq-enquiries' },
+    { title: 'LeadSquared Enquiries', value: 0, icon: BarChart3, color: 'cyan' as const, link: '/reports/lsq-enquiries' },
     { title: 'Gross Admission', value: data?.kpis?.grossAdmission || 0, icon: UserPlus, color: 'blue' as const, link: '/admission' },
     { title: 'Transfer In', value: data?.kpis?.transferIn || 0, icon: ArrowRightLeft, color: 'indigo' as const, link: '/transfers/manage' },
     { title: 'Transfer Out', value: data?.kpis?.transferOut || 0, icon: ArrowRightLeft, color: 'amber' as const, link: '/transfer-out' },
@@ -209,46 +207,6 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="bg-destructive/5 pb-4 border-b border-destructive/10">
-              <CardTitle className="text-base flex items-center justify-between">
-                <span className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-destructive" /> Outstanding Payments (Top 5)</span>
-                <Button variant="outline" size="sm" className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground">Remind All</Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {data?.recentAdmissions?.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/10">
-                        <TableHead>Student</TableHead>
-                        <TableHead>Program</TableHead>
-                        <TableHead className="text-right">Action</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data.recentAdmissions.map((adm: any) => (
-                        <TableRow key={adm.id}>
-                          <TableCell>
-                            <div className="font-medium text-sm">{adm.student.firstName} {adm.student.lastName}</div>
-                          </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">{adm.program?.name}</TableCell>
-                          <TableCell className="text-right">
-                            <Button variant="ghost" size="sm" asChild>
-                              <Link to={`/admissions/view-receipt`} state={{ student: adm, receipt: { receiptNumber: 'View Dues', amount: 0, paymentMode: 'N/A' } }}>View</Link>
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                 <div className="p-8 text-center text-muted-foreground text-sm">No recent admissions to show</div>
-              )}
-            </CardContent>
-          </Card>
         </div>
 
         {/* Right Column */}
@@ -296,7 +254,7 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-               {data?.recentEnquiries?.length > 0 ? (
+              {data?.recentEnquiries?.length > 0 ? (
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -317,9 +275,9 @@ export default function DashboardPage() {
                     </TableBody>
                   </Table>
                 </div>
-               ) : (
-                 <div className="p-8 text-center text-muted-foreground text-sm">No recent enquiries</div>
-               )}
+              ) : (
+                <div className="p-8 text-center text-muted-foreground text-sm">No recent enquiries</div>
+              )}
             </CardContent>
           </Card>
         </div>

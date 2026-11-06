@@ -81,10 +81,8 @@ export class ReportsController {
 
   async lsqEnquiries(req: Request, res: Response, next: NextFunction) {
     try {
-      // LSQ enquiries use the same data as regular enquiries, with lead source tagging.
-      const result = await reportsService.getEnquiriesReport(req.user!.schoolId!, req.query);
-      const lsqData = result.data.filter((e: any) => e.mediaSource?.name?.toLowerCase().includes('lsq') || e.mediaSource?.name?.toLowerCase().includes('lead'));
-      res.json({ success: true, data: lsqData.length > 0 ? lsqData : result.data, total: lsqData.length > 0 ? lsqData.length : result.total });
+      const result = await reportsService.getLSQEnquiriesReport(req.user!.schoolId!, req.query);
+      res.json({ success: true, ...result });
     } catch (error) { next(error); }
   }
 }
