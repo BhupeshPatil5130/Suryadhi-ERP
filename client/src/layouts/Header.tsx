@@ -13,6 +13,7 @@ import {
   Settings,
   Calendar,
   ChevronDown,
+  Building2,
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -21,14 +22,27 @@ import { showToast } from '@/lib/toast';
 
 export default function Header() {
   const { user, logout } = useAuthStore();
-  const { toggleSidebar, setSidebarMobileOpen, theme, setTheme, academicYear, setAcademicYear, setAcademicYearId, activePortal, setActivePortal } = useUIStore();
+  const {
+    toggleSidebar,
+    setSidebarMobileOpen,
+    theme,
+    setTheme,
+    academicYear,
+    setAcademicYear,
+    setAcademicYearId,
+    activeBrandId,
+    setActiveBrandId,
+  } = useUIStore();
   const [showProfile, setShowProfile] = useState(false);
-  const [showPortals, setShowPortals] = useState(false);
+  const [showBrands, setShowBrands] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
-  const portalsRef = useRef<HTMLDivElement>(null);
+  const brandsRef = useRef<HTMLDivElement>(null);
 
   const [academicYearsList, setAcademicYearsList] = useState<string[]>([]);
   const [academicYearsRaw, setAcademicYearsRaw] = useState<any[]>([]);
+
+  // Find active sub-brand
+  const currentBrand = BRAND.subBrands.find((b) => b.id === activeBrandId) || BRAND.subBrands[0];
 
   useEffect(() => {
     const fetchYears = async () => {
@@ -62,8 +76,8 @@ export default function Header() {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
         setShowProfile(false);
       }
-      if (portalsRef.current && !portalsRef.current.contains(e.target as Node)) {
-        setShowPortals(false);
+      if (brandsRef.current && !brandsRef.current.contains(e.target as Node)) {
+        setShowBrands(false);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -77,6 +91,11 @@ export default function Header() {
     setTheme(themes[(idx + 1) % themes.length]);
   };
 
+  // Role display helper: format super_admin / school_admin as Admin
+  const displayRole = user?.role === 'SUPER_ADMIN' || user?.role === 'SCHOOL_ADMIN'
+    ? 'Admin'
+    : (user?.role?.replace(/_/g, ' ') || 'Admin');
+
   return (
     <header className="h-14 border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-30 flex items-center justify-between px-4 gap-4">
       {/* Left */}
@@ -89,7 +108,7 @@ export default function Header() {
         </button>
 
         {/* Search */}
-        <div className="hidden md:flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-1.5 w-64 border border-transparent focus-within:border-primary/30 transition-colors">
+        <div className="hidden md:flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-1.5 w-60 border border-transparent focus-within:border-primary/30 transition-colors">
           <Search className="h-4 w-4 text-muted-foreground shrink-0" />
           <input
             type="text"
@@ -104,39 +123,59 @@ export default function Header() {
 
       {/* Right */}
       <div className="flex items-center gap-2">
-        {/* Portal / Application Selector */}
-        <div className="relative" ref={portalsRef}>
+        {/* Franchise Badge */}
+        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 text-xs font-semibold border border-amber-200 dark:border-amber-800/40">
+          <Building2 className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+          <span>Franchisee: <span className="font-bold">{BRAND.franchiseCode}</span></span>
+        </div>
+
+        {/* Sub-Brand Selector (No "Portal") */}
+        <div className="relative" ref={brandsRef}>
           <button
-            onClick={() => setShowPortals(!showPortals)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400 text-xs font-semibold hover:bg-indigo-100 transition-colors"
+            onClick={() => setShowBrands(!showBrands)}
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-900 dark:bg-blue-950/40 dark:text-blue-300 text-xs font-semibold hover:bg-blue-100 transition-colors border border-blue-200/60 dark:border-blue-800/40 shadow-sm"
+            title="Switch Brand / School"
           >
-            <span className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400 animate-pulse" />
-            Portal: {activePortal || BRAND.systemAbbr}
-            <ChevronDown className="h-3 w-3" />
+            <div className="w-5 h-5 rounded bg-white p-0.5 border border-slate-200 flex items-center justify-center shrink-0">
+              <img
+                src={currentBrand.logoSrc}
+                alt={currentBrand.name}
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <span className="hidden sm:inline font-semibold">{currentBrand.name}</span>
+            <span className="sm:hidden font-semibold">{currentBrand.shortName}</span>
+            <ChevronDown className="h-3 w-3 text-muted-foreground" />
           </button>
           
-          {showPortals && (
+          {showBrands && (
             <div className="absolute right-0 top-full mt-2 w-72 bg-popover border border-border rounded-xl shadow-xl z-50 py-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="px-3 py-1 border-b border-border mb-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                Switch Portal
+              <div className="px-3 py-1.5 border-b border-border mb-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center justify-between">
+                <span>Select Brand / School</span>
+                <span className="text-[9px] text-amber-600 font-bold">{BRAND.franchiseCode}</span>
               </div>
-              {BRAND.portals.map((p) => (
+              {BRAND.subBrands.map((b) => (
                 <button
-                  key={p.name}
+                  key={b.id}
                   onClick={() => {
-                    setActivePortal(p.name);
-                    setShowPortals(false);
-                    showToast(`Switched to portal: ${p.name}`, 'success');
+                    setActiveBrandId(b.id);
+                    setShowBrands(false);
+                    showToast(`Active brand: ${b.name}`, 'success');
                   }}
-                  className={`w-full text-left px-3 py-2 text-xs hover:bg-accent transition-colors flex items-start gap-2 ${
-                    activePortal === p.name ? 'bg-indigo-50/50 dark:bg-indigo-950/20 font-medium' : ''
+                  className={`w-full text-left px-3 py-2 text-xs hover:bg-accent transition-colors flex items-center gap-2.5 ${
+                    currentBrand.id === b.id ? 'bg-blue-50/70 dark:bg-blue-950/30 font-medium' : ''
                   }`}
                 >
-                  <img src={p.logoSrc} alt={p.name} className="w-7 h-7 rounded object-contain bg-black shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-semibold text-foreground block">{p.name}</span>
-                    <span className="text-[10px] text-muted-foreground">{p.desc}</span>
+                  <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center p-0.5 shrink-0 shadow-sm">
+                    <img src={b.logoSrc} alt={b.name} className="w-full h-full object-contain" />
                   </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="font-semibold text-foreground block truncate">{b.name}</span>
+                    <span className="text-[10px] text-muted-foreground block truncate">{b.desc}</span>
+                  </div>
+                  {currentBrand.id === b.id && (
+                    <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
+                  )}
                 </button>
               ))}
             </div>
@@ -144,7 +183,7 @@ export default function Header() {
         </div>
 
         {/* Academic Year Selector */}
-        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-100 transition-colors relative">
+        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-100 transition-colors relative border border-emerald-200/60 dark:border-emerald-800/40">
           <Calendar className="h-3.5 w-3.5 pointer-events-none" />
           <select
             value={academicYear}
@@ -199,17 +238,25 @@ export default function Header() {
                 {user?.firstName} {user?.lastName}
               </p>
               <p className="text-[10px] text-muted-foreground mt-0.5">
-                {user?.role?.replace(/_/g, ' ')}
+                {displayRole}
               </p>
             </div>
             <ChevronDown className="h-3 w-3 text-muted-foreground hidden md:block" />
           </button>
 
           {showProfile && (
-            <div className="absolute right-0 top-full mt-2 w-52 bg-popover border border-border rounded-xl shadow-xl z-50 py-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="absolute right-0 top-full mt-2 w-56 bg-popover border border-border rounded-xl shadow-xl z-50 py-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="px-3 py-2 border-b border-border mb-1">
                 <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <span className="text-[10px] font-semibold text-primary px-1.5 py-0.5 bg-primary/10 rounded">
+                    {displayRole}
+                  </span>
+                  <span className="text-[10px] font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-200/50">
+                    {BRAND.franchiseCode}
+                  </span>
+                </div>
                 {user?.customerId && (
                   <p className="text-[10px] text-muted-foreground mt-1">
                     Customer ID: {user.customerId}

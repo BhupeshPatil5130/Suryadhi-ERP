@@ -7,12 +7,14 @@ interface UIStore {
   academicYear: string;
   academicYearId: string;
   activePortal: string;
+  activeBrandId: string;
   toggleSidebar: () => void;
   setSidebarMobileOpen: (open: boolean) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   setAcademicYear: (year: string) => void;
   setAcademicYearId: (id: string) => void;
   setActivePortal: (portal: string) => void;
+  setActiveBrandId: (brandId: string) => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -22,6 +24,7 @@ export const useUIStore = create<UIStore>((set) => ({
   academicYear: localStorage.getItem('academicYear') || '',
   academicYearId: localStorage.getItem('academicYearId') || '',
   activePortal: localStorage.getItem('activePortal') || '',
+  activeBrandId: localStorage.getItem('activeBrandId') || 'UNIX',
 
   toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
   setSidebarMobileOpen: (open) => set({ sidebarMobileOpen: open }),
@@ -49,5 +52,9 @@ export const useUIStore = create<UIStore>((set) => ({
   setActivePortal: (portal) => {
     localStorage.setItem('activePortal', portal);
     set({ activePortal: portal });
+  },
+  setActiveBrandId: (brandId) => {
+    localStorage.setItem('activeBrandId', brandId);
+    set({ activeBrandId: brandId });
   },
 }));
