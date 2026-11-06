@@ -414,7 +414,7 @@ export default function PurchaseOrderPage() {
 
     try {
       // Post to backend API
-      await api.post('/operations/purchase-orders', {
+      const res = await api.post('/operations/purchase-orders', {
         orderNumber: newPO.poNo,
         items: {
           orderType,
@@ -434,9 +434,24 @@ export default function PurchaseOrderPage() {
         },
         totalAmount: grandTotal,
         notes: newPO.remarks,
-      }).catch((err) => {
-        console.warn('API post failed, keeping in local memory:', err);
+        orderType,
+        program,
+        supplier,
+        transporter,
+        estimatedDeliveryDate,
+        noOfBoxes,
+        depositReceiptNo,
+        depositAmount: grandTotal,
+        paymentMode,
+        paymentRef,
+        bankName,
+        depositDate,
+        lineItems,
       });
+
+      if (res.data?.data?.id) {
+        newPO.id = res.data.data.id;
+      }
 
       setData((prev) => [newPO, ...prev]);
       showToast(`Purchase Order ${newPO.poNo} generated successfully with Deposit Receipt ${depositReceiptNo}!`, 'success');

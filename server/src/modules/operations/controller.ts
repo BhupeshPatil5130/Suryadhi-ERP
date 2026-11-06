@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { operationsService } from './service';
+import prisma from '../../config/database';
 import { 
   createPurchaseOrderSchema, 
   updatePurchaseOrderStatusSchema, 
@@ -10,7 +11,7 @@ import { AppError } from '../../middleware/errorHandler';
 
 export class OperationsController {
   private getSchoolId(req: Request): string {
-    const schoolId = getEffectiveSchoolId(req);
+    const schoolId = getEffectiveSchoolId(req) || req.user?.schoolId;
     if (!schoolId) {
       throw new AppError('School context is required for this operation', 400);
     }
@@ -24,6 +25,17 @@ export class OperationsController {
       res.status(200).json({ success: true, data: result });
     } catch (error: any) {
       res.status(400).json({ success: false, error: error.message });
+    }
+  }
+
+  async getPurchaseOrderById(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const schoolId = this.getSchoolId(req);
+      const result = await operationsService.getPurchaseOrderById(id as string, schoolId);
+      res.status(200).json({ success: true, data: result });
+    } catch (error: any) {
+      res.status(404).json({ success: false, error: error.message });
     }
   }
 
@@ -44,6 +56,17 @@ export class OperationsController {
       const schoolId = this.getSchoolId(req);
       const validatedData = updatePurchaseOrderStatusSchema.parse(req.body);
       const result = await operationsService.updatePurchaseOrderStatus(id as string, schoolId, validatedData);
+      res.status(200).json({ success: true, data: result });
+    } catch (error: any) {
+      res.status(400).json({ success: false, error: error.message });
+    }
+  }
+
+  async deletePurchaseOrder(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const schoolId = this.getSchoolId(req);
+      const result = await operationsService.deletePurchaseOrder(id as string, schoolId);
       res.status(200).json({ success: true, data: result });
     } catch (error: any) {
       res.status(400).json({ success: false, error: error.message });
