@@ -5,24 +5,17 @@
  * ⚡ IMPORTANT: This is the SINGLE SOURCE OF TRUTH for all branding.
  * Edit values here and the entire application updates automatically.
  * No other files should hard-code brand names.
- *
- * Logo files are in: client/src/assets/
- * To swap a logo, just update the import path below.
  */
 
 // ─── Logo asset imports ───────────────────────────────────────────────────────
-// Suryadhi circular icon mark (dark background) — sidebar collapsed + favicon
-import suryadhiIcon from '@/assets/WhatsApp Image 2026-08-05 at 6.14.51 PM.jpeg';
-// SURYADHI LEARNING full wordmark (black background) — expanded sidebar
-import suryadhiLearningLogo from '@/assets/WhatsApp Image 2026-08-05 at 6.14.52 PM (1).jpeg';
-// SUNOIA World Pre-School logo
-import sunoiaWorldPreschoolLogo from '@/assets/WhatsApp Image 2026-08-05 at 6.14.52 PM (2).jpeg';
-// SURYADHI SCHOOL MANAGEMENT SYSTEM badge (was SUSMS) — SEMS badge
-import semsBadge from '@/assets/WhatsApp Image 2026-08-05 at 6.14.52 PM.jpeg';
-// SURYADHI tagline wordmark — Meditate · Innovate · Educate
-import suryadhiTaglineLogo from '@/assets/WhatsApp Image 2026-08-05 at 6.14.53 PM (1).jpeg';
-// SUNOIA Global School logo
-import sunoiaGlobalSchoolLogo from '@/assets/WhatsApp Image 2026-08-05 at 6.14.53 PM.jpeg';
+// Main Brand Logo — Suryadhi Learning Private Limited
+import suryadhiMainLogo from '@/assets/logos/suryadhi-main.png';
+// Sub-Brand 1 — Unix Global Pre School
+import unixGlobalPreschoolLogo from '@/assets/logos/unix-global-preschool.png';
+// Sub-Brand 2 — Utopia World Pre School
+import utopiaWorldPreschoolLogo from '@/assets/logos/utopia-world-preschool.png';
+// Sub-Brand 3 — Utopia Global School
+import utopiaGlobalSchoolLogo from '@/assets/logos/utopia-global-school.png';
 
 // ─── Brand Config ─────────────────────────────────────────────────────────────
 export const BRAND = {
@@ -44,6 +37,10 @@ export const BRAND = {
   /** Suryadhi Group umbrella name */
   groupName: 'Suryadhi Group',
 
+  /** Default franchise details */
+  franchiseCode: 'SK-Dhule-Deopur',
+  franchiseName: 'Suryadhi Kids - Dhule Deopur',
+
   /** System version tag shown in sidebar */
   version: 'SEMS v2.0',
 
@@ -53,84 +50,110 @@ export const BRAND = {
   /** White-label powered-by footer */
   poweredBy: 'Powered by SEMS — Suryadhi Learning Pvt. Ltd.',
 
-  /** Tagline shown in marketing / academic year step */
+  /** Tagline */
   tagline: 'Meditate · Innovate · Educate',
 
-  // ─── Logos ──────────────────────────────────────────────────────────────────
+  // ─── Main Logo ──────────────────────────────────────────────────────────────
+  /** Main circular/icon brand mark */
+  iconSrc: suryadhiMainLogo,
 
-  /** Circular brand icon — used as favicon replacement & sidebar collapsed state */
-  iconSrc: suryadhiIcon,
+  /** Main full brand logo: SURYADHI LEARNING PRIVATE LIMITED */
+  logoSrc: suryadhiMainLogo,
 
-  /** Full SURYADHI LEARNING wordmark — used in expanded sidebar */
-  logoSrc: suryadhiLearningLogo,
+  /** Tagline wordmark */
+  taglineLogoSrc: suryadhiMainLogo,
 
-  /** SURYADHI tagline wordmark (Meditate·Innovate·Educate) */
-  taglineLogoSrc: suryadhiTaglineLogo,
+  /** SEMS badge logo */
+  semsBadgeSrc: suryadhiMainLogo,
 
-  /** SEMS badge logo (was SUSMS) — used on academic-year step in login */
-  semsBadgeSrc: semsBadge,
+  // ─── 3 Sub-Brands ───────────────────────────────────────────────────────────
+  subBrands: [
+    {
+      id: 'UNIX',
+      name: 'Unix Global Pre School',
+      shortName: 'Unix Global',
+      fullName: 'Unix Global Pre School',
+      desc: 'Pre-School & Early Childhood Center',
+      code: 'UGPS',
+      color: 'blue',
+      logoSrc: unixGlobalPreschoolLogo,
+    },
+    {
+      id: 'UTOPIA_WORLD',
+      name: 'Utopia World Pre School',
+      shortName: 'Utopia World',
+      fullName: 'Utopia World Pre School',
+      desc: 'World Pre-School & Day Care Network',
+      code: 'UWPS',
+      color: 'teal',
+      logoSrc: utopiaWorldPreschoolLogo,
+    },
+    {
+      id: 'UTOPIA_GLOBAL',
+      name: 'Utopia Global School',
+      shortName: 'Utopia Global',
+      fullName: 'Utopia Global School',
+      desc: 'K-12 & Global Foundation School',
+      code: 'UGS',
+      color: 'indigo',
+      logoSrc: utopiaGlobalSchoolLogo,
+    },
+  ],
 
-  // ─── Portals (Login Step 2 + Header Switcher) ───────────────────────────────
+  // ─── Applications / Sub-Brand Portals ──────────────────────────────────────
   portals: [
     {
-      name: 'SEMS',
-      fullName: 'Suryadhi Education Management System',
-      desc: 'Master ERP — School, Franchise & Operations Management',
+      name: 'Unix Global Pre School',
+      fullName: 'Unix Global Pre School',
+      desc: 'Pre-School Franchise & Fee Management',
       color: 'blue',
-      logoSrc: suryadhiLearningLogo,
+      logoSrc: unixGlobalPreschoolLogo,
     },
     {
-      name: 'SŪNOIAKIDS™',
-      fullName: 'SŪNOIAKIDS™ Pre-School & DayCare',
-      desc: 'Pre-School Franchise Network, Center & Fee Management',
-      color: 'orange',
-      logoSrc: sunoiaWorldPreschoolLogo,
+      name: 'Utopia World Pre School',
+      fullName: 'Utopia World Pre School',
+      desc: 'World Pre-School Network & Admissions',
+      color: 'teal',
+      logoSrc: utopiaWorldPreschoolLogo,
     },
     {
-      name: 'STEPS',
-      fullName: 'Suryadhi Teacher Excellence & Pedagogy System',
-      desc: 'Teacher Training, Pedagogy & Academic Excellence Portal',
-      color: 'violet',
-      logoSrc: sunoiaGlobalSchoolLogo,
+      name: 'Utopia Global School',
+      fullName: 'Utopia Global School',
+      desc: 'K-12 Foundation & Master Operations',
+      color: 'indigo',
+      logoSrc: utopiaGlobalSchoolLogo,
     },
   ],
 
   // ─── Verticals (for reference in reports, documents) ────────────────────────
   verticals: [
     {
-      id: 'SNK',
-      name: 'SŪNOIAKIDS™ Pre-School & DayCare',
-      short: 'SŪNOIAKIDS™',
+      id: 'UNIX',
+      name: 'Unix Global Pre School',
+      short: 'Unix Global',
       type: 'Franchise Pre-School',
-      logoSrc: sunoiaWorldPreschoolLogo,
+      logoSrc: unixGlobalPreschoolLogo,
     },
     {
-      id: 'SWP',
-      name: 'SUNOIA World Pre-School',
-      short: 'SUNOIA World',
+      id: 'UTOPIA_WORLD',
+      name: 'Utopia World Pre School',
+      short: 'Utopia World',
       type: 'Premium Pre-School Chain',
-      logoSrc: sunoiaWorldPreschoolLogo,
+      logoSrc: utopiaWorldPreschoolLogo,
     },
     {
-      id: 'SNS',
-      name: 'SUNOIA School',
-      short: 'SUNOIA School',
+      id: 'UTOPIA_GLOBAL',
+      name: 'Utopia Global School',
+      short: 'Utopia School',
       type: 'K-12 School Chain',
-      logoSrc: sunoiaGlobalSchoolLogo,
-    },
-    {
-      id: 'SPB',
-      name: 'Suryadhi Publication',
-      short: 'Suryadhi Pub.',
-      type: 'In-house Publishing House',
-      logoSrc: suryadhiLearningLogo,
+      logoSrc: utopiaGlobalSchoolLogo,
     },
     {
       id: 'SEMS',
       name: 'Suryadhi Education Management System',
       short: 'SEMS',
-      type: 'Master ERP Engine',
-      logoSrc: semsBadge,
+      type: 'Master Franchise ERP',
+      logoSrc: suryadhiMainLogo,
     },
   ],
 
@@ -144,3 +167,4 @@ export const BRAND = {
 
 export type PortalName = (typeof BRAND.portals)[number]['name'];
 export type VerticalId = (typeof BRAND.verticals)[number]['id'];
+export type SubBrand = (typeof BRAND.subBrands)[number];
