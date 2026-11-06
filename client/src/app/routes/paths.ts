@@ -31,6 +31,7 @@ export const PATHS = {
 
   // ── Student Lifecycle ──────────────────────────────────
   GRADUATION: {
+    ROOT: '/graduation',
     HOMEBUDDY: '/graduation/homebuddy',
   },
   TRANSFERS: {

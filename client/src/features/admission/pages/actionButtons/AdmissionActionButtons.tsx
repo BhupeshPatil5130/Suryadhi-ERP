@@ -32,7 +32,7 @@ export default function AdmissionActionButtons({ id }: AdmissionActionButtonsPro
           </Button>
         </Link>
         <div className="w-[1px] h-[14px] bg-slate-300"></div>
-        <Link to={`/graduation/homebuddy?admissionId=${id}`}>
+        <Link to={`/graduation?admissionId=${id}`}>
           <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Graduate to">
             <Forward className="h-[14px] w-[14px] text-black stroke-[2.5]" />
           </Button>
