@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatDate, formatCurrency, getStatusColor } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
-import { 
+import {
   Download, Plus, Eye, Printer, CreditCard, Banknote, AlertTriangle, FileText,
-  Package, Clock, Send, Truck, CheckCircle2, ChevronDown, Loader2
+  Package, Clock, Send, Truck, CheckCircle2, ChevronDown, Loader2, MoreHorizontal
 } from 'lucide-react';
 import {
   Dialog,
@@ -139,6 +139,13 @@ export default function PurchaseOrderPage() {
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null);
 
+  // Row action dropdown (fixed positioned so it never gets clipped by the table)
+  const [actionMenu, setActionMenu] = useState<{
+    po: PurchaseOrder;
+    top: number;
+    left: number;
+  } | null>(null);
+
   // New PO Form state
   const [formData, setFormData] = useState({
     supplier: 'SunoiaKids HQ Supply',
@@ -197,187 +204,183 @@ export default function PurchaseOrderPage() {
   const filteredData = statusFilter === 'ALL'
     ? data
     : data.filter((item) => {
-        const s = item.status.toUpperCase();
-        if (statusFilter === 'ORDER_RECEIVED') return ['ORDER_RECEIVED', 'SUBMITTED', 'PENDING'].includes(s);
-        if (statusFilter === 'IN_PROCESS') return ['IN_PROCESS', 'APPROVED'].includes(s);
-        if (statusFilter === 'ORDER_DISPATCH') return ['ORDER_DISPATCH', 'DISPATCHED'].includes(s);
-        if (statusFilter === 'IN_TRANSIT') return ['IN_TRANSIT'].includes(s);
-        if (statusFilter === 'ORDER_DELIVERED') return ['ORDER_DELIVERED', 'DELIVERED'].includes(s);
-        return true;
-      });
+      const s = item.status.toUpperCase();
+      if (statusFilter === 'ORDER_RECEIVED') return ['ORDER_RECEIVED', 'SUBMITTED', 'PENDING'].includes(s);
+      if (statusFilter === 'IN_PROCESS') return ['IN_PROCESS', 'APPROVED'].includes(s);
+      if (statusFilter === 'ORDER_DISPATCH') return ['ORDER_DISPATCH', 'DISPATCHED'].includes(s);
+      if (statusFilter === 'IN_TRANSIT') return ['IN_TRANSIT'].includes(s);
+      if (statusFilter === 'ORDER_DELIVERED') return ['ORDER_DELIVERED', 'DELIVERED'].includes(s);
+      return true;
+    });
+
+  /* ---------------- Row action helpers ---------------- */
+
+  const openActionMenu = (e: React.MouseEvent<HTMLButtonElement>, po: PurchaseOrder) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const MENU_WIDTH = 224;
+    const MENU_HEIGHT = 300;
+
+    const left = Math.min(
+      Math.max(8, rect.right - MENU_WIDTH),
+      window.innerWidth - MENU_WIDTH - 8
+    );
+    const top = rect.bottom + MENU_HEIGHT > window.innerHeight
+      ? Math.max(8, rect.top - MENU_HEIGHT - 4)
+      : rect.bottom + 4;
+
+    setActionMenu(prev => (prev && prev.po.id === po.id ? null : { po, top, left }));
+  };
+
+  const closeActionMenu = () => setActionMenu(null);
+
+  const openDetailDialog = (po: PurchaseOrder, dialog: string) => {
+    setSelectedPO(po);
+    setActiveDialog(dialog);
+    closeActionMenu();
+  };
+
+  const handleDownloadPackageList = (item: PurchaseOrder) => {
+    downloadAsPDF({
+      title: `Package List — ${item.poNo}`,
+      subtitle: `Order Type: ${item.orderType} | Boxes: ${item.noOfBoxes} | Transporter: ${item.transporter}`,
+      filename: `package-list-${item.poNo}`,
+      columns: ['Box #', 'Item Description', 'Quantity', 'Status'],
+      rows: [
+        ['Box 1 of ' + item.noOfBoxes, `${item.orderType} Main Kit Items`, '10 sets', 'Packed'],
+        ['Box 2 of ' + item.noOfBoxes, `${item.orderType} Ancillary Materials`, '5 sets', 'Packed'],
+      ],
+    });
+    showToast('Package list downloaded successfully!', 'success');
+    closeActionMenu();
+  };
+
+  const handleDownloadHSInvoice = (item: PurchaseOrder) => {
+    downloadAsPDF({
+      title: `HomeSunny Sale Invoice — ${item.poNo}`,
+      subtitle: `Order Type: ${item.orderType} | Amount: ${formatCurrency(item.totalAmount)}`,
+      filename: `homesunny-invoice-${item.poNo}`,
+      columns: ['Invoice No', 'Date', 'Description', 'Amount (₹)', 'Tax (₹)', 'Total (₹)'],
+      rows: [[
+        `HS-INV-${item.poNo}`,
+        formatDate(item.date),
+        item.orderType,
+        formatCurrency(item.totalAmount * 0.82),
+        formatCurrency(item.totalAmount * 0.18),
+        formatCurrency(item.totalAmount),
+      ]],
+    });
+    showToast('HomeSunny Sale Invoice downloaded!', 'success');
+    closeActionMenu();
+  };
+
+  const handleDownloadSaleInvoice = (item: PurchaseOrder) => {
+    downloadAsPDF({
+      title: `Standard Sale Invoice — ${item.poNo}`,
+      subtitle: `Vendor: ${item.supplier} | Total Amount: ${formatCurrency(item.totalAmount)}`,
+      filename: `sale-invoice-${item.poNo}`,
+      columns: ['Item', 'Program', 'Boxes', 'Amount', 'LR No'],
+      rows: [[item.orderType, item.program, String(item.noOfBoxes), formatCurrency(item.totalAmount), item.transporter]],
+    });
+    showToast('Sale Invoice downloaded!', 'success');
+    closeActionMenu();
+  };
+
+  /* ---------------- Table columns (compact structure) ---------------- */
 
   const columns: ColumnDef<PurchaseOrder, any>[] = [
     {
+      id: 'poNo',
       accessorKey: 'poNo',
-      header: 'PO. Number',
-      cell: ({ getValue }) => <span className="font-mono font-bold text-xs text-blue-700">{getValue() as string}</span>,
-    },
-    {
-      accessorKey: 'date',
-      header: 'PO Date',
-      cell: ({ getValue }) => <span className="text-xs">{formatDate(getValue() as string)}</span>,
+      header: 'PO Number',
+      cell: ({ row }) => (
+        <div className="leading-tight">
+          <div className="font-mono font-bold text-xs text-blue-700">{row.original.poNo}</div>
+          <div className="text-[10px] text-slate-500 mt-0.5">{formatDate(row.original.date)}</div>
+        </div>
+      ),
     },
     {
       accessorKey: 'totalAmount',
-      header: () => <div className="text-right">Total Amount (₹)</div>,
-      cell: ({ getValue }) => <div className="text-right font-mono font-semibold text-xs text-slate-800">{formatCurrency(getValue() as number)}</div>,
+      header: () => <div className="text-right">Amount (₹)</div>,
+      cell: ({ getValue }) => (
+        <div className="text-right font-mono font-semibold text-xs text-slate-800">
+          {formatCurrency(getValue() as number)}
+        </div>
+      ),
     },
     {
       accessorKey: 'status',
       header: 'Status',
       cell: ({ getValue }) => {
         const status = getValue() as string;
-        return <Badge className={`${getStatusColor(status)} text-[10px] px-2 py-0.5`}>{status.replace(/_/g, ' ')}</Badge>;
+        return (
+          <Badge className={`${getStatusColor(status)} text-[10px] px-2 py-0.5 whitespace-nowrap`}>
+            {status.replace(/_/g, ' ')}
+          </Badge>
+        );
       },
     },
     {
       accessorKey: 'orderType',
       header: 'Order Type',
-      cell: ({ getValue }) => <span className="text-xs font-medium text-slate-700">{getValue() as string}</span>,
+      cell: ({ getValue }) => (
+        <span className="text-xs font-medium text-slate-700 whitespace-nowrap">
+          {(getValue() as string).replace('Create ', '')}
+        </span>
+      ),
     },
     {
       accessorKey: 'transporter',
-      header: 'Transporter/LR No',
-      cell: ({ getValue }) => <span className="text-xs text-slate-600 font-mono">{getValue() as string}</span>,
+      header: 'Transporter / LR No',
+      cell: ({ getValue }) => (
+        <span className="text-[11px] text-slate-600 font-mono whitespace-nowrap">
+          {getValue() as string}
+        </span>
+      ),
     },
     {
-      accessorKey: 'estimatedDeliveryDate',
-      header: 'Est. Delivery Date',
-      cell: ({ getValue }) => <span className="text-xs">{formatDate(getValue() as string)}</span>,
-    },
-    {
-      accessorKey: 'deliveryDate',
-      header: 'Delivery Date',
-      cell: ({ getValue }) => {
-        const val = getValue() as string;
-        return <span className="text-xs">{val && val !== '—' ? formatDate(val) : '—'}</span>;
+      id: 'delivery',
+      accessorFn: (row) => row.estimatedDeliveryDate,
+      header: 'Delivery',
+      cell: ({ row }) => {
+        const { estimatedDeliveryDate, deliveryDate } = row.original;
+        const isDelivered = !!deliveryDate && deliveryDate !== '—';
+        return (
+          <div className="leading-tight whitespace-nowrap">
+            <div className="text-xs text-slate-700">{formatDate(estimatedDeliveryDate)}</div>
+            <div className={`text-[10px] mt-0.5 ${isDelivered ? 'text-emerald-600 font-medium' : 'text-slate-400'}`}>
+              {isDelivered ? `Delivered ${formatDate(deliveryDate)}` : 'Expected'}
+            </div>
+          </div>
+        );
       },
     },
     {
       accessorKey: 'noOfBoxes',
-      header: () => <div className="text-center">No. Of Boxes</div>,
-      cell: ({ getValue }) => <div className="text-center font-bold text-xs">{getValue() as number}</div>,
+      header: () => <div className="text-center">Boxes</div>,
+      cell: ({ getValue }) => (
+        <div className="text-center font-bold text-xs text-slate-700">{getValue() as number}</div>
+      ),
     },
     {
       id: 'actions',
-      header: () => <div className="text-center font-bold">Action Buttons (07)</div>,
+      header: () => <div className="text-center">Actions</div>,
       enableSorting: false,
       cell: ({ row }) => {
         const item = row.original;
+        const isOpen = actionMenu?.po.id === item.id;
         return (
-          <div className="flex items-center gap-1 justify-center flex-wrap max-w-[260px]">
-            {/* 1. View Order */}
+          <div className="flex justify-center">
             <Button
               variant="outline"
               size="sm"
-              className="h-6 px-1.5 text-[10px] gap-1 bg-white hover:bg-slate-100"
-              title="1. View Order"
-              onClick={() => { setSelectedPO(item); setActiveDialog('view'); }}
+              className={`h-6 px-2 text-[10px] gap-1 bg-white hover:bg-slate-100 ${isOpen ? 'border-blue-500 text-blue-700' : ''}`}
+              title="Open actions"
+              onClick={(e) => openActionMenu(e, item)}
             >
-              <Eye className="h-3 w-3 text-blue-600" /> View
-            </Button>
-
-            {/* 2. Payment Details */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-6 px-1.5 text-[10px] gap-1 bg-white hover:bg-slate-100"
-              title="2. Payment Details"
-              onClick={() => { setSelectedPO(item); setActiveDialog('payment'); }}
-            >
-              <CreditCard className="h-3 w-3 text-emerald-600" /> Payment
-            </Button>
-
-            {/* 3. Deposit Details */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-6 px-1.5 text-[10px] gap-1 bg-white hover:bg-slate-100"
-              title="3. Deposit Details"
-              onClick={() => { setSelectedPO(item); setActiveDialog('deposit'); }}
-            >
-              <Banknote className="h-3 w-3 text-indigo-600" /> Deposit
-            </Button>
-
-            {/* 4. Shortage / Damages */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-6 px-1.5 text-[10px] gap-1 bg-white hover:bg-slate-100 text-rose-600"
-              title="4. Shortage/Damages"
-              onClick={() => { setSelectedPO(item); setActiveDialog('shortage'); }}
-            >
-              <AlertTriangle className="h-3 w-3" /> Shortage
-            </Button>
-
-            {/* 5. Download Package List */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-6 px-1.5 text-[10px] gap-1 bg-white hover:bg-slate-100"
-              title="5. Download Package List"
-              onClick={() => {
-                downloadAsPDF({
-                  title: `Package List — ${item.poNo}`,
-                  subtitle: `Order Type: ${item.orderType} | Boxes: ${item.noOfBoxes} | Transporter: ${item.transporter}`,
-                  filename: `package-list-${item.poNo}`,
-                  columns: ['Box #', 'Item Description', 'Quantity', 'Status'],
-                  rows: [
-                    ['Box 1 of ' + item.noOfBoxes, `${item.orderType} Main Kit Items`, '10 sets', 'Packed'],
-                    ['Box 2 of ' + item.noOfBoxes, `${item.orderType} Ancillary Materials`, '5 sets', 'Packed'],
-                  ],
-                });
-                showToast('Package list downloaded successfully!', 'success');
-              }}
-            >
-              <Download className="h-3 w-3 text-slate-700" /> Package
-            </Button>
-
-            {/* 6. View & Download HomeSunny Sale Invoice */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-6 px-1.5 text-[10px] gap-1 bg-white hover:bg-slate-100 text-amber-700"
-              title="6. View & Download HomeSunny Sale Invoice"
-              onClick={() => {
-                downloadAsPDF({
-                  title: `HomeSunny Sale Invoice — ${item.poNo}`,
-                  subtitle: `Order Type: ${item.orderType} | Amount: ${formatCurrency(item.totalAmount)}`,
-                  filename: `homesunny-invoice-${item.poNo}`,
-                  columns: ['Invoice No', 'Date', 'Description', 'Amount (₹)', 'Tax (₹)', 'Total (₹)'],
-                  rows: [[
-                    `HS-INV-${item.poNo}`,
-                    formatDate(item.date),
-                    item.orderType,
-                    formatCurrency(item.totalAmount * 0.82),
-                    formatCurrency(item.totalAmount * 0.18),
-                    formatCurrency(item.totalAmount),
-                  ]],
-                });
-                showToast('HomeSunny Sale Invoice downloaded!', 'success');
-              }}
-            >
-              <FileText className="h-3 w-3" /> HS Invoice
-            </Button>
-
-            {/* 7. View & Download Sale Invoice */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-6 px-1.5 text-[10px] gap-1 bg-white hover:bg-slate-100 text-blue-700"
-              title="7. View & Download Sale Invoice"
-              onClick={() => {
-                downloadAsPDF({
-                  title: `Standard Sale Invoice — ${item.poNo}`,
-                  subtitle: `Vendor: ${item.supplier} | Total Amount: ${formatCurrency(item.totalAmount)}`,
-                  filename: `sale-invoice-${item.poNo}`,
-                  columns: ['Item', 'Program', 'Boxes', 'Amount', 'LR No'],
-                  rows: [[item.orderType, item.program, String(item.noOfBoxes), formatCurrency(item.totalAmount), item.transporter]],
-                });
-                showToast('Sale Invoice downloaded!', 'success');
-              }}
-            >
-              <Printer className="h-3 w-3" /> Invoice
+              <MoreHorizontal className="h-3.5 w-3.5" />
+              Actions
+              <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </Button>
           </div>
         );
@@ -425,9 +428,8 @@ export default function PurchaseOrderPage() {
       {/* 5 Dashboard KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card
-          className={`cursor-pointer transition-all border-l-4 border-l-blue-500 shadow-sm hover:shadow-md ${
-            statusFilter === 'ORDER_RECEIVED' ? 'ring-2 ring-blue-500 bg-blue-50/20' : ''
-          }`}
+          className={`cursor-pointer transition-all border-l-4 border-l-blue-500 shadow-sm hover:shadow-md ${statusFilter === 'ORDER_RECEIVED' ? 'ring-2 ring-blue-500 bg-blue-50/20' : ''
+            }`}
           onClick={() => setStatusFilter(statusFilter === 'ORDER_RECEIVED' ? 'ALL' : 'ORDER_RECEIVED')}
         >
           <CardContent className="p-3 flex items-center justify-between">
@@ -442,9 +444,8 @@ export default function PurchaseOrderPage() {
         </Card>
 
         <Card
-          className={`cursor-pointer transition-all border-l-4 border-l-amber-500 shadow-sm hover:shadow-md ${
-            statusFilter === 'IN_PROCESS' ? 'ring-2 ring-amber-500 bg-amber-50/20' : ''
-          }`}
+          className={`cursor-pointer transition-all border-l-4 border-l-amber-500 shadow-sm hover:shadow-md ${statusFilter === 'IN_PROCESS' ? 'ring-2 ring-amber-500 bg-amber-50/20' : ''
+            }`}
           onClick={() => setStatusFilter(statusFilter === 'IN_PROCESS' ? 'ALL' : 'IN_PROCESS')}
         >
           <CardContent className="p-3 flex items-center justify-between">
@@ -459,9 +460,8 @@ export default function PurchaseOrderPage() {
         </Card>
 
         <Card
-          className={`cursor-pointer transition-all border-l-4 border-l-indigo-500 shadow-sm hover:shadow-md ${
-            statusFilter === 'ORDER_DISPATCH' ? 'ring-2 ring-indigo-500 bg-indigo-50/20' : ''
-          }`}
+          className={`cursor-pointer transition-all border-l-4 border-l-indigo-500 shadow-sm hover:shadow-md ${statusFilter === 'ORDER_DISPATCH' ? 'ring-2 ring-indigo-500 bg-indigo-50/20' : ''
+            }`}
           onClick={() => setStatusFilter(statusFilter === 'ORDER_DISPATCH' ? 'ALL' : 'ORDER_DISPATCH')}
         >
           <CardContent className="p-3 flex items-center justify-between">
@@ -476,9 +476,8 @@ export default function PurchaseOrderPage() {
         </Card>
 
         <Card
-          className={`cursor-pointer transition-all border-l-4 border-l-purple-500 shadow-sm hover:shadow-md ${
-            statusFilter === 'IN_TRANSIT' ? 'ring-2 ring-purple-500 bg-purple-50/20' : ''
-          }`}
+          className={`cursor-pointer transition-all border-l-4 border-l-purple-500 shadow-sm hover:shadow-md ${statusFilter === 'IN_TRANSIT' ? 'ring-2 ring-purple-500 bg-purple-50/20' : ''
+            }`}
           onClick={() => setStatusFilter(statusFilter === 'IN_TRANSIT' ? 'ALL' : 'IN_TRANSIT')}
         >
           <CardContent className="p-3 flex items-center justify-between">
@@ -493,9 +492,8 @@ export default function PurchaseOrderPage() {
         </Card>
 
         <Card
-          className={`cursor-pointer transition-all border-l-4 border-l-emerald-500 shadow-sm hover:shadow-md ${
-            statusFilter === 'ORDER_DELIVERED' ? 'ring-2 ring-emerald-500 bg-emerald-50/20' : ''
-          }`}
+          className={`cursor-pointer transition-all border-l-4 border-l-emerald-500 shadow-sm hover:shadow-md ${statusFilter === 'ORDER_DELIVERED' ? 'ring-2 ring-emerald-500 bg-emerald-50/20' : ''
+            }`}
           onClick={() => setStatusFilter(statusFilter === 'ORDER_DELIVERED' ? 'ALL' : 'ORDER_DELIVERED')}
         >
           <CardContent className="p-3 flex items-center justify-between">
@@ -521,6 +519,72 @@ export default function PurchaseOrderPage() {
         />
       </div>
 
+      {/* Row Action Dropdown (rendered outside the table so it never clips) */}
+      {actionMenu && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={closeActionMenu} />
+          <div
+            className="fixed z-50 w-56 bg-white border border-slate-200 rounded-md shadow-xl py-1"
+            style={{ top: actionMenu.top, left: actionMenu.left }}
+          >
+            <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              {actionMenu.po.poNo}
+            </div>
+
+            <button
+              onClick={() => openDetailDialog(actionMenu.po, 'view')}
+              className="w-full text-left px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+            >
+              <Eye className="h-3.5 w-3.5 text-blue-600" /> View Order
+            </button>
+
+            <button
+              onClick={() => openDetailDialog(actionMenu.po, 'payment')}
+              className="w-full text-left px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+            >
+              <CreditCard className="h-3.5 w-3.5 text-emerald-600" /> Payment Details
+            </button>
+
+            <button
+              onClick={() => openDetailDialog(actionMenu.po, 'deposit')}
+              className="w-full text-left px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+            >
+              <Banknote className="h-3.5 w-3.5 text-indigo-600" /> Deposit Details
+            </button>
+
+            <button
+              onClick={() => openDetailDialog(actionMenu.po, 'shortage')}
+              className="w-full text-left px-3 py-1.5 text-[11px] font-medium text-rose-600 hover:bg-rose-50 flex items-center gap-2"
+            >
+              <AlertTriangle className="h-3.5 w-3.5" /> Shortage / Damages
+            </button>
+
+            <div className="my-1 border-t border-slate-100" />
+
+            <button
+              onClick={() => handleDownloadPackageList(actionMenu.po)}
+              className="w-full text-left px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+            >
+              <Download className="h-3.5 w-3.5 text-slate-600" /> Package List
+            </button>
+
+            <button
+              onClick={() => handleDownloadHSInvoice(actionMenu.po)}
+              className="w-full text-left px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+            >
+              <FileText className="h-3.5 w-3.5 text-amber-600" /> HomeSunny Invoice
+            </button>
+
+            <button
+              onClick={() => handleDownloadSaleInvoice(actionMenu.po)}
+              className="w-full text-left px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+            >
+              <Printer className="h-3.5 w-3.5 text-blue-700" /> Sale Invoice
+            </button>
+          </div>
+        </>
+      )}
+
       {/* Create Order Dialog */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-md p-0 overflow-hidden border border-slate-200 rounded-lg shadow-2xl bg-white">
@@ -530,7 +594,7 @@ export default function PurchaseOrderPage() {
               {selectedOrderType}
             </DialogTitle>
           </DialogHeader>
-          
+
           <form onSubmit={handleFormSubmit} className="p-5 space-y-3.5">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Supplier / Vendor</label>

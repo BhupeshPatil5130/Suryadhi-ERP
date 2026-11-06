@@ -37,17 +37,17 @@ export function AdmissionActionButtons({ id }: AdmissionActionButtonsProps) {
           <div className="w-[1px] h-[14px] bg-slate-300"></div>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Link to={`/admissions/${id}/receipt`}>
+              <Link to={`/admissions/${id}/receipt?tab=new`}>
                 <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none">
                   <Banknote className="h-[14px] w-[14px] text-black stroke-[2.5]" />
                 </Button>
               </Link>
             </TooltipTrigger>
-            <TooltipContent side="top"><p className="text-xs">Receipt</p></TooltipContent>
+            <TooltipContent side="top"><p className="text-xs">Add Receipt</p></TooltipContent>
           </Tooltip>
         </div>
 
-        {/* Row 2: Invoice / Fee Receipt | Transfer Student (Graduate to) */}
+        {/* Row 2: Invoice / Fee Receipt (Term 1 & Term 2) | Transfer Student (Graduate to) */}
         <div className="flex items-center justify-between relative">
           <Tooltip>
             <TooltipTrigger asChild>
@@ -57,7 +57,7 @@ export function AdmissionActionButtons({ id }: AdmissionActionButtonsProps) {
                 </Button>
               </Link>
             </TooltipTrigger>
-            <TooltipContent side="top"><p className="text-xs">Invoice / Fee Receipt</p></TooltipContent>
+            <TooltipContent side="top"><p className="text-xs">Invoice & Fee Receipts (Term 1 & 2)</p></TooltipContent>
           </Tooltip>
           <div className="w-[1px] h-[14px] bg-slate-300"></div>
           <Tooltip>

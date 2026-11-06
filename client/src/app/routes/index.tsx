@@ -29,6 +29,8 @@ const UpdateAdmissionPage = lazy(() => import('@/features/admission/pages/Update
 const AdvanceReceiptFormPage = lazy(() => import('@/features/admission/pages/AdvanceReceiptFormPage'));
 const QuitStudentPage = lazy(() => import('@/features/admission/pages/QuitStudentPage'));
 const TransferRequestPage = lazy(() => import('@/features/admission/pages/TransferRequestPage'));
+const TransferInPage = lazy(() => import('@/features/admission/pages/TransferInPage'));
+const TransferOutPage = lazy(() => import('@/features/admission/pages/TransferOutPage'));
 const NameDobChangePage = lazy(() => import('@/features/admission/pages/NameDobChangePage'));
 const NameChangeConfirmationPage = lazy(() => import('@/features/admission/pages/NameChangeConfirmationPage'));
 const ManageTransferStagePage = lazy(() => import('@/features/admission/pages/ManageTransferStagePage'));
@@ -135,12 +137,14 @@ export default function AppRoutes() {
           <Route path={PATHS.ADMISSION.RECEIPT()} element={<AdvanceReceiptFormPage />} />
           <Route path={PATHS.ADMISSION.VIEW_RECEIPT} element={<PrintReceiptPage />} />
           <Route path={PATHS.GRADUATION.HOMEBUDDY} element={<GraduationHomebuddyPage />} />
-          <Route path={PATHS.TRANSFERS.MANAGE} element={<TransferRequestPage />} />
+          <Route path={PATHS.TRANSFERS.IN} element={<TransferInPage />} />
+          <Route path={PATHS.TRANSFERS.MANAGE} element={<TransferInPage />} />
           <Route path={PATHS.TRANSFERS.MANAGE_STAGE} element={<ManageTransferStagePage />} />
           <Route path={PATHS.TRANSFERS.REQUESTS} element={<SchoolTransferRequestsPage />} />
           <Route path={PATHS.QUIT.ADMISSION} element={<QuitStudentPage />} />
           <Route path={PATHS.QUIT.MANAGE} element={<ManageQuitAdmissionPage />} />
-          <Route path={PATHS.TRANSFERS.OUT} element={<TransferRequestPage />} />
+          <Route path={PATHS.TRANSFERS.OUT} element={<TransferOutPage />} />
+          <Route path="/transfers/out" element={<TransferOutPage />} />
           <Route path={PATHS.NAME_CHANGE.REQUEST} element={<NameDobChangePage />} />
           <Route path={PATHS.NAME_CHANGE.CONFIRM} element={<NameChangeConfirmationPage />} />
           <Route path={PATHS.ENROLLMENT.INVENTORY} element={<InventoryDetailsPage />} />

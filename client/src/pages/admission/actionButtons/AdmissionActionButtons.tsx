@@ -24,10 +24,10 @@ export default function AdmissionActionButtons({ id }: AdmissionActionButtonsPro
         </Link>
       </div>
 
-      {/* Row 2: Online Payment | Transfer Out */}
+      {/* Row 2: Online Payment / Fee Receipt | Transfer Out */}
       <div className="flex items-center justify-between relative">
-        <Link to={`/fees/add-receipt?admissionId=${id}`}>
-          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Add Online Payment">
+        <Link to={`/admissions/${id}/receipt`}>
+          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Invoice & Fee Receipts (Term 1 & Term 2)">
             <CreditCard className="h-[14px] w-[14px] text-black stroke-[2.5]" />
           </Button>
         </Link>

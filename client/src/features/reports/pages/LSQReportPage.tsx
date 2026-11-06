@@ -141,9 +141,9 @@ export default function LSQReportPage() {
         'Locality': d.locality,
         'Franchisee Code': franchiseeCode,
       })),
-      'leadsquared_enquiry_report'
+      'leadsuryadhi_enquiry_report'
     );
-    showToast('Downloaded LeadSquared Enquiry Report to Excel!', 'success');
+    showToast('Downloaded LeadSuryadhi Enquiry Report to Excel!', 'success');
   };
 
   const columns: ColumnDef<LSQEnquiryRow, any>[] = useMemo(
@@ -205,9 +205,9 @@ export default function LSQReportPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h1 className="text-2xl font-normal text-slate-800">LeadSquared Enquiry Report</h1>
+          <h1 className="text-2xl font-normal text-slate-800">LeadSuryadhi Enquiry Report</h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Program-wise enquiry details from LeadSquared CRM — Franchise Code:{' '}
+            Program-wise enquiry details from LeadSuryadhi CRM — Franchise Code:{' '}
             <strong className="text-blue-700 font-mono">{franchiseeCode}</strong>
           </p>
         </div>

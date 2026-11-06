@@ -125,7 +125,7 @@ export default function DashboardPage() {
 
   const enrollmentKPIs = [
     { title: 'Enquiries', value: data?.kpis?.enquiries || 0, icon: Users, color: 'green' as const, link: '/enquiry' },
-    { title: 'LeadSquared Enquiries', value: 0, icon: BarChart3, color: 'cyan' as const, link: '/reports/lsq-enquiries' },
+    { title: 'LeadSuryadhi Enquiries', value: 0, icon: BarChart3, color: 'cyan' as const, link: '/reports/lsq-enquiries' },
     { title: 'Gross Admission', value: data?.kpis?.grossAdmission || 0, icon: UserPlus, color: 'blue' as const, link: '/admission' },
     { title: 'Transfer In', value: data?.kpis?.transferIn || 0, icon: ArrowRightLeft, color: 'indigo' as const, link: '/transfers/manage' },
     { title: 'Transfer Out', value: data?.kpis?.transferOut || 0, icon: ArrowRightLeft, color: 'amber' as const, link: '/transfer-out' },

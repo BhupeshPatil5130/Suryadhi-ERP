@@ -134,28 +134,79 @@ export class FeeService {
       orderBy: { receiptDate: 'desc' },
     });
 
-    // Only receipts linked to the invoice count towards invoice payment
-    // Independent / Other receipts (admission form fee, uniform, etc.) do NOT reduce invoice balance
-    const totalReceived = receipts
-      .filter((r) => !r.isCancelled && r.invoiceId !== null)
-      .reduce((sum, r) => sum + Number(r.amount), 0);
+    // Ensure invoice number matches student UIN format (e.g. INV-SLPL3201/0071/2027)
+    const formattedInvoices = admission.invoices.map((inv) => {
+      const uin = admission.student?.uin;
+      let invoiceNumber = inv.invoiceNumber;
+      if (uin && (!invoiceNumber || invoiceNumber.startsWith('INV-0') || !invoiceNumber.includes(uin))) {
+        invoiceNumber = `INV-${uin}`;
+      }
+      return {
+        ...inv,
+        invoiceNumber,
+      };
+    });
 
-    const totalInvoiced = admission.invoices.reduce(
-      (sum, inv) => sum + Number(inv.netAmount),
-      0
-    );
+    // Separate Invoice (Term) receipts from Other / Independent receipts
+    // Only receipts linked to the invoice count towards invoice payment
+    // Independent / Other receipts (admission form fee, uniform, transport, etc.) do NOT reduce invoice balance
+    const invoiceReceipts = receipts.filter((r) => !r.isCancelled && r.invoiceId !== null);
+    const otherReceipts = receipts.filter((r) => !r.isCancelled && r.invoiceId === null);
+
+    const term1Total = admission.invoices.reduce((sum, inv) => sum + Number(inv.term1Amount), 0);
+    const term2Total = admission.invoices.reduce((sum, inv) => sum + Number(inv.term2Amount), 0);
+    const totalInvoiced = admission.invoices.reduce((sum, inv) => sum + Number(inv.netAmount), 0);
+
+    // Calculate Term 1 vs Term 2 collections
+    let term1Received = 0;
+    let term2Received = 0;
+
+    invoiceReceipts.forEach((r) => {
+      const amt = Number(r.amount);
+      const branchNote = (r.bankBranch || '').toLowerCase();
+      if (branchNote.includes('term 2') || branchNote.includes('term2')) {
+        term2Received += amt;
+      } else if (branchNote.includes('term 1') || branchNote.includes('term1')) {
+        term1Received += amt;
+      } else {
+        // Automatically allocate to Term 1 until filled, then overflow to Term 2
+        if (term1Received < term1Total) {
+          const needed = term1Total - term1Received;
+          if (amt <= needed) {
+            term1Received += amt;
+          } else {
+            term1Received += needed;
+            term2Received += (amt - needed);
+          }
+        } else {
+          term2Received += amt;
+        }
+      }
+    });
+
+    const totalReceived = term1Received + term2Received;
+    const otherTotalReceived = otherReceipts.reduce((sum, r) => sum + Number(r.amount), 0);
 
     return {
       student: admission.student,
       program: admission.program,
       academicYear: admission.academicYear,
       school: admission.school,
-      invoices: admission.invoices,
+      invoices: formattedInvoices,
       receipts,
+      invoiceReceipts,
+      otherReceipts,
       summary: {
+        term1Amount: term1Total,
+        term1Received,
+        term1Balance: Math.max(0, term1Total - term1Received),
+        term2Amount: term2Total,
+        term2Received,
+        term2Balance: Math.max(0, term2Total - term2Received),
         totalAmount: totalInvoiced,
         amountReceived: totalReceived,
         balanceAmount: totalInvoiced - totalReceived,
+        otherTotalReceived,
       },
     };
   }
@@ -211,7 +262,7 @@ export class FeeService {
           amount: input.amount,
           paymentMode: input.paymentMode as any,
           bankName: input.bankName,
-          bankBranch: input.bankBranch,
+          bankBranch: input.bankBranch || input.notes || (input as any).term || null,
           chequeNumber: input.chequeNumber,
           chequeDate: input.chequeDate ? new Date(input.chequeDate) : null,
           transactionId: input.transactionId,

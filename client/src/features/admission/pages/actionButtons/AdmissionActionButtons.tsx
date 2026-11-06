@@ -17,8 +17,8 @@ export default function AdmissionActionButtons({ id }: AdmissionActionButtonsPro
           </Button>
         </Link>
         <div className="w-[1px] h-[14px] bg-slate-300"></div>
-        <Link to={`/admissions/${id}/receipt`}>
-          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="View/Add Receipts">
+        <Link to={`/admissions/${id}/receipt?tab=new`}>
+          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Add Receipt">
             <Banknote className="h-[14px] w-[14px] text-black stroke-[2.5]" />
           </Button>
         </Link>
@@ -27,7 +27,7 @@ export default function AdmissionActionButtons({ id }: AdmissionActionButtonsPro
       {/* Row 2: Invoice / Fee Receipt | Graduate to */}
       <div className="flex items-center justify-between relative">
         <Link to={`/admissions/${id}/receipt`}>
-          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Invoice / Fee Receipt">
+          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Invoice & Fee Receipts (Term 1 & Term 2)">
             <FileText className="h-[14px] w-[14px] text-black stroke-[2.5]" />
           </Button>
         </Link>

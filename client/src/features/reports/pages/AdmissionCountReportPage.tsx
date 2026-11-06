@@ -87,7 +87,7 @@ export default function AdmissionCountReportPage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <CardTitle className="text-sm font-bold text-slate-800">
-                1. Admission Count as per Sunoiakids
+                 Admission Count as per Sunoiakids
               </CardTitle>
               <p className="text-xs text-slate-500 mt-0.5">
                 Center: <span className="font-semibold text-blue-700">SK-Dhule-Deopur</span>
@@ -98,7 +98,7 @@ export default function AdmissionCountReportPage() {
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-1.5 text-xs text-slate-700 font-semibold">
                 <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                <span>2. Select Month:</span>
+                <span> Select Month:</span>
                 <select
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(e.target.value)}

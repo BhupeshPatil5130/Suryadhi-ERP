@@ -271,8 +271,10 @@ export class AdmissionService {
 
         const netAmount = totalAmount - discountAmount;
 
-        // Create Invoice
-        const invoiceNumber = await getNextSequenceNumber('INV', schoolId, tx, 6);
+        // Create Invoice with invoice number matching student UIN
+        const invoiceNumber = admission.student?.uin
+          ? `INV-${admission.student.uin}`
+          : await getNextSequenceNumber('SK',schoolId, tx, 6);
 
         const invoice = await tx.invoice.create({
           data: {
@@ -495,7 +497,9 @@ export class AdmissionService {
 
           const netAmount = totalAmount - discountAmount;
 
-          const invoiceNumber = await getNextSequenceNumber('INV', schoolId, tx, 6);
+          const invoiceNumber = existing.student?.uin
+            ? `INV-${existing.student.uin}`
+            : await getNextSequenceNumber('INV', schoolId, tx, 6);
 
           await tx.invoice.create({
             data: {

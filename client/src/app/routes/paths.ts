@@ -34,6 +34,7 @@ export const PATHS = {
     HOMEBUDDY: '/graduation/homebuddy',
   },
   TRANSFERS: {
+    IN: '/transfers/in',
     MANAGE: '/transfers/manage',
     MANAGE_STAGE: '/transfers/manage-stage',
     REQUESTS: '/transfers/requests',
