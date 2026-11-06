@@ -210,6 +210,9 @@ export default function AppRoutes() {
 
           {/* Tools */}
           <Route path={PATHS.TOOLS.FEE_CALCULATOR} element={<FeeCalculatorPage />} />
+          <Route path="/tools/fee-calculator" element={<FeeCalculatorPage />} />
+          <Route path="/fees/calculator" element={<FeeCalculatorPage />} />
+          <Route path="/fees/fee-calculator" element={<FeeCalculatorPage />} />
 
           {/* Settings / Admin */}
           <Route path={PATHS.SETTINGS.SYSTEM} element={<SystemSettingsPage />} />
