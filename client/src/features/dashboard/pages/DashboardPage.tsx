@@ -37,6 +37,26 @@ const feeRateCards = [
       { type: 'Material Fee', term1: 3000, term2: 0, total: 3000 },
     ],
   },
+  {
+    program: 'Euro Junior',
+    status: 'HO Approved',
+    fees: [
+      { type: 'Registration Fee', term1: 5000, term2: 0, total: 5000 },
+      { type: 'Tuition Fee', term1: 20000, term2: 20000, total: 40000 },
+      { type: 'Activity Fee', term1: 4000, term2: 4000, total: 8000 },
+      { type: 'Material Fee', term1: 3500, term2: 0, total: 3500 },
+    ],
+  },
+  {
+    program: 'Euro Senior',
+    status: 'HO Approved',
+    fees: [
+      { type: 'Registration Fee', term1: 5000, term2: 0, total: 5000 },
+      { type: 'Tuition Fee', term1: 22000, term2: 22000, total: 44000 },
+      { type: 'Activity Fee', term1: 4500, term2: 4500, total: 9000 },
+      { type: 'Material Fee', term1: 4000, term2: 0, total: 4000 },
+    ],
+  },
 ];
 
 const purchaseOrders = [

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertCircle, DollarSign, Users, Eye, RotateCcw } from 'lucide-react';
+import { AlertCircle, DollarSign, Users, Eye, RotateCcw, ChevronDown } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import api from '@/api/client';
 
@@ -302,33 +302,20 @@ export default function PaymentDueReportPage() {
               ))}
             </div>
 
-            {/* Status (Detail & Summary) + Action Buttons (View Detail & Cancel) */}
+            {/* View Mode Dropdown + Reset Button */}
             <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t">
               <div className="flex items-center gap-3">
                 <span className="text-xs font-bold text-slate-700">Status View:</span>
-                <div className="inline-flex rounded-md shadow-sm">
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('detail')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-l-md border ${
-                      viewMode === 'detail'
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-background text-foreground border-border hover:bg-muted'
-                    }`}
+                <div className="relative">
+                  <select
+                    value={viewMode}
+                    onChange={(e) => setViewMode(e.target.value as 'detail' | 'summary')}
+                    className="appearance-none h-8 pl-3 pr-8 text-xs font-medium rounded-md border border-border bg-background hover:bg-muted focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer min-w-[150px]"
                   >
-                    Detail View
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('summary')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-r-md border-t border-b border-r ${
-                      viewMode === 'summary'
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-background text-foreground border-border hover:bg-muted'
-                    }`}
-                  >
-                    Summary View
-                  </button>
+                    <option value="detail">Detail View</option>
+                    <option value="summary">Summary View</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
                 </div>
               </div>
 
