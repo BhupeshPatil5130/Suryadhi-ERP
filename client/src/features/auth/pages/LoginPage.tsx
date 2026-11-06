@@ -15,7 +15,7 @@ import { useEffect } from 'react';
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login, isAuthenticated, isLoading: authLoading } = useAuthStore();
-  const { setAcademicYear, setAcademicYearId, setActivePortal } = useUIStore();
+  const { setAcademicYear, setAcademicYearId, setActivePortal, setActiveBrandId } = useUIStore();
 
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
@@ -102,6 +102,10 @@ export default function LoginPage() {
       setAcademicYearId('ay1');
     }
     setActivePortal(selectedPortal);
+    const matchedBrand = BRAND.subBrands.find(b => b.name === selectedPortal || b.fullName === selectedPortal);
+    if (matchedBrand) {
+      setActiveBrandId(matchedBrand.id);
+    }
     navigate('/dashboard');
   };
 

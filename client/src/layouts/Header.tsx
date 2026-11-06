@@ -31,18 +31,27 @@ export default function Header() {
     setAcademicYear,
     setAcademicYearId,
     activeBrandId,
-    setActiveBrandId,
+    activePortal,
   } = useUIStore();
   const [showProfile, setShowProfile] = useState(false);
-  const [showBrands, setShowBrands] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
-  const brandsRef = useRef<HTMLDivElement>(null);
 
   const [academicYearsList, setAcademicYearsList] = useState<string[]>([]);
   const [academicYearsRaw, setAcademicYearsRaw] = useState<any[]>([]);
 
-  // Find active sub-brand
-  const currentBrand = BRAND.subBrands.find((b) => b.id === activeBrandId) || BRAND.subBrands[0];
+  // Find logged-in brand
+  const currentBrand =
+    BRAND.subBrands.find(
+      (b) =>
+        b.id === activeBrandId ||
+        b.name === activePortal ||
+        b.fullName === activePortal
+    ) || BRAND.subBrands[0];
+
+  const loggedInName =
+    user?.school?.name ||
+    activePortal ||
+    currentBrand.name;
 
   useEffect(() => {
     const fetchYears = async () => {
@@ -75,9 +84,6 @@ export default function Header() {
     const handler = (e: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
         setShowProfile(false);
-      }
-      if (brandsRef.current && !brandsRef.current.contains(e.target as Node)) {
-        setShowBrands(false);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -129,57 +135,16 @@ export default function Header() {
           <span>Franchisee: <span className="font-bold">{BRAND.franchiseCode}</span></span>
         </div>
 
-        {/* Sub-Brand Selector (No "Portal") */}
-        <div className="relative" ref={brandsRef}>
-          <button
-            onClick={() => setShowBrands(!showBrands)}
-            className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-900 dark:bg-blue-950/40 dark:text-blue-300 text-xs font-semibold hover:bg-blue-100 transition-colors border border-blue-200/60 dark:border-blue-800/40 shadow-sm"
-            title="Switch Brand / School"
-          >
-            <div className="w-5 h-5 rounded bg-white p-0.5 border border-slate-200 flex items-center justify-center shrink-0">
-              <img
-                src={currentBrand.logoSrc}
-                alt={currentBrand.name}
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <span className="hidden sm:inline font-semibold">{currentBrand.name}</span>
-            <span className="sm:hidden font-semibold">{currentBrand.shortName}</span>
-            <ChevronDown className="h-3 w-3 text-muted-foreground" />
-          </button>
-          
-          {showBrands && (
-            <div className="absolute right-0 top-full mt-2 w-72 bg-popover border border-border rounded-xl shadow-xl z-50 py-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="px-3 py-1.5 border-b border-border mb-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center justify-between">
-                <span>Select Brand / School</span>
-                <span className="text-[9px] text-amber-600 font-bold">{BRAND.franchiseCode}</span>
-              </div>
-              {BRAND.subBrands.map((b) => (
-                <button
-                  key={b.id}
-                  onClick={() => {
-                    setActiveBrandId(b.id);
-                    setShowBrands(false);
-                    showToast(`Active brand: ${b.name}`, 'success');
-                  }}
-                  className={`w-full text-left px-3 py-2 text-xs hover:bg-accent transition-colors flex items-center gap-2.5 ${
-                    currentBrand.id === b.id ? 'bg-blue-50/70 dark:bg-blue-950/30 font-medium' : ''
-                  }`}
-                >
-                  <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center p-0.5 shrink-0 shadow-sm">
-                    <img src={b.logoSrc} alt={b.name} className="w-full h-full object-contain" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="font-semibold text-foreground block truncate">{b.name}</span>
-                    <span className="text-[10px] text-muted-foreground block truncate">{b.desc}</span>
-                  </div>
-                  {currentBrand.id === b.id && (
-                    <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
+        {/* Logged in School / Brand (Static Display - No dropdown, No switch after login) */}
+        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-blue-50/90 text-blue-900 dark:bg-blue-950/40 dark:text-blue-300 text-xs font-semibold border border-blue-200/60 dark:border-blue-800/40 shadow-xs">
+          <div className="w-5 h-5 rounded bg-white p-0.5 border border-slate-200 flex items-center justify-center shrink-0">
+            <img
+              src={currentBrand.logoSrc}
+              alt={loggedInName}
+              className="w-full h-full object-contain"
+            />
+          </div>
+          <span className="font-semibold">{loggedInName}</span>
         </div>
 
         {/* Academic Year Selector */}
