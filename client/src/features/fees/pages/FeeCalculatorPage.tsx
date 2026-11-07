@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Menu, Printer, Download, Search } from 'lucide-react';
 import { showToast } from '@/lib/toast';
 import { downloadAsCSV } from '@/lib/export';
+import { useUIStore } from '@/store';
 
 interface ProgramFeeConfig {
   registration: number;
@@ -64,7 +65,8 @@ export default function FeeCalculatorPage() {
 
   // Franchisee & Year details
   const franchisee = 'SK-Dhule-Deopur';
-  const academicYear = 'Apr 26 - Mar 27';
+  const selectedYear = useUIStore((s) => s.academicYear);
+  const academicYear = selectedYear || 'Apr 26 - Mar 27';
 
   // Fee calculation logic
   const feeDetails = useMemo(() => {

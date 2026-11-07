@@ -147,29 +147,13 @@ export default function Header() {
           <span className="font-semibold">{loggedInName}</span>
         </div>
 
-        {/* Academic Year Selector */}
-        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-100 transition-colors relative border border-emerald-200/60 dark:border-emerald-800/40">
-          <Calendar className="h-3.5 w-3.5 pointer-events-none" />
-          <select
-            value={academicYear}
-            onChange={(e) => {
-              const val = e.target.value;
-              const yearObj = academicYearsRaw.find(y => y.label === val);
-              setAcademicYear(val);
-              if (yearObj) setAcademicYearId(yearObj.id);
-              showToast(`Academic year set to ${val}`, 'success');
-            }}
-            className="bg-transparent border-none text-emerald-700 dark:text-emerald-400 text-xs font-semibold outline-none cursor-pointer pr-4 appearance-none"
-          >
-            {academicYearsList.map((year) => (
-              <option key={year} value={year} className="bg-background text-foreground">
-                {year}
-              </option>
-            ))}
-          </select>
-          <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-[8px]">
-            ▼
-          </span>
+        {/* Academic Year Display (Locked - Selected at Login, No Change inside ERP) */}
+        <div
+          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 text-xs font-semibold border border-emerald-200/70 dark:border-emerald-800/40 shadow-xs"
+          title="Academic Year locked from login session"
+        >
+          <Calendar className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <span>AY: <strong className="font-bold">{academicYear || 'Apr 26 - Mar 27'}</strong></span>
         </div>
 
         {/* Theme */}

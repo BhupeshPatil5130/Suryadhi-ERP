@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Menu, CheckCircle, Banknote, ArrowRight } from 'lucide-react';
 import { showToast } from '@/lib/toast';
+import { useUIStore } from '@/store';
 
 export default function ConvertToAdmissionPage() {
   const navigate = useNavigate();
@@ -88,9 +89,10 @@ export default function ConvertToAdmissionPage() {
               ? new Date(e.dateOfBirth).toISOString().split('T')[0]
               : '2022-01-01';
 
+            const storeYearId = useUIStore.getState().academicYearId;
             setForm((prev: any) => ({
               ...prev,
-              academicYearId: e.academicYearId || currentAyId,
+              academicYearId: storeYearId || e.academicYearId || currentAyId,
               studentFirstName: stu.firstName || e.studentFirstName || '',
               studentMiddleName: stu.middleName || e.studentMiddleName || '',
               studentLastName: stu.lastName || e.studentLastName || '',

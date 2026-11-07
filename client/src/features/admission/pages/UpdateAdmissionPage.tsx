@@ -7,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import api from '@/api/client';
 import { showToast } from '@/lib/toast';
+import { useUIStore } from '@/store';
 
 interface FormState {
   academicYearId: string;
@@ -104,8 +105,9 @@ export default function UpdateAdmissionPage() {
             const a = admissionRes.data.data;
             const s = a.student;
             const p = s?.parent;
+            const storeYearId = useUIStore.getState().academicYearId;
             setForm({
-              academicYearId: a.academicYearId || '',
+              academicYearId: a.academicYearId || storeYearId || (yearsRes.data.data?.[0]?.id || ''),
               admissionDate: a.admissionDate?.split('T')[0] || '',
               studentFirstName: s?.firstName || '',
               studentMiddleName: s?.middleName || '',

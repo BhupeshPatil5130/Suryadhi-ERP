@@ -280,7 +280,7 @@ export default function UpdateEnquiryPage() {
               </div>
 
               <div className="grid grid-cols-3 items-center gap-4">
-                <Label className="text-right text-slate-600 font-normal text-[13px] leading-tight">How did you hear about Suryadhi / SEMS?</Label>
+                <Label className="text-right text-slate-600 font-normal text-[13px] leading-tight">How did you hear about SunoiaKids?</Label>
                 <div className="col-span-2">
                   <Select value={watch('mediaSourceId')} onValueChange={(v) => setValue('mediaSourceId', v)}>
                     <SelectTrigger className="h-8 text-[13px] border-slate-300 shadow-none rounded-sm bg-white">

@@ -13,7 +13,7 @@ import {
 
 export default function Navbar() {
   const { user, logout } = useAuthStore();
-  const { toggleSidebar, theme, setTheme } = useUIStore();
+  const { toggleSidebar, theme, setTheme, academicYear } = useUIStore();
 
   const ThemeIcon = theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor;
 
@@ -51,8 +51,8 @@ export default function Navbar() {
       {/* Right */}
       <div className="flex items-center gap-2">
         {/* Academic Year */}
-        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-medium">
-          <span>Apr 26 - Mar 27</span>
+        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold">
+          <span>{academicYear || 'Apr 26 - Mar 27'}</span>
         </div>
 
         {/* Theme Toggle */}

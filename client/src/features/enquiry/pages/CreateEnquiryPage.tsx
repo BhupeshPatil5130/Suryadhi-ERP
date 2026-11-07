@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { showToast } from '@/lib/toast';
+import { useUIStore } from '@/store';
 
 const enquiryFormSchema = z.object({
   enquirerMobile: z.string().min(10, 'Valid mobile number required'),
@@ -73,8 +74,17 @@ export default function CreateEnquiryPage() {
         if (progRes.data.success) setPrograms(progRes.data.data);
         if (yearRes.data.success) {
           setAcademicYears(yearRes.data.data);
-          const current = yearRes.data.data.find((y: any) => y.isCurrent);
-          if (current) setValue('academicYearId', current.id);
+          const storeYearId = useUIStore.getState().academicYearId;
+          const storeYearLabel = useUIStore.getState().academicYear;
+          const matched = yearRes.data.data.find(
+            (y: any) => y.id === storeYearId || y.label === storeYearLabel
+          );
+          if (matched) {
+            setValue('academicYearId', matched.id);
+          } else {
+            const current = yearRes.data.data.find((y: any) => y.isCurrent);
+            if (current) setValue('academicYearId', current.id);
+          }
         }
         if (sourceRes.data.success) setMediaSources(sourceRes.data.data);
       } catch (error) {
@@ -335,7 +345,7 @@ export default function CreateEnquiryPage() {
           </CardHeader>
           <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className={labelClass}>Has Sibling in SUNOIA / SEMS? *</label>
+              <label className={labelClass}>Has Sibling in SunoiaKids ? *</label>
               <div className="flex flex-wrap gap-4 mt-2">
                 {[true, false].map((val) => (
                   <label key={String(val)} className="flex items-center gap-2 cursor-pointer group">
