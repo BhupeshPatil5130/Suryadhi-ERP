@@ -260,24 +260,32 @@ export default function CreateEnquiryPage() {
             <CardContent className="pt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Academic Year</label>
-                <div className="flex h-9 w-full items-center justify-between rounded-lg border border-input bg-muted/40 px-3 py-1.5 text-sm font-semibold text-foreground shadow-xs cursor-not-allowed">
-                  <div className="flex items-center gap-2">
-                    <CalendarDays className="h-4 w-4 text-emerald-600 shrink-0" />
-                    <span>{sessionYear}</span>
-                  </div>
-                  <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-semibold border border-emerald-200">
-                    Locked from Login
-                  </span>
+                <div className="relative">
+                  <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-600 pointer-events-none" />
+                  <Input
+                    value={sessionYear}
+                    readOnly
+                    disabled
+                    className="pl-9 bg-slate-50 text-slate-800 font-semibold cursor-not-allowed border-slate-300"
+                  />
                 </div>
                 <input type="hidden" {...register('academicYearId')} />
               </div>
               <div>
                 <label className={labelClass}>Enquiry Date</label>
-                <Input value={new Date().toLocaleDateString('en-IN')} readOnly className="bg-muted/50 text-muted-foreground" />
+                <Input
+                  value={new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                  readOnly
+                  disabled
+                  className="bg-slate-50 text-slate-800 font-medium cursor-not-allowed border-slate-300"
+                />
               </div>
               <div className="sm:col-span-2">
                 <label className={labelClass}>Program Seeking *</label>
-                <select {...register('programId')} className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary">
+                <select
+                  {...register('programId')}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary"
+                >
                   <option value="">Select Program</option>
                   {programs.map((p) => (
                     <option key={p.id} value={p.id}>{p.name}</option>
