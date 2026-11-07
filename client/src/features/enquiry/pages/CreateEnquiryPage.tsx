@@ -34,6 +34,8 @@ type EnquiryFormData = z.infer<typeof enquiryFormSchema>;
 
 export default function CreateEnquiryPage() {
   const navigate = useNavigate();
+  const sessionYear = useUIStore((s) => s.academicYear) || 'Apr 26 - Mar 27';
+  const sessionYearId = useUIStore((s) => s.academicYearId);
   const [programs, setPrograms] = useState<any[]>([]);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
   const [mediaSources, setMediaSources] = useState<any[]>([]);
@@ -59,6 +61,7 @@ export default function CreateEnquiryPage() {
       hasSibling: false,
       isTrialClass: false,
       gender: 'BOY',
+      academicYearId: sessionYearId || 'ay1',
     },
   });
 
@@ -256,14 +259,17 @@ export default function CreateEnquiryPage() {
             </CardHeader>
             <CardContent className="pt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>Academic Year *</label>
-                <select {...register('academicYearId')} className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary">
-                  <option value="">Select Academic Year</option>
-                  {academicYears.map((y) => (
-                    <option key={y.id} value={y.id}>{y.label}</option>
-                  ))}
-                </select>
-                {errors.academicYearId && <p className={errorClass}>{errors.academicYearId.message}</p>}
+                <label className={labelClass}>Academic Year</label>
+                <div className="flex h-9 w-full items-center justify-between rounded-lg border border-input bg-muted/40 px-3 py-1.5 text-sm font-semibold text-foreground shadow-xs cursor-not-allowed">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <span>{sessionYear}</span>
+                  </div>
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-semibold border border-emerald-200">
+                    Locked from Login
+                  </span>
+                </div>
+                <input type="hidden" {...register('academicYearId')} />
               </div>
               <div>
                 <label className={labelClass}>Enquiry Date</label>

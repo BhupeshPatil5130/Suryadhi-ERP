@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { showToast } from '@/lib/toast';
+import { useUIStore } from '@/store';
 
 const enquiryFormSchema = z.object({
   enquirerMobile: z.string().min(10, 'Valid mobile number required'),
@@ -175,19 +176,13 @@ export default function UpdateEnquiryPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
               
               <div className="grid grid-cols-3 items-center gap-4">
-                <Label className="text-right text-slate-600 font-normal text-[13px]">Academic Year <span className="text-red-500">*</span></Label>
+                <Label className="text-right text-slate-600 font-normal text-[13px]">Academic Year</Label>
                 <div className="col-span-2">
-                  <Select value={watch('academicYearId')} onValueChange={(v) => setValue('academicYearId', v)}>
-                    <SelectTrigger className="h-8 text-[13px] border-slate-300 shadow-none rounded-sm bg-white">
-                      <SelectValue placeholder="Select Year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {academicYears.map((y: any) => (
-                        <SelectItem key={y.id} value={y.id}>{y.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.academicYearId && <p className="text-red-500 text-xs mt-1">{errors.academicYearId.message}</p>}
+                  <div className="h-8 text-[13px] bg-[#f4f8fd] border border-[#b3d4f6] text-slate-800 font-semibold rounded-sm px-3 flex items-center justify-between cursor-not-allowed">
+                    <span>{academicYears.find((y: any) => y.id === watch('academicYearId'))?.label || useUIStore.getState().academicYear || 'Apr 26 - Mar 27'}</span>
+                    <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-medium border border-emerald-200">Session Locked</span>
+                  </div>
+                  <input type="hidden" {...register('academicYearId')} />
                 </div>
               </div>
 

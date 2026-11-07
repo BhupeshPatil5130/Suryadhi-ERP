@@ -7,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import api from '@/api/client';
 import { showToast } from '@/lib/toast';
+import { useUIStore } from '@/store';
 
 interface FormState {
   academicYearId: string;
@@ -237,17 +238,11 @@ export default function UpdateAdmissionPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-5">
 
               <div className="grid grid-cols-[180px_1fr] items-center gap-4">
-                <Label className="text-right text-slate-600 font-normal text-[13px]">Academic Year <span className="text-red-500">*</span></Label>
-                <Select value={form.academicYearId} onValueChange={(v) => setField('academicYearId', v)}>
-                  <SelectTrigger className="h-8 text-[13px] border-slate-300 shadow-none rounded-sm bg-[#f2f2f2]">
-                    <SelectValue placeholder="Select Year" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {academicYears.map((y: any) => (
-                      <SelectItem key={y.id} value={y.id}>{y.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label className="text-right text-slate-600 font-normal text-[13px]">Academic Year</Label>
+                <div className="h-8 text-[13px] border border-slate-300 rounded-sm bg-[#f2f2f2] px-3 flex items-center justify-between text-slate-800 font-semibold cursor-not-allowed">
+                  <span>{academicYears.find((y: any) => y.id === form.academicYearId)?.label || useUIStore.getState().academicYear || 'Apr 26 - Mar 27'}</span>
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-medium border border-emerald-200">Session Locked</span>
+                </div>
               </div>
 
               <div className="grid grid-cols-[180px_1fr] items-center gap-4">
