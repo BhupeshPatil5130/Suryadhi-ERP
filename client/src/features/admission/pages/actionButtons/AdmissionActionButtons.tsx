@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { FileEdit, Banknote, FileText, Forward, X, Plane, Pen, Info } from 'lucide-react';
+import { FileEdit, Banknote, FileText, Forward, X, Plane, Pen } from 'lucide-react';
 
 interface AdmissionActionButtonsProps {
   id: string;
@@ -55,18 +55,12 @@ export default function AdmissionActionButtons({ id }: AdmissionActionButtonsPro
         </Link>
       </div>
 
-      {/* Row 4: Name/DOB Change | View Royalty */}
-      <div className="flex items-center justify-between relative pl-1">
+      {/* Row 4: Name/DOB Change */}
+      <div className="flex items-center relative pl-1">
         <div className="w-[1px] h-[14px] bg-slate-300 absolute left-0"></div>
         <Link to={`/name-change?admissionId=${id}`}>
           <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Name/DOB Change">
             <Pen className="h-[14px] w-[14px] text-black stroke-[2.5]" />
-          </Button>
-        </Link>
-        <div className="w-[1px] h-[14px] bg-slate-300"></div>
-        <Link to={`/franchisee/royalty-forecast?admissionId=${id}`}>
-          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="View Royalty">
-            <Info className="h-[14px] w-[14px] text-black stroke-[2.5]" />
           </Button>
         </Link>
       </div>

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { FileEdit, Banknote, FileText, Forward, X, Plane, Pen, Info } from 'lucide-react';
+import { FileEdit, Banknote, FileText, Forward, X, Plane, Pen } from 'lucide-react';
 
 interface AdmissionActionButtonsProps {
   id: string;
@@ -97,8 +97,8 @@ export function AdmissionActionButtons({ id }: AdmissionActionButtonsProps) {
           </Tooltip>
         </div>
 
-        {/* Row 4: Name/DOB Change | Forecasted Royalty (View Royalty) */}
-        <div className="flex items-center justify-between relative">
+        {/* Row 4: Name/DOB Change */}
+        <div className="flex items-center relative">
           <Tooltip>
             <TooltipTrigger asChild>
               <Link to={`/name-change?admissionId=${id}`}>
@@ -108,17 +108,6 @@ export function AdmissionActionButtons({ id }: AdmissionActionButtonsProps) {
               </Link>
             </TooltipTrigger>
             <TooltipContent side="top"><p className="text-xs">Name / DOB Change</p></TooltipContent>
-          </Tooltip>
-          <div className="w-[1px] h-[14px] bg-slate-300"></div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link to={`/admissions/${id}/royalty`}>
-                <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none">
-                  <Info className="h-[14px] w-[14px] text-black stroke-[2.5]" />
-                </Button>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="top"><p className="text-xs">View Royalty</p></TooltipContent>
           </Tooltip>
         </div>
       </div>
