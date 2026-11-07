@@ -28,34 +28,36 @@ export default function EnquiryActionButtons({ id, studentName = 'Student', pare
   };
 
   return (
-    <div className="flex items-center gap-1 text-slate-600">
+    <div className="flex items-center gap-1 text-slate-600 whitespace-nowrap">
       {/* 2.1 View */}
       <Link to={`/enquiry/${id}/edit`}>
-        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-slate-100 text-slate-700" title="1. View / Edit Enquiry">
+        <Button variant="ghost" size="sm" className="h-7 px-2 hover:bg-slate-100 text-slate-700 font-medium text-xs gap-1" title="View">
           <Eye className="h-3.5 w-3.5" />
+          <span>View</span>
         </Button>
       </Link>
       <span className="text-slate-300">|</span>
 
       {/* 2.2 Fees Receipt */}
       <Link to={`/enquiry/${id}/receipts`}>
-        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-slate-100 text-emerald-700" title="2. Fees Receipt (View + Print + Delete)">
+        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-slate-100 text-emerald-700" title="Fees Receipt">
           <Banknote className="h-3.5 w-3.5" />
         </Button>
       </Link>
       <span className="text-slate-300">|</span>
 
-      {/* 2.3 Convert to Admission */}
+      {/* 2.3 Graduate To (Convert to Admission) */}
       <Link to={`/enquiry/${id}/convert`}>
-        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-slate-100 text-blue-700" title="3. Convert to Admission">
+        <Button variant="ghost" size="sm" className="h-7 px-2 hover:bg-blue-50 text-blue-700 font-medium text-xs gap-1" title="Graduate To">
           <Share className="h-3.5 w-3.5" />
+          <span>Graduate To</span>
         </Button>
       </Link>
       <span className="text-slate-300">|</span>
 
       {/* 2.4 Follow Up */}
       <Link to={`/enquiry/${id}/follow-up`}>
-        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-slate-100 text-amber-700" title="4. Follow Up">
+        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-slate-100 text-amber-700" title="Follow Up">
           <MessageCircle className="h-3.5 w-3.5" />
         </Button>
       </Link>
@@ -66,7 +68,7 @@ export default function EnquiryActionButtons({ id, studentName = 'Student', pare
         variant="ghost"
         size="icon"
         className="h-7 w-7 hover:bg-slate-100 text-purple-700"
-        title="5. Prinr Receipt "
+        title="Print Receipt"
         onClick={handlePrintEmail}
       >
         <Printer className="h-3.5 w-3.5" />

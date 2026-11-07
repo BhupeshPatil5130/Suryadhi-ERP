@@ -467,23 +467,23 @@ export default function ConvertToAdmissionPage() {
         </div>
 
         <div className="flex gap-2 mt-4 ml-[12.5%] md:ml-[180px] px-6">
-          <Button type="submit" disabled={isSubmitting} className="bg-[#0056b3] hover:bg-[#004494] text-white h-7 px-4 text-xs shadow-none rounded-sm font-semibold">
-            {isSubmitting ? 'Saving...' : 'Confirm'}
+          <Button type="submit" disabled={isSubmitting} className="bg-[#0056b3] hover:bg-[#004494] text-white h-8 px-6 text-xs shadow-none rounded-sm font-semibold">
+            {isSubmitting ? 'Saving...' : 'Save'}
           </Button>
-          <Button type="button" onClick={() => navigate(-1)} className="bg-[#e6e6e6] hover:bg-[#d4d4d4] text-slate-700 h-7 px-4 text-xs shadow-none rounded-sm font-semibold">
+          <Button type="button" onClick={() => navigate('/enquiry')} className="bg-[#e6e6e6] hover:bg-[#d4d4d4] text-slate-700 h-8 px-6 text-xs shadow-none rounded-sm font-semibold">
             Cancel
           </Button>
         </div>
       </form>
 
-      {/* Admission Fees Confirmation Modal */}
+      {/* Admission Fees Confirmation Fee Detail Modal */}
       {showFeesModal && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-slate-300 rounded-md shadow-2xl max-w-md w-full p-6 space-y-5 animate-in fade-in-50 zoom-in-95 duration-200">
             <div className="flex items-center gap-3 text-emerald-600">
               <CheckCircle className="h-8 w-8 text-emerald-500 shrink-0" />
               <div>
-                <h3 className="font-bold text-lg text-slate-800">Admission Fees Confirmation</h3>
+                <h3 className="font-bold text-lg text-slate-800">Admission Fees Confirmation Fee Detail</h3>
                 <p className="text-xs text-slate-500">Student registration completed</p>
               </div>
             </div>
@@ -493,12 +493,24 @@ export default function ConvertToAdmissionPage() {
                 Student <strong className="text-slate-900">{form.studentFirstName} {form.studentLastName}</strong> has been successfully converted to admission!
               </p>
               <p className="text-xs text-slate-500">
-                Would you like to collect the admission / term fees and generate a receipt right now?
+                Would you like to collect and save the admission fee detail right now?
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
+            <div className="flex items-center justify-end gap-3 pt-2">
               <Button
+                variant="outline"
+                type="button"
+                onClick={() => {
+                  setShowFeesModal(false);
+                  navigate('/admission');
+                }}
+                className="text-xs h-8 px-5 border-slate-300 text-slate-700 hover:bg-slate-100"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
                 onClick={() => {
                   setShowFeesModal(false);
                   if (createdAdmissionId) {
@@ -507,19 +519,9 @@ export default function ConvertToAdmissionPage() {
                     navigate(`/fees/add-receipt`);
                   }
                 }}
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9 font-semibold gap-1.5 shadow-sm"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-5 font-semibold gap-1.5 shadow-sm"
               >
-                <Banknote className="h-4 w-4" /> Collect Fees Now
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowFeesModal(false);
-                  navigate('/admission');
-                }}
-                className="flex-1 text-xs h-9 border-slate-300 text-slate-700 hover:bg-slate-100"
-              >
-                View Admission List <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                <Banknote className="h-4 w-4" /> Save
               </Button>
             </div>
           </div>

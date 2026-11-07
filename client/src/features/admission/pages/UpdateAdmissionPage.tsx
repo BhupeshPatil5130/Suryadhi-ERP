@@ -474,14 +474,11 @@ export default function UpdateAdmissionPage() {
         </div>
 
         <div className="flex gap-2 mt-4 ml-[12.5%] md:ml-[180px] px-6">
-          <Button type="submit" disabled={isSubmitting} className="bg-[#0056b3] hover:bg-[#004494] text-white h-7 px-4 text-xs shadow-none rounded-sm font-semibold">
-            {isSubmitting ? 'Saving...' : 'Confirm'}
+          <Button type="submit" disabled={isSubmitting} className="bg-[#0056b3] hover:bg-[#004494] text-white h-8 px-6 text-xs shadow-none rounded-sm font-semibold">
+            {isSubmitting ? 'Saving...' : 'Save'}
           </Button>
-          <Button type="button" onClick={() => setIsLoading(true)} className="bg-[#333] hover:bg-[#222] text-white h-7 px-4 text-xs shadow-none rounded-sm font-semibold">
-            Reload
-          </Button>
-          <Button type="button" onClick={() => navigate(-1)} className="bg-[#e6e6e6] hover:bg-[#d4d4d4] text-slate-700 h-7 px-4 text-xs shadow-none rounded-sm font-semibold">
-            Back
+          <Button type="button" onClick={() => navigate('/admission')} className="bg-[#e6e6e6] hover:bg-[#d4d4d4] text-slate-700 h-8 px-6 text-xs shadow-none rounded-sm font-semibold">
+            Cancel
           </Button>
         </div>
       </form>

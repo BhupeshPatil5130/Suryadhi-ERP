@@ -991,7 +991,7 @@ function NewReceiptView({
               className="bg-emerald-600 hover:bg-emerald-700 text-white h-8 px-5 text-xs shadow-none rounded-sm font-semibold"
             >
               {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
-              Generate Receipt
+              Save
             </Button>
             <Button onClick={onBack} variant="outline" className="h-8 px-5 text-xs rounded-sm">
               Cancel
@@ -1149,7 +1149,7 @@ function OtherReceiptView({
               className="bg-amber-600 hover:bg-amber-700 text-white h-8 px-5 text-xs shadow-none rounded-sm font-semibold"
             >
               {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
-              Generate Other Receipts
+              Save
             </Button>
             <Button onClick={onBack} variant="outline" className="h-8 px-5 text-xs rounded-sm">
               Cancel

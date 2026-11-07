@@ -410,16 +410,16 @@ export default function CreateEnquiryPage() {
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-3 sticky bottom-4 bg-card/80 backdrop-blur-xl p-4 rounded-xl border border-border shadow-lg z-10">
-          <Button variant="outline" type="button" onClick={() => navigate(-1)}>
+          <Button variant="outline" type="button" onClick={() => navigate('/enquiry')}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting} className="min-w-[140px]">
+          <Button type="submit" disabled={isSubmitting} className="min-w-[120px]">
             {isSubmitting ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : (
               <Save className="h-4 w-4 mr-2" />
             )}
-            Save Enquiry
+            Save
           </Button>
         </div>
       </form>

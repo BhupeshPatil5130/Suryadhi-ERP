@@ -389,21 +389,21 @@ export default function AddReceiptPage() {
 
                 {/* Actions */}
                 <div className="pt-4 border-t border-border flex justify-end gap-3">
-                  <Button type="button" variant="outline" className="min-w-[100px]" onClick={handleClear}>
-                    Clear
+                  <Button type="button" variant="outline" className="min-w-[100px]" onClick={() => navigate(-1)}>
+                    Cancel
                   </Button>
                   <Button
                     type="button"
                     onClick={handleIssueReceipt}
                     disabled={isSubmitting || !admission || parseFloat(amount) <= 0}
-                    className="min-w-[180px] bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="min-w-[140px] bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
                   >
                     {isSubmitting ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     ) : (
                       <Receipt className="h-4 w-4 mr-2" />
                     )}
-                    {isSubmitting ? 'Issuing...' : 'Issue Receipt'}
+                    {isSubmitting ? 'Saving...' : 'Save'}
                   </Button>
                 </div>
               </form>

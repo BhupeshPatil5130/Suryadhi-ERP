@@ -297,10 +297,10 @@ export default function UpdateEnquiryPage() {
         {/* Action Buttons */}
         <div className="flex items-center gap-3">
           <Button type="submit" disabled={isSubmitting} className="bg-[#0056b3] hover:bg-[#004494] text-white h-8 px-6 text-[13px] shadow-none rounded-sm font-medium">
-            {isSubmitting ? 'Updating...' : 'Update'}
+            {isSubmitting ? 'Saving...' : 'Save'}
           </Button>
           <Button type="button" onClick={() => navigate('/enquiry')} variant="outline" className="h-8 px-6 text-[13px] border-slate-300 text-slate-700 shadow-none rounded-sm font-medium">
-            Cancel
+            Back
           </Button>
         </div>
       </form>
