@@ -1,28 +1,27 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { FileEdit, Banknote, FileText, Forward, X, Plane, Pen } from 'lucide-react';
+import { FileEdit, Eye, PlusCircle, Forward, X, Plane, Pen } from 'lucide-react';
 
 interface AdmissionActionButtonsProps {
   id: string;
 }
 
 /**
- * 8 Action Buttons as per ERP spec:
- * 1. Edit & View
- * 2. Receipt
- * 3. Add Online Payment (Invoice)
+ * Action Buttons as per ERP spec:
+ * 1. Edit Admission
+ * 2. View Receipt (Opens Page 1: View Receipt)
+ * 3. Add Receipt (Opens Page 2: New Receipt)
  * 4. Transfer Student (Graduate to)
  * 5. Quit Admission
  * 6. Relocation / Transfer (Transfer Out)
  * 7. Name / DOB Change
- * 8. Forecasted Royalty (View Royalty)
  */
 export function AdmissionActionButtons({ id }: AdmissionActionButtonsProps) {
   return (
     <TooltipProvider delayDuration={200}>
       <div className="flex flex-col gap-1 w-[80px]">
-        {/* Row 1: Edit & View | Receipt */}
+        {/* Row 1: Edit | View Receipt (Opens Page 1) */}
         <div className="flex items-center justify-between relative">
           <Tooltip>
             <TooltipTrigger asChild>
@@ -32,32 +31,32 @@ export function AdmissionActionButtons({ id }: AdmissionActionButtonsProps) {
                 </Button>
               </Link>
             </TooltipTrigger>
-            <TooltipContent side="top"><p className="text-xs">Edit & View</p></TooltipContent>
+            <TooltipContent side="top"><p className="text-xs">Edit Admission</p></TooltipContent>
           </Tooltip>
           <div className="w-[1px] h-[14px] bg-slate-300"></div>
           <Tooltip>
             <TooltipTrigger asChild>
+              <Link to={`/admissions/${id}/receipt`}>
+                <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none">
+                  <Eye className="h-[14px] w-[14px] text-blue-700 stroke-[2.5]" />
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="top"><p className="text-xs">View (View Receipt)</p></TooltipContent>
+          </Tooltip>
+        </div>
+
+        {/* Row 2: Add Receipt (Opens Page 2) | Transfer Student (Graduate to) */}
+        <div className="flex items-center justify-between relative">
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Link to={`/admissions/${id}/receipt?tab=new`}>
                 <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none">
-                  <Banknote className="h-[14px] w-[14px] text-black stroke-[2.5]" />
+                  <PlusCircle className="h-[14px] w-[14px] text-emerald-700 stroke-[2.5]" />
                 </Button>
               </Link>
             </TooltipTrigger>
             <TooltipContent side="top"><p className="text-xs">Add Receipt</p></TooltipContent>
-          </Tooltip>
-        </div>
-
-        {/* Row 2: Invoice / Fee Receipt (Term 1 & Term 2) | Transfer Student (Graduate to) */}
-        <div className="flex items-center justify-between relative">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link to={`/admissions/${id}/receipt`}>
-                <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none">
-                  <FileText className="h-[14px] w-[14px] text-black stroke-[2.5]" />
-                </Button>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="top"><p className="text-xs">Invoice & Fee Receipts (Term 1 & 2)</p></TooltipContent>
           </Tooltip>
           <div className="w-[1px] h-[14px] bg-slate-300"></div>
           <Tooltip>

@@ -19,7 +19,8 @@ export const createReceiptSchema = z.object({
   transactionId: z.string().optional(),
   receiptDate: z.string().optional(),
   notes: z.string().optional(),
-});
+  term: z.string().optional(),
+}).passthrough();
 
 export const depositSchema = z.object({
   receiptIds: z.array(z.string()).min(1, 'At least one receipt is required'),
