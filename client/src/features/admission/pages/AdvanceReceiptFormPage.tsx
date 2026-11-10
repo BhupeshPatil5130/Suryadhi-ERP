@@ -7,6 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Loader2, Printer, Mail, Link as LinkIcon, Pencil, Eye, Trash2, X } from 'lucide-react';
 import { showToast } from '@/lib/toast';
+import ReceiptDetailsViewer, {
+  buildReceiptPrintHtml,
+  formatInvoiceNumber,
+} from '@/features/admission/components/ReceiptDetailsViewer';
 
 interface AdmissionData {
   studentName: string;
@@ -91,7 +95,7 @@ export default function AdvanceReceiptFormPage() {
         const d = res.data.data;
         const invoice = d.invoices?.[0];
         const uin = d.student?.uin || 'N/A';
-        const invoiceNumber = invoice?.invoiceNumber || (uin !== 'N/A' ? (uin.startsWith('SNK/') ? uin : `SNK/3201/${uin.replace(/[^0-9]/g, '').slice(-4) || '0001'}/2027`) : 'Not Generated');
+        const invoiceNumber = formatInvoiceNumber(invoice?.invoiceNumber || uin);
 
         const rawReceipts: any[] = d.receipts || [];
         const mappedReceipts: ReceiptRow[] = rawReceipts.map((r: any) => {
@@ -163,7 +167,7 @@ export default function AdvanceReceiptFormPage() {
           motherMobile: d.student?.parent?.motherMobile || '9822114456',
           email: d.student?.parent?.fatherEmail || d.student?.parent?.motherEmail || 'parent@sunoiakids.com',
           address: d.student?.address || 'Dhule',
-          academicYear: d.academicYear?.label || 'Jun 24 - May 25',
+          academicYear: d.academicYear?.label || 'Apr 26 - May 27',
           franchisee: d.school?.name || 'SNK - Dhule - Deopur',
           franchiseeContactPerson: 'Rahul Khandale',
           franchiseeAddress: d.school?.address || 'Mohanlal Mangal Karyalay, Yavatmal road in front of forest office, ward number-1, At Post Taluka-Arni, District',
@@ -188,7 +192,7 @@ export default function AdvanceReceiptFormPage() {
         batch: fallback.batch || 'Morning Shift',
         gender: fallback.gender || 'MALE',
         uin,
-        invoiceNumber: uin.startsWith('SNK/') ? uin : `SNK/3201/0001/2027`,
+        invoiceNumber: formatInvoiceNumber(uin),
         invoiceId: 'inv-1',
         invoiceStatus: 'GENERATED',
         term1Amount,
@@ -209,7 +213,7 @@ export default function AdvanceReceiptFormPage() {
         motherMobile: fallback.motherMobile || '9822114456',
         email: 'parent@sunoiakids.com',
         address: 'Dhule',
-        academicYear: 'Jun 24 - May 25',
+        academicYear: 'Apr 26 - May 27',
         franchisee: 'SNK - Dhule - Deopur',
         franchiseeContactPerson: 'Rahul Khandale',
         franchiseeAddress: 'Mohanlal Mangal Karyalay, Yavatmal road in front of forest office, ward number-1, At Post Taluka-Arni, District',
@@ -375,6 +379,15 @@ function getFeeBreakdown(r: ReceiptRow) {
 }
 
 function printReceiptDocument(r: ReceiptRow, data: AdmissionData) {
+  const win = window.open('', '_blank', 'width=900,height=800');
+  if (win) {
+    win.document.open();
+    win.document.write(buildReceiptPrintHtml(r, data));
+    win.document.close();
+  }
+}
+
+function _unusedPrint(r: ReceiptRow, data: AdmissionData) {
   const genderPrefix = (data.gender || 'MALE').toUpperCase() === 'FEMALE' ? 'Miss' : 'Master';
   const parentName = (data.motherName || data.fatherName || 'Parent').toUpperCase();
   const dateFormatted = formatReceiptDate(r.receiptDate);
@@ -601,7 +614,7 @@ function printReceiptDocument(r: ReceiptRow, data: AdmissionData) {
         <table>
           <thead>
             <tr>
-              <th>Fees for Academic year ${data.academicYear || 'Jun 24 - May 25'}</th>
+              <th>Fees for Academic year ${data.academicYear || 'Apr 26 - May 27'}</th>
               <th style="width: 80px; text-align: right;">Amount Rs.</th>
             </tr>
           </thead>
@@ -679,27 +692,32 @@ function ReceiptDetailsModal({
   receipt,
   data,
   onClose,
-  onPrint,
   onEmail,
 }: {
   receipt: ReceiptRow;
   data: AdmissionData;
   onClose: () => void;
-  onPrint: () => void;
-  onEmail: () => void;
+  onPrint?: () => void;
+  onEmail?: () => void;
 }) {
-  const genderPrefix = (data.gender || 'MALE').toUpperCase() === 'FEMALE' ? 'Miss' : 'Master';
-  const parentName = (data.motherName || data.fatherName || 'Parent').toUpperCase();
-  const dateFormatted = formatReceiptDate(receipt.receiptDate);
-  const chequeDateFormatted = receipt.chequeDate ? formatReceiptDate(receipt.chequeDate) : dateFormatted;
-  const words = numberToWords(receipt.amount);
-  const breakdownRows = getFeeBreakdown(receipt);
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white rounded-lg shadow-2xl border border-slate-300 w-full max-w-[860px] my-6 flex flex-col max-h-[92vh]">
-        {/* Modal Toolbar Header */}
-        <div className="bg-slate-100 px-5 py-3 border-b border-slate-300 flex items-center justify-between">
+    <ReceiptDetailsViewer
+      isModal
+      receipt={receipt}
+      data={data}
+      onClose={onClose}
+      onEmail={onEmail}
+      onRefresh={onClose}
+    />
+  );
+}
+
+function _unusedOldModal(receipt: any, data: any, onClose: any, onPrint: any, onEmail: any, words: any, breakdownRows: any, genderPrefix: any, parentName: any, dateFormatted: any, chequeDateFormatted: any) {
+  return null;
+  return (
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
+        <div className="bg-white rounded-lg shadow-2xl border border-slate-300 w-full max-w-[860px] my-6 flex flex-col max-h-[92vh]">
           <div className="flex items-center gap-2">
             <h2 className="text-base font-bold text-slate-800">Receipt Details</h2>
             <span className="text-xs text-slate-500 font-mono bg-white px-2 py-0.5 rounded border border-slate-200">
@@ -842,13 +860,13 @@ function ReceiptDetailsModal({
                 <thead>
                   <tr className="bg-slate-100 font-bold text-slate-900">
                     <th className="border border-slate-700 p-2 text-left">
-                      Fees for Academic year {data.academicYear || 'Jun 24 - May 25'}
+                      Fees for Academic year {data.academicYear || 'Apr 26 - May 27'}
                     </th>
                     <th className="border border-slate-700 p-2 text-right w-24">Amount Rs.</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {breakdownRows.map((row, idx) => (
+                  {breakdownRows.map((row: any, idx: number) => (
                     <tr key={idx} className="hover:bg-slate-50">
                       <td className="border border-slate-700 p-2 text-slate-800">{row.label}</td>
                       <td className="border border-slate-700 p-2 text-right font-medium">{row.amount.toFixed(2)}</td>
@@ -911,7 +929,7 @@ function ReceiptDetailsModal({
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

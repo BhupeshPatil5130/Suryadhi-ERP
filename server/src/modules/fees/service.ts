@@ -10,6 +10,28 @@ import {
   ConvertBulkPaymentInput,
 } from './schema';
 
+export function formatInvoiceNumber(inv?: string | null): string {
+  if (!inv || inv === 'Not Generated' || inv === 'N/A') return 'SNK/3201/0001/2026';
+  const str = inv.trim().replace(/^INV[-_/]/i, '');
+  const parts = str.split('/');
+  if (parts.length >= 4) {
+    const schoolDigits = parts[1].replace(/[^0-9]/g, '');
+    const schoolCode = schoolDigits ? schoolDigits.slice(-4).padStart(4, '0') : '3201';
+    const seqDigits = parts[2].replace(/[^0-9]/g, '');
+    const seq = seqDigits ? seqDigits.slice(-4).padStart(4, '0') : '0001';
+    let year = parts[3].replace(/[^0-9]/g, '');
+    if (year.length === 4 && (year.startsWith('26') || year === '2627')) year = '2026';
+    else if (year.length === 4 && year.startsWith('24')) year = '2024';
+    else if (year.length === 4 && year.startsWith('25')) year = '2025';
+    else if (year.length === 2) year = `20${year}`;
+    else if (!year) year = '2026';
+    return `SNK/${schoolCode}/${seq}/${year}`;
+  }
+  const allNums = str.replace(/[^0-9]/g, '');
+  const seq = allNums ? allNums.slice(-4).padStart(4, '0') : '0001';
+  return `SNK/3201/${seq}/2026`;
+}
+
 export class FeeService {
   /**
    * Calculate fee breakup for a program + admission date + discount
@@ -135,13 +157,14 @@ export class FeeService {
       orderBy: { receiptDate: 'desc' },
     });
 
-    // Ensure invoice number matches student UIN format (e.g. INV-SLPL3201/0071/2027)
+    // Ensure invoice number matches student UIN format (e.g. SNK/3201/0007/2026)
     const formattedInvoices = admission.invoices.map((inv) => {
       const uin = admission.student?.uin;
       let invoiceNumber = inv.invoiceNumber;
-      if (uin && (!invoiceNumber || invoiceNumber.startsWith('INV-0') || !invoiceNumber.includes(uin))) {
-        invoiceNumber = `INV-${uin}`;
+      if (uin && (!invoiceNumber || invoiceNumber.startsWith('INV-') || !invoiceNumber.includes(uin))) {
+        invoiceNumber = uin;
       }
+      invoiceNumber = formatInvoiceNumber(invoiceNumber || uin);
       return {
         ...inv,
         invoiceNumber,
@@ -240,6 +263,12 @@ export class FeeService {
 
     if (!receipt) {
       throw new AppError('Receipt not found', 404);
+    }
+
+    if (receipt.invoice) {
+      (receipt.invoice as any).invoiceNumber = formatInvoiceNumber(
+        receipt.invoice.invoiceNumber || receipt.admission?.student?.uin
+      );
     }
 
     return receipt;

@@ -137,14 +137,23 @@ export default function AddReceiptPage() {
     <div className="max-w-6xl mx-auto space-y-6 pb-12 pt-4">
       <div className="flex items-center justify-between mb-2">
         <h1 className="text-2xl font-semibold text-slate-800">Advance Receipt</h1>
-        <Button
-          onClick={() => navigate(`/enquiry/${id}/receipts`)}
-          variant="outline"
-          className="h-8 text-xs flex items-center gap-1 border-slate-300"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Back to Receipts
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => navigate('/enquiry')}
+            variant="outline"
+            className="h-8 text-xs flex items-center gap-1 border-slate-300"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to Enquiries
+          </Button>
+          <Button
+            onClick={() => navigate(`/enquiry/${id}/receipts`)}
+            variant="outline"
+            className="h-8 text-xs flex items-center gap-1 border-slate-300"
+          >
+            Back to Receipts
+          </Button>
+        </div>
       </div>
 
       <Card className="border-slate-300 shadow-sm rounded-sm overflow-hidden">

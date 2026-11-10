@@ -35,11 +35,21 @@ interface ProgramSummaryItem {
   totalBalance: number;
 }
 
-const DEFAULT_PROGRAMS = ['Play Group', 'Nursery', 'Sunoia Junior', 'Sunoia Senior'];
+export const STANDARD_PROGRAMS = ['Play Group', 'Nursery', 'SUNOIA Junior', 'SUNOIA Senior'] as const;
+
+export function normalizeProgramName(name?: string | null): string {
+  if (!name) return '';
+  const clean = name.trim().toLowerCase();
+  if (clean.includes('play')) return 'Play Group';
+  if (clean.includes('nurse')) return 'Nursery';
+  if (clean.includes('junior') || clean.includes('jr')) return 'SUNOIA Junior';
+  if (clean.includes('senior') || clean.includes('sr')) return 'SUNOIA Senior';
+  return name.trim();
+}
 
 export default function PaymentDueReportPage() {
   const [data, setData] = useState<PaymentDueItem[]>([]);
-  const [programsList, setProgramsList] = useState<string[]>(DEFAULT_PROGRAMS);
+  const programsList = STANDARD_PROGRAMS;
   const [isLoading, setIsLoading] = useState(true);
 
   // Filters
@@ -54,17 +64,15 @@ export default function PaymentDueReportPage() {
     try {
       const res = await api.get('/reports/payment-due');
       if (res.data.success && Array.isArray(res.data.data)) {
-        setData(res.data.data);
-
-        // Extract any distinct program names from backend data
-        const extracted: string[] = Array.from(new Set(
-          res.data.data
-            .map((item: any) => item.program?.name)
-            .filter((name: any): name is string => Boolean(name && name.trim()))
-        ));
-        if (extracted.length > 0) {
-          setProgramsList((_prev: string[]) => Array.from(new Set<string>([...DEFAULT_PROGRAMS, ...extracted])));
-        }
+        // Normalize all program names so casing is 100% consistent
+        const normalized: PaymentDueItem[] = res.data.data.map((item: any) => ({
+          ...item,
+          program: {
+            ...item.program,
+            name: normalizeProgramName(item.program?.name),
+          },
+        }));
+        setData(normalized);
       }
     } catch (err) {
       console.error('Failed to fetch payment due report', err);
@@ -86,19 +94,20 @@ export default function PaymentDueReportPage() {
   const filteredData = useMemo(() => {
     return data.filter((item) => {
       if (selectedProgram === 'ALL') return true;
-      const prog = (item.program?.name || '').toLowerCase();
-      return prog.includes(selectedProgram.toLowerCase());
+      const prog = normalizeProgramName(item.program?.name).toLowerCase();
+      const sel = selectedProgram.toLowerCase();
+      return prog === sel;
     });
   }, [data, selectedProgram]);
 
-  // Calculate summary grouped by program
+  // Calculate summary grouped by program - exactly 4 programs
   const summaryData: ProgramSummaryItem[] = useMemo(() => {
     const listToSummarize = selectedProgram === 'ALL'
-      ? programsList
-      : programsList.filter((p) => p.toLowerCase().includes(selectedProgram.toLowerCase()));
+      ? [...STANDARD_PROGRAMS]
+      : STANDARD_PROGRAMS.filter((p) => p.toLowerCase() === selectedProgram.toLowerCase());
 
     return listToSummarize.map((pName) => {
-      const items = data.filter((d) => (d.program?.name || '').toLowerCase().includes(pName.toLowerCase()));
+      const items = data.filter((d) => normalizeProgramName(d.program?.name).toLowerCase() === pName.toLowerCase());
       return {
         programName: pName,
         studentCount: items.length,
@@ -107,7 +116,7 @@ export default function PaymentDueReportPage() {
         totalBalance: items.reduce((sum, i) => sum + i.balance, 0),
       };
     });
-  }, [data, programsList, selectedProgram]);
+  }, [data, selectedProgram]);
 
   const totalDueAmount = filteredData.reduce((sum, d) => sum + d.balance, 0);
   const totalStudentsDue = filteredData.length;
@@ -134,7 +143,7 @@ export default function PaymentDueReportPage() {
     {
       id: 'program',
       header: 'Program',
-      cell: ({ row }) => <span className="font-medium">{row.original.program?.name || '-'}</span>,
+      cell: ({ row }) => <span className="font-medium">{normalizeProgramName(row.original.program?.name) || '-'}</span>,
     },
     {
       accessorKey: 'invoiceNumber',
@@ -376,7 +385,7 @@ export default function PaymentDueReportPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Program:</span>
-                  <span className="font-medium">{selectedItem.program?.name || '-'}</span>
+                  <span className="font-medium">{normalizeProgramName(selectedItem.program?.name) || '-'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Invoice No:</span>

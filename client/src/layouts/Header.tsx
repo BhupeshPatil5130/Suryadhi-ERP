@@ -153,7 +153,7 @@ export default function Header() {
           title="Academic Year locked from login session"
         >
           <Calendar className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-          <span>AY: <strong className="font-bold">{academicYear || 'Apr 26 - Mar 27'}</strong></span>
+          <span>AY: <strong className="font-bold">{academicYear || 'Apr 26 - May 27'}</strong></span>
         </div>
 
         {/* Theme */}

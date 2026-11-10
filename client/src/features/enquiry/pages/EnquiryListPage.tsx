@@ -144,25 +144,40 @@ export default function EnquiryListPage() {
         ]);
 
         if (enquiriesRes.data.success && enquiriesRes.data.data && enquiriesRes.data.data.length > 0) {
-          const apiData = enquiriesRes.data.data.map((item: any) => ({
-            id: item.id,
-            studentName: `${item.student?.firstName || ''} ${item.student?.middleName || ''} ${item.student?.lastName || ''}`.trim(),
-            enquirerName: item.enquirerName || 'N/A',
-            enquirerContact: item.enquirerMobile || 'N/A',
-            enquirerEmail: item.enquirerEmail || item.student?.parent?.fatherEmail || '',
-            stage: item.stage || 'NEW',
-            subStage: item.subStage || 'Admission Enquiry (New Opportunity)',
-            programName: item.program?.name || 'N/A',
-            nextFollowUp: item.nextFollowUp ? new Date(item.nextFollowUp).toLocaleDateString('en-GB') : '',
-            lastContacted: item.lastContacted
-              ? new Date(item.lastContacted).toLocaleDateString('en-GB')
-              : new Date(item.createdAt).toLocaleDateString('en-GB'),
-            receivableAmount: item.stage === 'CONVERTED' ? 45000 : 500,
-            collectionAmount: (item.advanceReceipts || []).reduce(
-              (sum: number, r: any) => sum + Number(r.amount || 0),
-              0
-            ),
-          }));
+          const apiData = enquiriesRes.data.data.map((item: any) => {
+            const programName = item.program?.name || 'N/A';
+            const defaultReceivable = programName === 'Nursery' ? 23800 : programName === 'Play Group' ? 30000 : programName === 'SUNOIA Senior' ? 50000 : 45000;
+            const receivableAmount = Number(
+              item.receivableAmount !== undefined && item.receivableAmount !== null
+                ? item.receivableAmount
+                : item.stage === 'CONVERTED' ? 45000 : defaultReceivable
+            );
+            const collectionAmount = Number(
+              item.collectionAmount !== undefined && item.collectionAmount !== null
+                ? item.collectionAmount
+                : (item.advanceReceipts || []).reduce(
+                    (sum: number, r: any) => sum + Number(r.amount || 0),
+                    0
+                  )
+            );
+
+            return {
+              id: item.id,
+              studentName: `${item.student?.firstName || ''} ${item.student?.middleName || ''} ${item.student?.lastName || ''}`.trim(),
+              enquirerName: item.enquirerName || 'N/A',
+              enquirerContact: item.enquirerMobile || 'N/A',
+              enquirerEmail: item.enquirerEmail || item.student?.parent?.fatherEmail || '',
+              stage: item.stage || 'NEW',
+              subStage: item.subStage || 'Admission Enquiry (New Opportunity)',
+              programName,
+              nextFollowUp: item.nextFollowUp ? new Date(item.nextFollowUp).toLocaleDateString('en-GB') : '',
+              lastContacted: item.lastContacted
+                ? new Date(item.lastContacted).toLocaleDateString('en-GB')
+                : new Date(item.createdAt).toLocaleDateString('en-GB'),
+              receivableAmount,
+              collectionAmount,
+            };
+          });
           setData(apiData);
         }
 
@@ -180,6 +195,14 @@ export default function EnquiryListPage() {
       }
     };
     fetchAll();
+
+    const handleFocus = () => {
+      fetchAll();
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [showEntries]);
 
   const totalEnquiry = summaryCards.reduce((acc, curr) => acc + curr.count, 0);

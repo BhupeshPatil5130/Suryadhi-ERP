@@ -80,7 +80,7 @@ export default function AdmissionListPage() {
   const [data, setData] = useState<AdmissionRecord[]>(dummyAdmissions);
   const [programCounts, setProgramCounts] = useState<ProgramCount[]>(dummyProgramCounts);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentYear] = useState('Apr 26 - Mar 27');
+  const [currentYear] = useState('Apr 26 - May 27');
   const [showEntries, setShowEntries] = useState('25');
 
   useEffect(() => {

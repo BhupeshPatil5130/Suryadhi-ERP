@@ -66,7 +66,7 @@ export default function FeeCalculatorPage() {
   // Franchisee & Year details
   const franchisee = 'SNK - Dhule - Deopur';
   const selectedYear = useUIStore((s) => s.academicYear);
-  const academicYear = selectedYear || 'Apr 26 - Mar 27';
+  const academicYear = selectedYear || 'Apr 26 - May 27';
 
   // Fee calculation logic
   const feeDetails = useMemo(() => {

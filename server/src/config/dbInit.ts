@@ -11,6 +11,89 @@ export async function initDatabase(): Promise<void> {
     await prisma.$connect();
     logger.info('✅ Database connected successfully');
 
+    // Automatically migrate any legacy 'Mar' academic years in the DB to 'Apr to May'
+    try {
+      const legacyYears = await prisma.academicYear.findMany({
+        where: { label: { contains: 'Mar' } },
+      });
+      for (const y of legacyYears) {
+        const newLabel = y.label.replace(/Mar/g, 'May');
+        const endDate = y.endDate ? new Date(y.endDate) : new Date('2027-05-31');
+        endDate.setMonth(4); // May
+        endDate.setDate(31);
+        await prisma.academicYear.update({
+          where: { id: y.id },
+          data: {
+            label: newLabel,
+            endDate,
+          },
+        });
+        logger.info(`🔄 Migrated academic year: ${y.label} -> ${newLabel}`);
+      }
+    } catch (e) {
+      // Non-blocking if table not yet migrated
+    }
+
+    // Migrate any legacy invoiceNumber or student UIN containing INV- or SEMS-DEMO to standard SNK/xxxx/xxxx/2026 format
+    try {
+      const invoices = await prisma.invoice.findMany({
+        where: {
+          OR: [
+            { invoiceNumber: { startsWith: 'INV-' } },
+            { invoiceNumber: { contains: 'SEMS-DEMO' } },
+          ],
+        },
+      });
+      for (const inv of invoices) {
+        const cleaned = inv.invoiceNumber.replace(/^INV[-_/]/i, '');
+        const parts = cleaned.split('/');
+        let newNum = inv.invoiceNumber;
+        if (parts.length >= 4) {
+          const schoolCode = (parts[1].replace(/[^0-9]/g, '') || '3201').slice(-4).padStart(4, '0');
+          const seq = (parts[2].replace(/[^0-9]/g, '') || '0001').slice(-4).padStart(4, '0');
+          let yr = parts[3].replace(/[^0-9]/g, '');
+          if (yr.length === 4 && (yr.startsWith('26') || yr === '2627')) yr = '2026';
+          else if (yr.length === 2) yr = `20${yr}`;
+          else if (!yr) yr = '2026';
+          newNum = `SNK/${schoolCode}/${seq}/${yr}`;
+        } else {
+          const digits = cleaned.replace(/[^0-9]/g, '');
+          newNum = `SNK/3201/${(digits.slice(-4) || '0001').padStart(4, '0')}/2026`;
+        }
+        await prisma.invoice.update({
+          where: { id: inv.id },
+          data: { invoiceNumber: newNum },
+        });
+        logger.info(`🔄 Migrated invoice number: ${inv.invoiceNumber} -> ${newNum}`);
+      }
+
+      const students = await prisma.student.findMany({
+        where: {
+          uin: { contains: 'SEMS-DEMO' },
+        },
+      });
+      for (const stu of students) {
+        if (!stu.uin) continue;
+        const parts = stu.uin.split('/');
+        if (parts.length >= 4) {
+          const schoolCode = (parts[1].replace(/[^0-9]/g, '') || '3201').slice(-4).padStart(4, '0');
+          const seq = (parts[2].replace(/[^0-9]/g, '') || '0001').slice(-4).padStart(4, '0');
+          let yr = parts[3].replace(/[^0-9]/g, '');
+          if (yr.length === 4 && (yr.startsWith('26') || yr === '2627')) yr = '2026';
+          else if (yr.length === 2) yr = `20${yr}`;
+          else if (!yr) yr = '2026';
+          const newUin = `SNK/${schoolCode}/${seq}/${yr}`;
+          await prisma.student.update({
+            where: { id: stu.id },
+            data: { uin: newUin },
+          });
+          logger.info(`🔄 Migrated student UIN: ${stu.uin} -> ${newUin}`);
+        }
+      }
+    } catch (e) {
+      // Non-blocking
+    }
+
     try {
       const userCount = await prisma.user.count();
       if (userCount === 0) {
@@ -37,15 +120,19 @@ export async function initDatabase(): Promise<void> {
           },
         });
 
-        // 2. Create current academic year
+        // 2. Create current academic year (Apr to May)
         const ay = await prisma.academicYear.upsert({
-          where: { label: 'Apr 26 - Mar 27' },
-          update: {},
-          create: {
-            label: 'Apr 26 - Mar 27',
+          where: { label: 'Apr 26 - May 27' },
+          update: {
             isCurrent: true,
             startDate: new Date('2026-04-01'),
-            endDate: new Date('2027-03-31'),
+            endDate: new Date('2027-05-31'),
+          },
+          create: {
+            label: 'Apr 26 - May 27',
+            isCurrent: true,
+            startDate: new Date('2026-04-01'),
+            endDate: new Date('2027-05-31'),
           },
         });
 

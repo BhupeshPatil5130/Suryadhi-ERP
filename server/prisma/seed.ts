@@ -8,15 +8,15 @@ async function main() {
   console.log('🌱 Seeding database...');
   console.log('📡 Connected to Database Host:', process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':****@'));
 
-  // ── Academic Years ─────────────────────────────────────────
+  // ── Academic Years (Apr to May) ──────────────────────────────
   const yearsToSeed = [
-    { label: 'Apr 26 - Mar 27', isCurrent: true, startDate: new Date('2026-04-01'), endDate: new Date('2027-03-31') },
-    { label: 'Apr 26 - Mar 27 (MTA)', isCurrent: false, startDate: new Date('2026-04-01'), endDate: new Date('2027-03-31') },
-    { label: 'Apr 26 - Mar 27 (MYP)', isCurrent: false, startDate: new Date('2026-04-01'), endDate: new Date('2027-03-31') },
-    { label: 'Apr 25 - Mar 26 (MTA)', isCurrent: false, startDate: new Date('2025-04-01'), endDate: new Date('2026-03-31') },
-    { label: 'Apr 25 - Mar 26', isCurrent: false, startDate: new Date('2025-04-01'), endDate: new Date('2026-03-31') },
-    { label: 'Apr 25 - Mar 26 (MYP)', isCurrent: false, startDate: new Date('2025-04-01'), endDate: new Date('2026-03-31') },
-    { label: 'Jun 24 - May 25', isCurrent: false, startDate: new Date('2024-06-01'), endDate: new Date('2025-05-31') },
+    { label: 'Apr 26 - May 27', isCurrent: true, startDate: new Date('2026-04-01'), endDate: new Date('2027-05-31') },
+    { label: 'Apr 26 - May 27 (MTA)', isCurrent: false, startDate: new Date('2026-04-01'), endDate: new Date('2027-05-31') },
+    { label: 'Apr 26 - May 27 (MYP)', isCurrent: false, startDate: new Date('2026-04-01'), endDate: new Date('2027-05-31') },
+    { label: 'Apr 25 - May 26 (MTA)', isCurrent: false, startDate: new Date('2025-04-01'), endDate: new Date('2026-05-31') },
+    { label: 'Apr 25 - May 26', isCurrent: false, startDate: new Date('2025-04-01'), endDate: new Date('2026-05-31') },
+    { label: 'Apr 25 - May 26 (MYP)', isCurrent: false, startDate: new Date('2025-04-01'), endDate: new Date('2026-05-31') },
+    { label: 'Apr 24 - May 25', isCurrent: false, startDate: new Date('2024-04-01'), endDate: new Date('2025-05-31') },
   ];
 
   const seededYears = [];
@@ -29,8 +29,8 @@ async function main() {
     seededYears.push(ay);
   }
 
-  const ay2526 = seededYears.find((y) => y.label === 'Apr 25 - Mar 26')!;
-  const ay2627 = seededYears.find((y) => y.label === 'Apr 26 - Mar 27')!;
+  const ay2526 = seededYears.find((y) => y.label === 'Apr 25 - May 26')!;
+  const ay2627 = seededYears.find((y) => y.label === 'Apr 26 - May 27')!;
 
   console.log('✅ Academic years created');
 

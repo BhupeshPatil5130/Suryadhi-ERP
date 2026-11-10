@@ -48,7 +48,7 @@ export default function TransferRequestPage() {
     }
   };
 
-  const currentYear = 'Apr 26 - Mar 27';
+  const currentYear = 'Apr 26 - May 27';
   const studentName = admission ? `${admission.student?.firstName || ''} ${admission.student?.lastName || ''}`.trim() : 'Mahi Sachin Rathod';
   const programName = admission?.program?.name || 'SUNOIA Senior';
 

@@ -33,7 +33,7 @@ export default function EnquiryActionButtons({ id, studentName = 'Student', pare
       <Link to={`/enquiry/${id}/edit`}>
         <Button variant="ghost" size="sm" className="h-7 px-2 hover:bg-slate-100 text-slate-700 font-medium text-xs gap-1" title="View">
           <FileEdit className="h-[14px] w-[14px] text-black stroke-[2.5]" />
-          <span>View</span>
+
         </Button>
       </Link>
       <span className="text-slate-300">|</span>

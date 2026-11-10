@@ -1,157 +1,191 @@
-import { useLocation, useNavigate } from 'react-router-dom';
-import PageHeader from '@/components/shared/PageHeader';
-import { Card, CardContent } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-// import { Badge } from '@/components/ui/badge
-import { ArrowLeft, Printer, Download, Receipt as ReceiptIcon, CheckCircle2, Mail } from 'lucide-react';
-import { formatCurrency, formatDate } from '@/lib/utils';
-import { downloadAsPDF } from '@/lib/downloadUtils';
+import api from '@/api/client';
+import ReceiptDetailsViewer, {
+  ReceiptItem,
+  AdmissionReceiptData,
+  formatInvoiceNumber,
+} from '@/features/admission/components/ReceiptDetailsViewer';
 
 export default function PrintReceiptPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { id } = useParams<{ id: string }>();
   const state = location.state as any;
 
-  if (!state || !state.receipt || !state.student) {
+  const [loading, setLoading] = useState<boolean>(!state?.receipt);
+  const [receipt, setReceipt] = useState<ReceiptItem | null>(() => {
+    if (state?.receipt) {
+      return {
+        id: state.receipt.id || 'r1',
+        receiptNumber: state.receipt.receiptNumber || '1103040',
+        receiptDate: state.receipt.receiptDate || new Date().toISOString(),
+        amount: Number(state.receipt.amount) || 7000,
+        paymentMode: state.receipt.paymentMode || 'Cash',
+        chequeNumber: state.receipt.chequeNumber || null,
+        chequeDate: state.receipt.chequeDate || null,
+        bankName: state.receipt.bankName || null,
+      };
+    }
+    if (state?.onlinePayment) {
+      return {
+        id: state.onlinePayment.id || 'r1',
+        receiptNumber: state.onlinePayment.receiptNumber || state.onlinePayment.transactionId || '1103040',
+        receiptDate: state.onlinePayment.createdAt || state.onlinePayment.date || new Date().toISOString(),
+        amount: Number(state.onlinePayment.amount) || 7000,
+        paymentMode: 'ONLINE',
+        chequeNumber: state.onlinePayment.transactionId || null,
+      };
+    }
+    return null;
+  });
+
+  const [admissionData, setAdmissionData] = useState<AdmissionReceiptData | null>(() => {
+    if (state?.student) {
+      const s = state.student;
+      return {
+        studentName: `${s.studentFirstName || s.firstName || ''} ${s.studentLastName || s.lastName || ''}`.trim() || 'SHAURYA NITESH RATHOD',
+        gender: s.gender || 'MALE',
+        invoiceNumber: formatInvoiceNumber(s.invoiceNumber || s.uin),
+        fatherName: s.fatherName || 'NITESH RATHOD',
+        motherName: s.motherName || 'NANDINI NITESH RATHOD',
+        program: s.program || 'Nursery',
+        batch: s.batch || 'Morning Shift',
+        academicYear: s.academicYear || 'Apr 26 - May 27',
+        franchisee: 'SNK - Dhule - Deopur',
+        franchiseeContactPerson: 'Rahul Khandale',
+        franchiseeAddress: 'Mohanlal Mangal Karyalay, Yavatmal road in front of forest office, ward number-1, At Post Taluka-Arni, District',
+        franchiseePhone: '9823990362',
+      };
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (receipt && admissionData) {
+      setLoading(false);
+      return;
+    }
+
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchReceipt = async () => {
+      setLoading(true);
+      try {
+        let res;
+        try {
+          res = await api.get(`/fees/receipt/${id}`);
+        } catch {
+          res = await api.get(`/fees/receipts/single/${id}`);
+        }
+
+        if (res?.data?.success && res.data.data) {
+          const r = res.data.data;
+          const adm = r.admission || {};
+          const stu = adm.student || {};
+          const par = stu.parent || {};
+
+          setReceipt({
+            id: r.id,
+            receiptNumber: r.receiptNumber || '1103040',
+            receiptDate: r.receiptDate || new Date().toISOString(),
+            amount: Number(r.amount) || 0,
+            paymentMode: r.paymentMode || 'Cash',
+            chequeNumber: r.chequeNumber || null,
+            chequeDate: r.chequeDate || null,
+            bankName: r.bankName || null,
+            category: r.invoiceId ? 'Tuition Fee' : 'Other Fee',
+          });
+
+          setAdmissionData({
+            studentName: `${stu.firstName || ''} ${stu.lastName || ''}`.trim() || 'SHAURYA NITESH RATHOD',
+            gender: stu.gender || 'MALE',
+            invoiceNumber: formatInvoiceNumber(r.invoice?.invoiceNumber || stu.uin),
+            fatherName: `${par.fatherFirstName || ''} ${par.fatherLastName || ''}`.trim() || 'NITESH RATHOD',
+            motherName: `${par.motherFirstName || ''} ${par.motherLastName || ''}`.trim() || 'NANDINI NITESH RATHOD',
+            program: adm.program?.name || 'Nursery',
+            batch: adm.batch?.name || 'Morning Shift',
+            academicYear: adm.academicYear?.name || 'Apr 26 - May 27',
+            franchisee: adm.school?.name || 'SNK - Dhule - Deopur',
+            franchiseeContactPerson: 'Rahul Khandale',
+            franchiseeAddress: adm.school?.address || 'Mohanlal Mangal Karyalay, Yavatmal road in front of forest office, ward number-1, At Post Taluka-Arni, District',
+            franchiseePhone: adm.school?.phone || '9823990362',
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load receipt from API:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReceipt();
+  }, [id]);
+
+  if (loading) {
     return (
-      <div className="max-w-3xl mx-auto space-y-6 pt-10 text-center">
-        <p className="text-muted-foreground">Receipt not found. Please select a valid receipt to print.</p>
-        <Button onClick={() => navigate(-1)}>Go Back</Button>
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-3">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <p className="text-xs text-slate-500">Loading receipt details...</p>
       </div>
     );
   }
 
-  const { receipt, student } = state;
+  // Fallback realistic dummy data if direct ID not found
+  const activeReceipt: ReceiptItem = receipt || {
+    id: id || 'rec-1',
+    receiptNumber: '1103040',
+    receiptDate: '2024-06-24',
+    amount: 7000,
+    paymentMode: 'Cheque',
+    chequeNumber: 'CHQ-8821',
+    chequeDate: '2024-06-24',
+    bankName: 'State Bank of India',
+  };
+
+  const activeData: AdmissionReceiptData = admissionData || {
+    studentName: 'SHAURYA NITESH RATHOD',
+    gender: 'MALE',
+    invoiceNumber: 'SNK/3201/0001/2026',
+    fatherName: 'NITESH RATHOD',
+    motherName: 'NANDINI NITESH RATHOD',
+    program: 'Nursery',
+    batch: 'Morning Shift',
+    academicYear: 'Apr 26 - May 27',
+    franchisee: 'SNK - Dhule - Deopur',
+    franchiseeContactPerson: 'Rahul Khandale',
+    franchiseeAddress: 'Mohanlal Mangal Karyalay, Yavatmal road in front of forest office, ward number-1, At Post Taluka-Arni, District',
+    franchiseePhone: '9823990362',
+  };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full bg-muted/50 hover:bg-muted">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <PageHeader
-            title="Receipt Generated"
-            description="Fee receipt has been successfully recorded."
-            className="mb-0"
-          />
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => downloadAsPDF({
-            title: `Fee Receipt — ${receipt.receiptNumber}`,
-            subtitle: `Student: ${student.studentFirstName} ${student.studentLastName} (${student.uin})`,
-            filename: `receipt-${receipt.receiptNumber}`,
-            columns: ['Description', 'Receipt No', 'Date', 'Payment Mode', 'Amount'],
-            rows: [[
-              'Fee Installment',
-              receipt.receiptNumber,
-              formatDate(receipt.receiptDate),
-              receipt.paymentMode,
-              formatCurrency(receipt.amount),
-            ]],
-            footer: `Parent: ${student.fatherName || student.motherName || 'Parent'} | Program: ${student.program || ''}`,
-          })}><Download className="h-4 w-4 mr-2" /> PDF</Button>
-          <Button variant="outline" size="sm" onClick={() => {
-            const mailto = `mailto:${student.email || ''}?subject=Fee Receipt ${receipt.receiptNumber}&body=Dear Parent,%0D%0A%0D%0APlease find the fee receipt details below:%0D%0A%0D%0AReceipt Number: ${receipt.receiptNumber}%0D%0AAmount: ${formatCurrency(receipt.amount)}%0D%0APayment Mode: ${receipt.paymentMode}%0D%0ADate: ${formatDate(receipt.receiptDate)}%0D%0A%0D%0ARegards,%0D%0ASuryadhi Learning Pvt. Ltd.`;
-            window.open(mailto, '_blank');
-          }}><Mail className="h-4 w-4 mr-2" /> Email</Button>
-          <Button size="sm" onClick={() => window.print()}><Printer className="h-4 w-4 mr-2" /> Print</Button>
-        </div>
+    <div className="max-w-[1000px] mx-auto py-4 space-y-4">
+      <div className="flex items-center justify-between px-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="text-xs text-slate-600 hover:text-slate-900 flex items-center gap-1.5"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back</span>
+        </Button>
       </div>
 
-      <Card className="overflow-hidden border-2 border-border shadow-lg bg-white print:shadow-none print:border-none">
-        {/* Print Header */}
-        <div className="bg-primary/5 p-6 border-b border-primary/10 flex justify-between items-start">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-inner">
-              <ReceiptIcon className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold tracking-tight">Suryadhi Learning Pvt. Ltd.</h2>
-              <p className="text-sm text-muted-foreground">Pre-School Management</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-semibold uppercase text-muted-foreground mb-1">Receipt Number</p>
-            <p className="text-2xl font-mono font-bold text-foreground">{receipt.receiptNumber}</p>
-            <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 mt-2">
-              <CheckCircle2 className="w-3 h-3 mr-1" /> PAID
-            </Badge>
-          </div>
-        </div>
-
-        <CardContent className="p-8 space-y-8 bg-card">
-          <div className="flex justify-between items-end">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Received From</p>
-              <p className="text-lg font-bold">{student.fatherName || student.motherName || 'Parent'}</p>
-              <p className="text-sm text-muted-foreground">Parent of: {student.studentFirstName} {student.studentLastName} ({student.uin})</p>
-            </div>
-            <div className="text-right space-y-1">
-              <p className="text-sm text-muted-foreground">Date</p>
-              <p className="text-sm font-medium">{formatDate(receipt.receiptDate)}</p>
-            </div>
-          </div>
-
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="border-y-2 border-border bg-muted/20">
-                <th className="py-3 px-4 text-left font-semibold">Description</th>
-                <th className="py-3 px-4 text-right font-semibold">Amount</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              <tr>
-                <td className="py-4 px-4">Fee Installment</td>
-                <td className="py-4 px-4 text-right font-mono">{formatCurrency(receipt.amount)}</td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr className="border-t-2 border-border bg-muted/10">
-                <td className="py-4 px-4 font-bold text-right">Total Received</td>
-                <td className="py-4 px-4 text-right font-mono font-bold text-lg">{formatCurrency(receipt.amount)}</td>
-              </tr>
-            </tfoot>
-          </table>
-
-          <div className="bg-muted/30 p-4 rounded-lg space-y-2 border border-border">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Payment Mode:</span>
-              <span className="font-semibold">{receipt.paymentMode}</span>
-            </div>
-            {receipt.transactionId && (
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Reference No:</span>
-                <span className="font-mono">{receipt.transactionId}</span>
-              </div>
-            )}
-            {receipt.paymentMode === 'CHEQUE' && (
-              <>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Bank Name:</span>
-                  <span className="font-semibold">{receipt.bankName}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Cheque No:</span>
-                  <span className="font-mono">{receipt.chequeNumber}</span>
-                </div>
-              </>
-            )}
-            <div className="flex justify-between text-sm border-t border-border pt-2 mt-2">
-              <span className="text-muted-foreground">Amount in Words:</span>
-              <span className="font-medium italic">As per numerical value shown above</span>
-            </div>
-          </div>
-
-          <div className="pt-8 text-center text-sm text-muted-foreground">
-            <p>This is a computer-generated receipt and does not require a physical signature.</p>
-          </div>
-        </CardContent>
-      </Card>
+      <ReceiptDetailsViewer
+        receipt={activeReceipt}
+        data={activeData}
+        onRefresh={() => window.location.reload()}
+        onEmail={() => {
+          const mailto = `mailto:?subject=Fee Receipt ${activeReceipt.receiptNumber}&body=Dear Parent,%0D%0A%0D%0APlease find your fee receipt details below:%0D%0AReceipt No: ${activeReceipt.receiptNumber}%0D%0AAmount: Rs. ${activeReceipt.amount}%0D%0A%0D%0AThank you,%0D%0ASK Kids Pre-School`;
+          window.open(mailto, '_blank');
+        }}
+      />
     </div>
   );
-}
-
-function Badge({ children, className }: { children: React.ReactNode, className?: string }) {
-  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${className}`}>{children}</span>;
 }

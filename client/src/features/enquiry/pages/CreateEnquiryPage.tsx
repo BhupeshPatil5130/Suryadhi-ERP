@@ -34,7 +34,7 @@ type EnquiryFormData = z.infer<typeof enquiryFormSchema>;
 
 export default function CreateEnquiryPage() {
   const navigate = useNavigate();
-  const sessionYear = useUIStore((s) => s.academicYear) || 'Apr 26 - Mar 27';
+  const sessionYear = useUIStore((s) => s.academicYear) || 'Apr 26 - May 27';
   const sessionYearId = useUIStore((s) => s.academicYearId);
   const [programs, setPrograms] = useState<any[]>([]);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
@@ -99,7 +99,7 @@ export default function CreateEnquiryPage() {
           { id: '4', name: 'SUNOIA Senior' }
         ]);
         setAcademicYears([
-          { id: '1', label: 'Apr 26 - Mar 27', isCurrent: true }
+          { id: '1', label: 'Apr 26 - May 27', isCurrent: true }
         ]);
         setMediaSources([
           { id: '1', name: 'Walk-in' },

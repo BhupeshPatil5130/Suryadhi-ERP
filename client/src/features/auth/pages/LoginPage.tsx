@@ -62,13 +62,13 @@ export default function LoginPage() {
     } catch (err) {
       console.warn('Failed to fetch academic years lookup, using default list');
     }
-    // Fallback defaults
-    setAcademicYears(['Apr 26 - Mar 27', 'Apr 25 - Mar 26']);
+    // Fallback defaults (Apr to May)
+    setAcademicYears(['Apr 26 - May 27', 'Apr 25 - May 26']);
     setAcademicYearsRaw([
-      { id: 'ay1', label: 'Apr 26 - Mar 27' },
-      { id: 'ay0', label: 'Apr 25 - Mar 26' },
+      { id: 'ay1', label: 'Apr 26 - May 27' },
+      { id: 'ay0', label: 'Apr 25 - May 26' },
     ]);
-    setSelectedYear('Apr 26 - Mar 27');
+    setSelectedYear('Apr 26 - May 27');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

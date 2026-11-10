@@ -258,7 +258,7 @@ export default function UpdateAdmissionPage() {
               <div className="grid grid-cols-[180px_1fr] items-center gap-4">
                 <Label className="text-right text-slate-600 font-normal text-[13px]">Academic Year</Label>
                 <div className="h-8 text-[13px] border border-slate-300 rounded-sm bg-[#f2f2f2] px-3 flex items-center justify-between text-slate-800 font-semibold cursor-not-allowed">
-                  <span>{academicYears.find((y: any) => y.id === form.academicYearId)?.label || useUIStore.getState().academicYear || 'Apr 26 - Mar 27'}</span>
+                  <span>{academicYears.find((y: any) => y.id === form.academicYearId)?.label || useUIStore.getState().academicYear || 'Apr 26 - May 27'}</span>
                   <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-medium border border-emerald-200">Session Locked</span>
                 </div>
               </div>

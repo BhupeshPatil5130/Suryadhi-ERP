@@ -252,10 +252,10 @@ export default function ViewReceiptPage() {
 
           <div className="bg-[#f2f2f2] border-t border-slate-300 p-4 px-12 mt-6 flex justify-between items-center">
             <Button 
-              onClick={() => navigate(-1)} 
+              onClick={() => navigate('/enquiry')} 
               className="bg-[#333] hover:bg-[#222] text-white h-8 px-6 text-[13px] shadow-none rounded-sm font-semibold"
             >
-              Back
+              Back to Enquiries
             </Button>
             <Link to={`/enquiry/${id}/receipts/add`}>
               <Button 

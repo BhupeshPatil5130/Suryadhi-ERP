@@ -41,7 +41,7 @@ export class EnquiryService {
       ];
     }
 
-    const [enquiries, total] = await Promise.all([
+    const [enquiries, total, feeStructures] = await Promise.all([
       prisma.enquiry.findMany({
         where,
         include: {
@@ -68,10 +68,86 @@ export class EnquiryService {
         take: limit,
       }),
       prisma.enquiry.count({ where }),
+      prisma.feeStructure.findMany({
+        where: { schoolId, isActive: true },
+        select: {
+          programId: true,
+          academicYearId: true,
+          totalAmount: true,
+        },
+      }),
     ]);
 
+    // Fetch admissions for converted enquiries to get invoice net amount and admission receipts
+    const convertedIds = enquiries
+      .map((e) => e.convertedToAdmissionId)
+      .filter((id): id is string => Boolean(id));
+
+    const admissions = convertedIds.length > 0
+      ? await prisma.admission.findMany({
+          where: { id: { in: convertedIds }, deletedAt: null },
+          select: {
+            id: true,
+            invoices: {
+              where: { deletedAt: null },
+              select: { netAmount: true, totalAmount: true },
+            },
+            receipts: {
+              where: { isCancelled: false, deletedAt: null },
+              select: { amount: true },
+            },
+          },
+        })
+      : [];
+    const admissionMap = new Map(admissions.map((a) => [a.id, a]));
+
+    const DEFAULT_PROGRAM_FEES: Record<string, number> = {
+      'Play Group': 30000,
+      'Nursery': 23800,
+      'SUNOIA Junior': 45000,
+      'SUNOIA Senior': 50000,
+    };
+
+    const enrichedEnquiries = enquiries.map((e) => {
+      const matchingFees = feeStructures.filter(
+        (fs) => fs.programId === e.programId && (!e.academicYearId || fs.academicYearId === e.academicYearId)
+      );
+      const fsTotal = matchingFees.reduce((sum, fs) => sum + Number(fs.totalAmount || 0), 0);
+      const defaultFee = DEFAULT_PROGRAM_FEES[e.program?.name || ''] || 23800;
+      const baseProgramFee = fsTotal > 0 ? fsTotal : defaultFee;
+
+      const advanceCollection = (e.advanceReceipts || []).reduce(
+        (sum, r) => sum + Number(r.amount || 0),
+        0
+      );
+
+      let receivableAmount = baseProgramFee;
+      let collectionAmount = advanceCollection;
+
+      if (e.convertedToAdmissionId && admissionMap.has(e.convertedToAdmissionId)) {
+        const adm = admissionMap.get(e.convertedToAdmissionId)!;
+        if (adm.invoices && adm.invoices.length > 0) {
+          receivableAmount = adm.invoices.reduce(
+            (sum, inv) => sum + Number(inv.netAmount || inv.totalAmount || 0),
+            0
+          );
+        }
+        const admReceipts = (adm.receipts || []).reduce(
+          (sum, r) => sum + Number(r.amount || 0),
+          0
+        );
+        collectionAmount += admReceipts;
+      }
+
+      return {
+        ...e,
+        receivableAmount,
+        collectionAmount,
+      };
+    });
+
     return {
-      data: enquiries,
+      data: enrichedEnquiries,
       pagination: {
         page,
         limit,
@@ -112,7 +188,49 @@ export class EnquiryService {
       throw new AppError('Enquiry not found', 404);
     }
 
-    return enquiry;
+    const feeStructures = await prisma.feeStructure.findMany({
+      where: { schoolId, programId: enquiry.programId, isActive: true },
+      select: { totalAmount: true },
+    });
+    const fsTotal = feeStructures.reduce((sum, fs) => sum + Number(fs.totalAmount || 0), 0);
+    const DEFAULT_PROGRAM_FEES: Record<string, number> = {
+      'Play Group': 30000,
+      'Nursery': 23800,
+      'SUNOIA Junior': 45000,
+      'SUNOIA Senior': 50000,
+    };
+    const defaultFee = DEFAULT_PROGRAM_FEES[enquiry.program?.name || ''] || 23800;
+    const baseProgramFee = fsTotal > 0 ? fsTotal : defaultFee;
+
+    const advanceCollection = (enquiry.advanceReceipts || []).reduce(
+      (sum, r) => sum + Number(r.amount || 0),
+      0
+    );
+
+    let receivableAmount = baseProgramFee;
+    let collectionAmount = advanceCollection;
+
+    if (enquiry.convertedToAdmissionId) {
+      const adm = await prisma.admission.findFirst({
+        where: { id: enquiry.convertedToAdmissionId, deletedAt: null },
+        include: {
+          invoices: { where: { deletedAt: null } },
+          receipts: { where: { isCancelled: false, deletedAt: null } },
+        },
+      });
+      if (adm) {
+        if (adm.invoices && adm.invoices.length > 0) {
+          receivableAmount = adm.invoices.reduce((sum, inv) => sum + Number(inv.netAmount || inv.totalAmount || 0), 0);
+        }
+        collectionAmount += (adm.receipts || []).reduce((sum, r) => sum + Number(r.amount || 0), 0);
+      }
+    }
+
+    return {
+      ...enquiry,
+      receivableAmount,
+      collectionAmount,
+    };
   }
 
   /**
