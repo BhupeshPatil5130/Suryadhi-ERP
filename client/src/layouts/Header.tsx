@@ -103,7 +103,7 @@ export default function Header() {
     : (user?.role?.replace(/_/g, ' ') || 'Admin');
 
   return (
-    <header className="h-14 border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-30 flex items-center justify-between px-4 gap-4">
+    <header className="h-16 border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-30 flex items-center justify-between px-4 gap-4 transition-all">
       {/* Left */}
       <div className="flex items-center gap-3">
         <button
@@ -113,8 +113,22 @@ export default function Header() {
           <Menu className="h-5 w-5 text-muted-foreground" />
         </button>
 
+        {/* ERP Brand Logo in Header for quick identification */}
+        <div className="flex items-center gap-2.5 pl-0.5">
+          <div className="w-9 h-9 rounded-xl bg-white p-1 border border-slate-200/90 shadow-xs flex items-center justify-center shrink-0">
+            <img
+              src={BRAND.iconSrc}
+              alt={BRAND.systemName}
+              className="w-full h-full object-contain"
+            />
+          </div>
+          <span className="font-extrabold text-sm tracking-tight text-slate-800 dark:text-slate-100 hidden sm:inline-block">
+            {BRAND.systemAbbr}
+          </span>
+        </div>
+
         {/* Search */}
-        <div className="hidden md:flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-1.5 w-60 border border-transparent focus-within:border-primary/30 transition-colors">
+        <div className="hidden md:flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-1.5 w-60 border border-transparent focus-within:border-primary/30 transition-colors ml-1">
           <Search className="h-4 w-4 text-muted-foreground shrink-0" />
           <input
             type="text"
@@ -130,21 +144,21 @@ export default function Header() {
       {/* Right */}
       <div className="flex items-center gap-2">
         {/* Franchise Badge */}
-        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 text-xs font-semibold border border-amber-200 dark:border-amber-800/40">
-          <Building2 className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 text-xs font-semibold border border-amber-200 dark:border-amber-800/40">
+          <Building2 className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
           <span>Franchisee: <span className="font-bold">{BRAND.franchiseCode}</span></span>
         </div>
 
         {/* Logged in School / Brand (Static Display - No dropdown, No switch after login) */}
-        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-blue-50/90 text-blue-900 dark:bg-blue-950/40 dark:text-blue-300 text-xs font-semibold border border-blue-200/60 dark:border-blue-800/40 shadow-xs">
-          <div className="w-5 h-5 rounded bg-white p-0.5 border border-slate-200 flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-blue-50/90 text-blue-900 dark:bg-blue-950/40 dark:text-blue-300 text-xs font-semibold border border-blue-200/60 dark:border-blue-800/40 shadow-xs">
+          <div className="w-8 h-8 rounded-lg bg-white p-1 border border-slate-200 flex items-center justify-center shrink-0 shadow-xs">
             <img
               src={currentBrand.logoSrc}
               alt={loggedInName}
               className="w-full h-full object-contain"
             />
           </div>
-          <span className="font-semibold">{loggedInName}</span>
+          <span className="font-bold text-xs tracking-tight">{loggedInName}</span>
         </div>
 
         {/* Academic Year Display (Locked - Selected at Login, No Change inside ERP) */}

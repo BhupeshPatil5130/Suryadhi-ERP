@@ -255,11 +255,14 @@ export default function Sidebar() {
     <>
       {/* Logo */}
       <div className={cn(
-        'h-16 flex items-center border-b border-sidebar-border/40 px-3.5 shrink-0',
+        'h-20 flex items-center border-b border-sidebar-border/40 px-3.5 shrink-0 transition-all',
         sidebarCollapsed ? 'justify-center' : 'gap-3'
       )}>
         {/* Suryadhi circular icon — shown always */}
-        <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 bg-white flex items-center justify-center p-1 shadow-xs border border-slate-200">
+        <div className={cn(
+          "rounded-2xl overflow-hidden shrink-0 bg-white flex items-center justify-center p-1.5 shadow-sm border border-slate-200 transition-all",
+          sidebarCollapsed ? "w-11 h-11" : "w-12 h-12"
+        )}>
           <img
             src={BRAND.iconSrc}
             alt="Suryadhi icon"
@@ -269,19 +272,19 @@ export default function Sidebar() {
         {!sidebarCollapsed && (
           <div className="min-w-0 flex-1">
             {/* SURYADHI LEARNING wordmark */}
-            <div className="bg-white px-2 py-0.5 rounded border border-slate-200/80 inline-block shadow-xs">
+            <div className="bg-white px-2.5 py-1 rounded-lg border border-slate-200/90 inline-block shadow-xs">
               <img
                 src={BRAND.logoSrc}
                 alt="Suryadhi Learning"
-                className="h-5 object-contain"
+                className="h-7 object-contain"
               />
             </div>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="text-[9px] font-bold text-amber-500 tracking-wider uppercase">
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className="text-[10px] font-bold text-amber-500 tracking-wider uppercase">
                 {BRAND.franchiseCode}
               </span>
-              <span className="text-[9px] text-sidebar-foreground/30">•</span>
-              <span className="text-[9px] text-sidebar-foreground/50 font-medium">{BRAND.version}</span>
+              <span className="text-[10px] text-sidebar-foreground/30">•</span>
+              <span className="text-[10px] text-sidebar-foreground/60 font-semibold">{BRAND.version}</span>
             </div>
           </div>
         )}

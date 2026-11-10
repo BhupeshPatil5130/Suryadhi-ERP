@@ -186,19 +186,19 @@ export default function Sidebar() {
       )}
     >
       {/* Logo */}
-      <div className="h-16 flex items-center justify-center border-b border-border/50 px-4">
+      <div className="h-20 flex items-center justify-center border-b border-border/50 px-4 transition-all">
         {sidebarCollapsed ? (
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <GraduationCap className="h-5 w-5 text-primary-foreground" />
+          <div className="w-11 h-11 rounded-xl bg-primary flex items-center justify-center shadow-sm">
+            <GraduationCap className="h-6 w-6 text-primary-foreground" />
           </div>
         ) : (
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <GraduationCap className="h-5 w-5 text-primary-foreground" />
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center shadow-sm">
+              <GraduationCap className="h-7 w-7 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-sm font-bold gradient-text">EPMS</h1>
-              <p className="text-[10px] text-muted-foreground">Pre-School Management</p>
+              <h1 className="text-base font-extrabold gradient-text">EPMS</h1>
+              <p className="text-[11px] text-muted-foreground font-medium">Pre-School Management</p>
             </div>
           </div>
         )}

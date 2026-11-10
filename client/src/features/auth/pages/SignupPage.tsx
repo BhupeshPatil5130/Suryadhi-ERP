@@ -84,7 +84,7 @@ export default function SignupPage() {
             <div className="absolute -inset-4 bg-gradient-to-r from-blue-400/20 via-indigo-400/20 to-purple-400/20 rounded-full blur-xl" />
 
             {/* Main Logo */}
-            <div className="relative w-52 h-52 rounded-2xl overflow-hidden border-4 border-white shadow-2xl shadow-blue-500/30 bg-white flex items-center justify-center p-4">
+            <div className="relative w-64 h-64 rounded-3xl overflow-hidden border-4 border-white shadow-2xl shadow-blue-500/30 bg-white flex items-center justify-center p-6">
               <img
                 src={BRAND.iconSrc}
                 alt="Suryadhi"
@@ -95,6 +95,13 @@ export default function SignupPage() {
 
           {/* Brand Text */}
           <div className="mt-8 text-center">
+            <div className="bg-white/90 backdrop-blur-sm px-5 py-2 rounded-2xl border border-white/60 inline-block shadow-md mb-4">
+              <img
+                src={BRAND.logoSrc}
+                alt={BRAND.systemName}
+                className="h-8 mx-auto object-contain"
+              />
+            </div>
             <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3">
               {BRAND.systemAbbr}
             </h1>

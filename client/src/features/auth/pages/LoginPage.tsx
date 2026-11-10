@@ -149,14 +149,21 @@ export default function LoginPage() {
           <>
             {/* Header / Brand Logo */}
             <div className="text-center mb-8">
-              <div className="w-24 h-24 rounded-2xl overflow-hidden mx-auto mb-4 border border-slate-200 shadow-md bg-white p-2 flex items-center justify-center">
+              <div className="w-28 h-28 rounded-3xl overflow-hidden mx-auto mb-3 border-2 border-slate-200/90 shadow-xl bg-white p-2.5 flex items-center justify-center">
                 <img
                   src={BRAND.iconSrc}
                   alt="Suryadhi Learning"
                   className="w-full h-full object-contain"
                 />
               </div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              <div className="bg-white px-4 py-1.5 rounded-xl border border-slate-200/90 inline-block shadow-xs mb-3">
+                <img
+                  src={BRAND.logoSrc}
+                  alt={BRAND.systemName}
+                  className="h-7 mx-auto object-contain"
+                />
+              </div>
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">
                 {BRAND.systemName}
               </h1>
               <div className="flex items-center justify-center gap-2 mt-2">
@@ -318,7 +325,7 @@ export default function LoginPage() {
                   </div>
 
                   {/* Big Image Container */}
-                  <div className="w-full h-36 bg-slate-50/80 group-hover:bg-blue-50/40 rounded-xl border border-slate-200/90 p-4 flex items-center justify-center transition-colors mb-5 shadow-xs">
+                  <div className="w-full h-44 bg-slate-50/80 group-hover:bg-blue-50/40 rounded-2xl border border-slate-200/90 p-5 flex items-center justify-center transition-colors mb-5 shadow-xs">
                     <img
                       src={brand.logoSrc}
                       alt={brand.name}
@@ -381,8 +388,8 @@ export default function LoginPage() {
               </div>
 
               {/* Chosen Brand Badge */}
-              <div className="flex items-center justify-center gap-3 bg-slate-50 border border-slate-200/80 rounded-2xl p-3 max-w-md mx-auto mb-5 shadow-xs">
-                <div className="w-10 h-10 rounded-lg bg-white p-1 border border-slate-200 flex items-center justify-center shrink-0">
+              <div className="flex items-center justify-center gap-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 max-w-md mx-auto mb-5 shadow-xs">
+                <div className="w-14 h-14 rounded-xl bg-white p-1.5 border border-slate-200 flex items-center justify-center shrink-0 shadow-xs">
                   <img
                     src={activeSubBrand.logoSrc}
                     alt={activeSubBrand.name}
@@ -390,10 +397,10 @@ export default function LoginPage() {
                   />
                 </div>
                 <div className="text-left min-w-0 flex-1">
-                  <p className="text-xs font-bold text-slate-900 truncate">
+                  <p className="text-sm font-bold text-slate-900 truncate">
                     {activeSubBrand.name}
                   </p>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-xs text-slate-500">
                     Franchisee: <span className="font-semibold">{BRAND.franchiseCode}</span>
                   </p>
                 </div>

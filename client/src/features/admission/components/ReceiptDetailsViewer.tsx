@@ -235,27 +235,27 @@ export function buildReceiptPrintHtml(r: ReceiptItem, data: AdmissionReceiptData
       gap: 16px;
     }
     .logo-container {
-      width: 190px;
+      width: 210px;
       text-align: center;
       border: 1.5px solid #1e3a8a;
-      padding: 6px 8px 8px;
+      padding: 8px 12px 10px;
       background: #fff;
     }
     .logo-title {
-      font-size: 20px;
+      font-size: 23px;
       font-weight: 900;
       color: #1d4ed8;
       letter-spacing: -0.5px;
-      margin-top: 2px;
+      margin-top: 3px;
       line-height: 1;
     }
     .logo-sub {
-      font-size: 9.5px;
+      font-size: 11px;
       font-weight: bold;
       color: #1e3a8a;
       text-transform: uppercase;
       letter-spacing: 1.5px;
-      margin-top: 3px;
+      margin-top: 4px;
     }
     .receipt-title {
       font-size: 22px;
@@ -377,7 +377,7 @@ export function buildReceiptPrintHtml(r: ReceiptItem, data: AdmissionReceiptData
     <div class="header-row">
       <div class="logo-container">
         <!-- Bunny SVG -->
-        <svg width="42" height="42" viewBox="0 0 100 100" style="display:block;margin:0 auto 2px;">
+        <svg width="52" height="52" viewBox="0 0 100 100" style="display:block;margin:0 auto 2px;">
           <ellipse cx="38" cy="24" rx="7.5" ry="19" fill="#ffffff" stroke="#e11d48" stroke-width="2.5" transform="rotate(-8 38 24)" />
           <ellipse cx="38" cy="24" rx="4" ry="13" fill="#ff4d6d" transform="rotate(-8 38 24)" />
           <ellipse cx="62" cy="24" rx="7.5" ry="19" fill="#ffffff" stroke="#e11d48" stroke-width="2.5" transform="rotate(8 62 24)" />
@@ -786,9 +786,9 @@ export default function ReceiptDetailsViewer({
             {/* Header: SK Bunny Logo Box + RECEIPT + Franchise Box */}
             <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
               {/* SK Mascot Logo Box */}
-              <div className="border border-[#1e3a8a] p-2 text-center w-[170px] bg-white shrink-0 shadow-xs">
+              <div className="border border-[#1e3a8a] p-2.5 text-center w-[200px] bg-white shrink-0 shadow-sm">
                 {/* Cute Bunny SVG */}
-                <svg width="42" height="42" viewBox="0 0 100 100" className="mx-auto mb-0.5">
+                <svg width="54" height="54" viewBox="0 0 100 100" className="mx-auto mb-1">
                   <ellipse
                     cx="38"
                     cy="24"
@@ -824,12 +824,12 @@ export default function ReceiptDetailsViewer({
                 </svg>
 
                 {/* Blue border frame around SK Kids */}
-                <div className="border border-[#1d4ed8] px-2 py-0.5 mt-0.5 bg-white">
-                  <div className="text-[17px] font-black text-[#1d4ed8] tracking-tight leading-tight">
+                <div className="border border-[#1d4ed8] px-2.5 py-1 mt-1 bg-white">
+                  <div className="text-[19px] font-black text-[#1d4ed8] tracking-tight leading-tight">
                     SK Kids
                   </div>
                 </div>
-                <div className="text-[9.5px] font-bold text-[#1e3a8a] tracking-widest uppercase mt-0.5">
+                <div className="text-[11px] font-bold text-[#1e3a8a] tracking-widest uppercase mt-1">
                   Pre-School
                 </div>
               </div>
