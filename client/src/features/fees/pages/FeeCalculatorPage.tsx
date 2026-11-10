@@ -27,16 +27,7 @@ const PROGRAM_CONFIG: Record<string, ProgramFeeConfig> = {
     termFee: 6500,
     annualTuition: 12500,
   },
-  'Sunoia Junior': {
-    registration: 8000,
-    termFee: 6500,
-    annualTuition: 12500,
-  },
-  'Sunoia Senior': {
-    registration: 8500,
-    termFee: 7000,
-    annualTuition: 14000,
-  },
+  
   'Sunoia Senior': {
     registration: 8500,
     termFee: 7000,
