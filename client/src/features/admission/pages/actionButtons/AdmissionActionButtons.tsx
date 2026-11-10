@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { FileEdit, Eye, PlusCircle, Forward, X, Plane, Pen } from 'lucide-react';
+import { FileEdit, Eye, PlusCircle, Forward, X, Plane, Pen, ReceiptText } from 'lucide-react';
 
 interface AdmissionActionButtonsProps {
   id: string;
@@ -28,12 +28,13 @@ export default function AdmissionActionButtons({ id }: AdmissionActionButtonsPro
       <div className="flex items-center justify-between relative">
         <Link to={`/admissions/${id}/receipt?tab=new`}>
           <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Add Receipt">
-            <PlusCircle className="h-[14px] w-[14px] text-emerald-700 stroke-[2.5]" />
+            <ReceiptText className="h-[14px] w-[14px] text-emerald-700 stroke-[2.5]" />
           </Button>
         </Link>
         <div className="w-[1px] h-[14px] bg-slate-300"></div>
         <Link to={`/graduation?admissionId=${id}`}>
-          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Graduate to">
+          <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title=
+            "Graduate to">
             <Forward className="h-[14px] w-[14px] text-black stroke-[2.5]" />
           </Button>
         </Link>

@@ -106,8 +106,9 @@ export class FeeService {
           },
         },
         program: { select: { id: true, name: true, shortName: true } },
+        batch: { select: { id: true, timeSlot: true } },
         academicYear: { select: { id: true, label: true } },
-        school: { select: { id: true, name: true, code: true } },
+        school: { select: { id: true, name: true, code: true, address: true, city: true, phone: true } },
         invoices: {
           where: { deletedAt: null },
           select: {
@@ -190,6 +191,7 @@ export class FeeService {
     return {
       student: admission.student,
       program: admission.program,
+      batch: admission.batch?.timeSlot || 'Morning Shift',
       academicYear: admission.academicYear,
       school: admission.school,
       invoices: formattedInvoices,
@@ -216,13 +218,18 @@ export class FeeService {
       where: {
         id: receiptId,
         deletedAt: null,
-        ...(schoolId ? { schoolId } : {}),
+        ...(schoolId ? { admission: { schoolId } } : {}),
       },
       include: {
         admission: {
           include: {
-            student: true,
+            student: {
+              include: {
+                parent: true,
+              },
+            },
             program: true,
+            batch: true,
             academicYear: true,
             school: true,
           },
@@ -236,6 +243,79 @@ export class FeeService {
     }
 
     return receipt;
+  }
+
+  /**
+   * Delete a receipt (soft-delete) and recalculate invoice status
+   */
+  async deleteReceipt(receiptId: string, schoolId?: string, userId?: string) {
+    const receipt = await prisma.receipt.findFirst({
+      where: {
+        id: receiptId,
+        deletedAt: null,
+        ...(schoolId ? { admission: { schoolId } } : {}),
+      },
+      include: {
+        admission: true,
+      },
+    });
+
+    if (!receipt) {
+      throw new AppError('Receipt not found or already deleted', 404);
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const deleted = await tx.receipt.update({
+        where: { id: receiptId },
+        data: {
+          deletedAt: new Date(),
+          isCancelled: true,
+          cancelledAt: new Date(),
+          cancelReason: 'Deleted by user',
+        },
+      });
+
+      if (receipt.invoiceId) {
+        const invoice = await tx.invoice.findUnique({ where: { id: receipt.invoiceId } });
+        if (invoice) {
+          const totalPaid = await tx.receipt.aggregate({
+            where: {
+              invoiceId: receipt.invoiceId,
+              isCancelled: false,
+              deletedAt: null,
+            },
+            _sum: { amount: true },
+          });
+          const paidAmount = Number(totalPaid._sum.amount || 0);
+
+          let newStatus: any = 'GENERATED';
+          if (paidAmount >= Number(invoice.netAmount)) {
+            newStatus = 'PAID';
+          } else if (paidAmount > 0) {
+            newStatus = 'PARTIALLY_PAID';
+          }
+
+          await tx.invoice.update({
+            where: { id: receipt.invoiceId },
+            data: { status: newStatus },
+          });
+        }
+      }
+
+      return deleted;
+    });
+
+    if (userId) {
+      await createAuditLog({
+        userId,
+        action: 'DELETE',
+        entity: 'Receipt',
+        entityId: receipt.id,
+        oldValue: receipt,
+      });
+    }
+
+    return updated;
   }
 
   /**

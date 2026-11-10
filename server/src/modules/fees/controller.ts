@@ -23,6 +23,14 @@ export class FeeController {
     } catch (error) { next(error); }
   }
 
+  async deleteReceipt(req: Request, res: Response, next: NextFunction) {
+    try {
+      const receiptId = (req.params.receiptId || req.params.id) as string;
+      const result = await feeService.deleteReceipt(receiptId, req.user?.schoolId, req.user?.userId);
+      res.json({ success: true, message: 'Receipt deleted successfully', data: result });
+    } catch (error) { next(error); }
+  }
+
   async createReceipt(req: Request, res: Response, next: NextFunction) {
     try {
       const receipt = await feeService.createReceipt(req.user!.schoolId!, req.body, req.user!.userId);

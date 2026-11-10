@@ -30,6 +30,16 @@ router.get(['/:id/receipt', '/:id/receipts'], (req, res, next) => {
   import('../fees/controller').then(({ feeController }) => feeController.getReceipts(req, res, next)).catch(next);
 });
 
+// DELETE /api/admissions/:id/receipt/:receiptId & /api/admissions/:id/receipts/:receiptId
+router.delete(
+  ['/:id/receipt/:receiptId', '/:id/receipts/:receiptId'],
+  authorize('SUPER_ADMIN', 'SCHOOL_ADMIN'),
+  (req, res, next) => {
+    req.params.id = req.params.receiptId;
+    import('../fees/controller').then(({ feeController }) => feeController.deleteReceipt(req, res, next)).catch(next);
+  }
+);
+
 // POST /api/admissions
 router.post(
   '/',

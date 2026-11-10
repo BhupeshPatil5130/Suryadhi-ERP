@@ -36,6 +36,13 @@ router.post(
   (req, res, next) => feeController.createReceipt(req, res, next)
 );
 
+// DELETE /api/fees/receipts/:id and /api/fees/receipt/:id
+router.delete(
+  ['/receipts/:id', '/receipt/:id'],
+  authorize('SUPER_ADMIN', 'SCHOOL_ADMIN'),
+  (req, res, next) => feeController.deleteReceipt(req, res, next)
+);
+
 // GET /api/fees/cash-receipts — List cash receipts for conversion
 router.get('/cash-receipts', (req, res, next) =>
   feeController.getCashReceipts(req, res, next)

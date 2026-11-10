@@ -60,10 +60,10 @@ const columns: ColumnDef<EnquiryData>[] = [
       const stage = row.original.stage;
       const color = stage === 'CONVERTED' ? 'bg-green-100 text-green-800'
         : stage === 'LOST' ? 'bg-red-100 text-red-700'
-        : stage === 'FOLLOW_UP' ? 'bg-yellow-100 text-yellow-800'
-        : stage === 'TRIAL_CLASS' ? 'bg-purple-100 text-purple-800'
-        : stage === 'CONTACTED' ? 'bg-blue-100 text-blue-800'
-        : 'bg-slate-100 text-slate-700';
+          : stage === 'FOLLOW_UP' ? 'bg-yellow-100 text-yellow-800'
+            : stage === 'TRIAL_CLASS' ? 'bg-purple-100 text-purple-800'
+              : stage === 'CONTACTED' ? 'bg-blue-100 text-blue-800'
+                : 'bg-slate-100 text-slate-700';
       return <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${color}`}>{stage}</span>;
     },
   },
@@ -187,10 +187,10 @@ export default function EnquiryListPage() {
   const displayData = stageFilter === 'ALL'
     ? data
     : stageFilter === 'CONVERTED'
-    ? data.filter((d) => d.stage === 'CONVERTED')
-    : stageFilter === 'NOT_CONVERTED'
-    ? data.filter((d) => d.stage !== 'CONVERTED')
-    : data.filter((d) => d.stage === stageFilter);
+      ? data.filter((d) => d.stage === 'CONVERTED')
+      : stageFilter === 'NOT_CONVERTED'
+        ? data.filter((d) => d.stage !== 'CONVERTED')
+        : data.filter((d) => d.stage === stageFilter);
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto pt-2 pb-12">
@@ -261,7 +261,7 @@ export default function EnquiryListPage() {
                 Create Enquiry
               </Button>
             </Link>
-            <Button
+            {/* <Button
               className="bg-[#333] hover:bg-[#222] text-white h-9 shadow-none"
               onClick={() => apiDownload(
                 'enquiries',
@@ -280,9 +280,8 @@ export default function EnquiryListPage() {
                 'enquiries-report'
               )}
             >
-              <Download className="h-4 w-4 mr-1" />
-              Download Report
-            </Button>
+             
+            </Button> */}
           </div>
         </div>
         <div className="p-0">
