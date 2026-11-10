@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const calculateFeeSchema = z.object({
   programId: z.string().min(1, 'Program is required'),
-  admissionDate: z.string().refine((val) => !isNaN(Date.parse(val)), 'Valid date required'),
+  admissionDate: z.string().optional().refine((val) => !val || !isNaN(Date.parse(val)), 'Valid date required'),
   discountTypeId: z.string().optional(),
   academicYearId: z.string().optional(),
 });

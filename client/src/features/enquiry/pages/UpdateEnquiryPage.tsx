@@ -63,7 +63,13 @@ export default function UpdateEnquiryPage() {
           api.get(`/enquiries/${id}`)
         ]);
         
-        if (progRes.data.success) setPrograms(progRes.data.data);
+        if (progRes.data.success) {
+          const cleaned = (progRes.data.data || []).map((p: any) => ({
+            ...p,
+            name: (p.name || '').replace(/euro/gi, 'SUNOIA'),
+          }));
+          setPrograms(cleaned);
+        }
         if (yearRes.data.success) setAcademicYears(yearRes.data.data);
         if (sourceRes.data.success) setMediaSources(sourceRes.data.data);
 

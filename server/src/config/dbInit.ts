@@ -1,5 +1,6 @@
 import { prisma } from './database';
 import { logger } from '../utils/logger';
+import { migrateLegacyEuroPrograms } from '../utils/cleanup-programs';
 import bcrypt from 'bcryptjs';
 
 /**
@@ -94,6 +95,13 @@ export async function initDatabase(): Promise<void> {
       // Non-blocking
     }
 
+    // Automatically migrate legacy Euro programs to Sunoia
+    try {
+      await migrateLegacyEuroPrograms(prisma);
+    } catch (e) {
+      // Non-blocking
+    }
+
     try {
       const userCount = await prisma.user.count();
       if (userCount === 0) {
@@ -154,8 +162,8 @@ export async function initDatabase(): Promise<void> {
         const defaultPrograms = [
           { name: 'Play Group', shortName: 'PG', ageFrom: 18, ageTo: 30, sortOrder: 1 },
           { name: 'Nursery', shortName: 'NR', ageFrom: 30, ageTo: 42, sortOrder: 2 },
-          { name: 'SUNOIA Junior', shortName: 'EJ', ageFrom: 42, ageTo: 54, sortOrder: 3 },
-          { name: 'SUNOIA Senior', shortName: 'ES', ageFrom: 54, ageTo: 72, sortOrder: 4 },
+          { name: 'SUNOIA Junior', shortName: 'SJ', ageFrom: 42, ageTo: 54, sortOrder: 3 },
+          { name: 'SUNOIA Senior', shortName: 'SS', ageFrom: 54, ageTo: 72, sortOrder: 4 },
         ];
 
         for (const prog of defaultPrograms) {

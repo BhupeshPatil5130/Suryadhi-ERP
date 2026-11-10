@@ -112,7 +112,13 @@ export default function UpdateAdmissionPage() {
           api.get('/lookups/programs'),
           api.get('/lookups/academic-years'),
         ]);
-        if (programsRes.data.success) setPrograms(programsRes.data.data);
+        if (programsRes.data.success) {
+          const cleanedPrograms = programsRes.data.data.map((p: any) => ({
+            ...p,
+            name: (p.name || '').replace(/euro/gi, 'SUNOIA'),
+          }));
+          setPrograms(cleanedPrograms);
+        }
         if (yearsRes.data.success) setAcademicYears(yearsRes.data.data);
 
         // Load admission data if editing

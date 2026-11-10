@@ -88,7 +88,13 @@ export default function ConvertToAdmissionPage() {
           api.get('/lookups/programs'),
           api.get('/lookups/academic-years'),
         ]);
-        if (progRes.data.success) setPrograms(progRes.data.data);
+        if (progRes.data.success) {
+          const cleaned = (progRes.data.data || []).map((p: any) => ({
+            ...p,
+            name: (p.name || '').replace(/euro/gi, 'SUNOIA'),
+          }));
+          setPrograms(cleaned);
+        }
         let currentAyId = '';
         if (yearRes.data?.success && yearRes.data.data?.length > 0) {
           const currentAy = yearRes.data.data.find((y: any) => y.isCurrent) || yearRes.data.data[0];

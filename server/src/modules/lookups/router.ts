@@ -27,7 +27,12 @@ router.get('/programs', async (_req, res, next) => {
       orderBy: { sortOrder: 'asc' },
       select: { id: true, name: true, shortName: true },
     });
-    res.json({ success: true, data: programs });
+    const cleaned = programs.map((p) => ({
+      ...p,
+      name: p.name.replace(/euro/gi, 'SUNOIA'),
+      shortName: p.shortName === 'EJ' ? 'SJ' : p.shortName === 'ES' ? 'SS' : p.shortName,
+    }));
+    res.json({ success: true, data: cleaned });
   } catch (error) { next(error); }
 });
 
