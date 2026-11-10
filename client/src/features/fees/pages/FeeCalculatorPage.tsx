@@ -27,7 +27,6 @@ const PROGRAM_CONFIG: Record<string, ProgramFeeConfig> = {
     termFee: 6500,
     annualTuition: 12500,
   },
-  
   'Sunoia Senior': {
     registration: 8500,
     termFee: 7000,
