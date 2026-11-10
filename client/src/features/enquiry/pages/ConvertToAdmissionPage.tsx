@@ -26,27 +26,21 @@ export default function ConvertToAdmissionPage() {
   const [academicYears, setAcademicYears] = useState<any[]>([]);
   const [batches, setBatches] = useState<any[]>([]);
 
-  // Standardize batches system-wide to strictly 2 non-duplicate batches: Morning Shift & Late Morning Shift
+  // Standardize batches system-wide to strictly 2 non-duplicate batches: Morning Shift (1st) & Late Morning Shift (2nd)
   const cleanBatches = useMemo(() => {
-    const source = batches.length > 0 ? batches : [
-      { id: 'batch-morning', timeSlot: 'Morning Shift' },
-      { id: 'batch-late-morning', timeSlot: 'Late Morning Shift' },
+    const morning = batches.find(b => {
+      const s = (b.timeSlot || '').toLowerCase();
+      return !s.includes('late') && !s.includes('evening') && !s.includes('afternoon');
+    });
+    const late = batches.find(b => {
+      const s = (b.timeSlot || '').toLowerCase();
+      return s.includes('late') || s.includes('evening') || s.includes('afternoon');
+    });
+
+    return [
+      { id: morning?.id || 'batch-morning', timeSlot: 'Morning Shift' },
+      { id: late?.id || 'batch-late-morning', timeSlot: 'Late Morning Shift' },
     ];
-    const seen = new Set<string>();
-    const list: any[] = [];
-    for (const b of source) {
-      const raw = (b.timeSlot || '').toLowerCase();
-      const slot = (raw.includes('late') || raw.includes('evening') || raw.includes('afternoon') || raw.includes('11') || raw.includes('12'))
-        ? 'Late Morning Shift'
-        : 'Morning Shift';
-      if (!seen.has(slot)) {
-        seen.add(slot);
-        list.push({ ...b, timeSlot: slot });
-      }
-    }
-    if (!seen.has('Morning Shift')) list.unshift({ id: 'batch-morning', timeSlot: 'Morning Shift' });
-    if (!seen.has('Late Morning Shift')) list.push({ id: 'batch-late-morning', timeSlot: 'Late Morning Shift' });
-    return list.sort((a, b) => a.timeSlot.localeCompare(b.timeSlot));
   }, [batches]);
   
   const [enquirerMap, setEnquirerMap] = useState('fathers');
@@ -463,11 +457,20 @@ export default function ConvertToAdmissionPage() {
 
               <div className="grid grid-cols-[180px_1fr] items-center gap-4">
                 <Label className="text-right text-slate-600 font-normal text-[13px]">Batch <span className="text-red-500">*</span></Label>
-                <Select value={form.batchId} onValueChange={v => setField('batchId', v)}>
-                  <SelectTrigger className="h-8 text-[13px] border-slate-300 shadow-none rounded-sm bg-white"><SelectValue placeholder="Select Batch" /></SelectTrigger>
+                <Select
+                  value={
+                    form.batchId === cleanBatches[1]?.id || (batches.find(b => b.id === form.batchId)?.timeSlot || '').toLowerCase().includes('late') || (batches.find(b => b.id === form.batchId)?.timeSlot || '').toLowerCase().includes('evening')
+                      ? cleanBatches[1]?.id
+                      : cleanBatches[0]?.id
+                  }
+                  onValueChange={v => setField('batchId', v)}
+                >
+                  <SelectTrigger className="h-8 text-[13px] border-slate-300 shadow-none rounded-sm bg-white">
+                    <SelectValue placeholder="Select Batch" />
+                  </SelectTrigger>
                   <SelectContent>
                     {cleanBatches.map((b: any) => (
-                      <SelectItem key={b.id} value={b.id}>
+                      <SelectItem key={b.id} value={b.id} className="text-[13px]">
                         {b.timeSlot}
                       </SelectItem>
                     ))}

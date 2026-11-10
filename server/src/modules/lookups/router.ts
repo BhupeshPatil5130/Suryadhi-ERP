@@ -206,35 +206,31 @@ router.get('/batches', optionalAuth, async (req, res, next) => {
       select: { id: true, timeSlot: true, capacity: true, program: { select: { name: true } } },
     });
 
-    // Normalize any legacy timeSlot labels and deduplicate so there are strictly 2 shifts:
-    // 1. Morning Shift
-    // 2. Late Morning Shift
-    const seen = new Set<string>();
-    const deduplicated: Array<{ id: string; timeSlot: string; capacity?: number; program?: any }> = [];
+    // Find the primary Morning Shift and Late Morning Shift batches
+    let morningBatch = batches.find(b => {
+      const s = (b.timeSlot || '').toLowerCase();
+      return !s.includes('late') && !s.includes('evening') && !s.includes('afternoon');
+    });
 
-    for (const b of batches) {
-      const lower = (b.timeSlot || '').toLowerCase();
-      const slot = (lower.includes('late') || lower.includes('evening') || lower.includes('afternoon') || lower.includes('11') || lower.includes('12') || lower.includes('2:00'))
-        ? 'Late Morning Shift'
-        : 'Morning Shift';
+    let lateBatch = batches.find(b => {
+      const s = (b.timeSlot || '').toLowerCase();
+      return s.includes('late') || s.includes('evening') || s.includes('afternoon');
+    });
 
-      if (!seen.has(slot)) {
-        seen.add(slot);
-        deduplicated.push({ ...b, timeSlot: slot });
-      }
-    }
+    const finalBatches = [
+      {
+        id: morningBatch?.id || 'batch-morning',
+        timeSlot: 'Morning Shift',
+        capacity: morningBatch?.capacity || 25,
+      },
+      {
+        id: lateBatch?.id || 'batch-late-morning',
+        timeSlot: 'Late Morning Shift',
+        capacity: lateBatch?.capacity || 25,
+      },
+    ];
 
-    if (!seen.has('Morning Shift')) {
-      deduplicated.unshift({ id: 'batch-morning', timeSlot: 'Morning Shift', capacity: 25 });
-    }
-    if (!seen.has('Late Morning Shift')) {
-      deduplicated.push({ id: 'batch-late-morning', timeSlot: 'Late Morning Shift', capacity: 25 });
-    }
-
-    // Sort so Morning Shift comes first, then Late Morning Shift
-    deduplicated.sort((a, b) => a.timeSlot.localeCompare(b.timeSlot));
-
-    return res.json({ success: true, data: deduplicated });
+    return res.json({ success: true, data: finalBatches });
   } catch (error) { next(error); }
 });
 
