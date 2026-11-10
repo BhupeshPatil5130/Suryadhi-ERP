@@ -23,8 +23,8 @@ const DEFAULT_TRANSFER_OUT: TransferOutRecord[] = [
   {
     id: 'tout-1',
     studentName: 'Mahi Sachin Rathod',
-    uin: 'SLPL3201/0045/2027',
-    fromSchool: 'SK-Dhule-Deopur',
+    uin: 'SNK/3201/0045/2027',
+    fromSchool: 'SNK - Dhule - Deopur',
     toSchool: 'SK-Pune-Baner',
     programName: 'SUNOIA Senior',
     transferInDate: '04-06-2026',
@@ -33,8 +33,8 @@ const DEFAULT_TRANSFER_OUT: TransferOutRecord[] = [
   {
     id: 'tout-2',
     studentName: 'Vihaan Deepak Shinde',
-    uin: 'SLPL3201/0056/2027',
-    fromSchool: 'SK-Dhule-Deopur',
+    uin: 'SNK/3201/0056/2027',
+    fromSchool: 'SNK - Dhule - Deopur',
     toSchool: 'SK-Thane-Majiwada',
     programName: 'Nursery',
     transferInDate: '08-06-2026',
@@ -43,8 +43,8 @@ const DEFAULT_TRANSFER_OUT: TransferOutRecord[] = [
   {
     id: 'tout-3',
     studentName: 'Ishaan Pritam Chaudhari',
-    uin: 'SLPL3201/0063/2027',
-    fromSchool: 'SK-Dhule-Deopur',
+    uin: 'SNK/3201/0063/2027',
+    fromSchool: 'SNK - Dhule - Deopur',
     toSchool: 'SK-Aurangabad-CIDCO',
     programName: 'Play Group',
     transferInDate: '18-06-2026',
@@ -153,7 +153,7 @@ export default function TransferOutPage() {
       const newRecord: TransferOutRecord = {
         id: `tout-${Date.now()}`,
         studentName: selectedStudentName,
-        fromSchool: 'SK-Dhule-Deopur',
+        fromSchool: 'SNK - Dhule - Deopur',
         toSchool: destinationSchool,
         programName: 'SUNOIA Senior',
         transferInDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-'),

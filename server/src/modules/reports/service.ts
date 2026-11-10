@@ -110,14 +110,21 @@ export class ReportsService {
   }
 
   async getFCR(schoolId: string, filters: any) {
-    const { from, to, paymentMode } = filters;
-    const where: any = { admission: { schoolId }, isCancelled: false };
+    const { from, to, paymentMode, status } = filters;
+    const where: any = { isCancelled: false, deletedAt: null };
+    if (schoolId) {
+      where.admission = { schoolId };
+    }
     if (from || to) {
       where.receiptDate = {};
       if (from) where.receiptDate.gte = new Date(from);
-      if (to) where.receiptDate.lte = new Date(to);
+      if (to) {
+        const toD = new Date(to);
+        toD.setHours(23, 59, 59, 999);
+        where.receiptDate.lte = toD;
+      }
     }
-    if (paymentMode) where.paymentMode = paymentMode;
+    if (paymentMode && paymentMode !== 'All') where.paymentMode = paymentMode;
 
     const receipts = await prisma.receipt.findMany({
       where,
@@ -129,8 +136,45 @@ export class ReportsService {
       orderBy: { receiptDate: 'desc' },
     });
 
-    const totalAmount = receipts.reduce((sum: number, r: any) => sum + Number(r.amount), 0);
-    return { data: receipts, total: receipts.length, totalAmount };
+    const mappedReceipts = receipts.map((r: any) => {
+      let receiptStatus = 'Not deposited';
+      if (r.isCancelled) {
+        receiptStatus = 'Bounced';
+      } else if (r.deposit) {
+        if (r.deposit.status === 'RECONCILED') receiptStatus = 'Reconciled';
+        else if (r.deposit.status === 'BOUNCED') receiptStatus = 'Bounced';
+        else if (r.deposit.status === 'DEPOSITED' || r.deposit.status === 'APPROVED') receiptStatus = 'Deposited';
+        else receiptStatus = 'Not deposited';
+      } else if (r.paymentMode === 'ONLINE' || r.paymentMode === 'PAYTM_POS' || r.paymentMode === 'BANK_TRANSFER') {
+        receiptStatus = 'Reconciled';
+      }
+
+      return {
+        ...r,
+        amount: Number(r.amount),
+        status: receiptStatus,
+      };
+    });
+
+    const filtered = (status && status !== 'All')
+      ? mappedReceipts.filter((r) => r.status === status)
+      : mappedReceipts;
+
+    const totalAmount = filtered.reduce((sum: number, r: any) => sum + r.amount, 0);
+    const totalDeposited = filtered
+      .filter((i) => i.status === 'Deposited' || i.status === 'Reconciled')
+      .reduce((acc, curr) => acc + curr.amount, 0);
+    const totalPending = filtered
+      .filter((i) => i.status === 'Not deposited')
+      .reduce((acc, curr) => acc + curr.amount, 0);
+
+    return {
+      data: filtered,
+      total: filtered.length,
+      totalAmount,
+      totalDeposited,
+      totalPending,
+    };
   }
 
   async getFeeCard(schoolId: string, filters: any) {
@@ -231,7 +275,7 @@ export class ReportsService {
       where: { id: schoolId },
       select: { code: true, name: true, city: true },
     });
-    const franchiseeCode = school?.code || 'SK-Dhule-Deopur';
+    const franchiseeCode = school?.code || 'SNK - Dhule - Deopur';
     const defaultLocality = school?.city || 'Dhule';
 
     // Build the filter for enquiries
@@ -287,7 +331,7 @@ export class ReportsService {
           enquirerName: 'Gaurav Pandurang Jadhav',
           enquiryDate: '2024-06-04T00:00:00.000Z',
           enquirerMobile: '9763339897',
-          programRequired: 'Euro Junior',
+          programRequired: 'SUNOIA Junior',
           locality: 'Dhule',
           studentName: 'Gaurav Pandurang Jadhav',
           enquirerEmail: '',

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +52,29 @@ export default function UpdateAdmissionPage() {
   const [programs, setPrograms] = useState<any[]>([]);
   const [batches, setBatches] = useState<any[]>([]);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
+
+  // Standardize batches system-wide to strictly 2 non-duplicate batches: Morning Shift & Late Morning Shift
+  const cleanBatches = useMemo(() => {
+    const source = batches.length > 0 ? batches : [
+      { id: 'batch-morning', timeSlot: 'Morning Shift' },
+      { id: 'batch-late-morning', timeSlot: 'Late Morning Shift' },
+    ];
+    const seen = new Set<string>();
+    const list: any[] = [];
+    for (const b of source) {
+      const raw = (b.timeSlot || '').toLowerCase();
+      const slot = (raw.includes('late') || raw.includes('evening') || raw.includes('afternoon') || raw.includes('11') || raw.includes('12'))
+        ? 'Late Morning Shift'
+        : 'Morning Shift';
+      if (!seen.has(slot)) {
+        seen.add(slot);
+        list.push({ ...b, timeSlot: slot });
+      }
+    }
+    if (!seen.has('Morning Shift')) list.unshift({ id: 'batch-morning', timeSlot: 'Morning Shift' });
+    if (!seen.has('Late Morning Shift')) list.push({ id: 'batch-late-morning', timeSlot: 'Late Morning Shift' });
+    return list.sort((a, b) => a.timeSlot.localeCompare(b.timeSlot));
+  }, [batches]);
 
   const [form, setForm] = useState<FormState>({
     academicYearId: '',
@@ -425,10 +448,7 @@ export default function UpdateAdmissionPage() {
                 <Select value={form.batchId} onValueChange={(v) => setField('batchId', v)}>
                   <SelectTrigger className="h-8 text-[13px] border-slate-300 shadow-none rounded-sm bg-white"><SelectValue placeholder="Select Batch" /></SelectTrigger>
                   <SelectContent>
-                    {(batches.length > 0 ? batches : [
-                      { id: 'morning', timeSlot: 'Morning Shift' },
-                      { id: 'evening', timeSlot: 'Evening Shift' }
-                    ]).map((b: any) => (
+                    {cleanBatches.map((b: any) => (
                       <SelectItem key={b.id} value={b.id}>
                         {b.timeSlot}
                       </SelectItem>
@@ -454,7 +474,7 @@ export default function UpdateAdmissionPage() {
               <div className="hidden md:block"></div>
 
               <div className="grid grid-cols-[180px_1fr] items-center gap-4">
-                <Label className="text-right text-slate-600 font-normal text-[13px] leading-tight">Has any of the child's kin attended SUNOIA / SEMS before?</Label>
+                <Label className="text-right text-slate-600 font-normal text-[13px] leading-tight">Has any of the child's kin attended SunoiaKids before?</Label>
                 <RadioGroup value={form.isKinAttended} onValueChange={(v) => setField('isKinAttended', v)} className="flex gap-4 items-center h-8">
                   <div className="flex items-center space-x-1.5"><RadioGroupItem value="yes" id="kin-yes" /><Label htmlFor="kin-yes" className="font-normal text-[13px]">Yes</Label></div>
                   <div className="flex items-center space-x-1.5"><RadioGroupItem value="no" id="kin-no" /><Label htmlFor="kin-no" className="font-normal text-[13px]">No</Label></div>

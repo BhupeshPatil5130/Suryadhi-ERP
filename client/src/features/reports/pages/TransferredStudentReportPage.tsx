@@ -19,15 +19,15 @@
   }
 
   const dummyTransferredStudents: TransferredStudentRow[] = [
-    { id: '1', regionName: 'West', franchiseeCode: 'SK-Dhule-Deopur', description: 'Transfer Out to SunoiaKids Pune', programName: 'Sunoia Senior', fullName: 'Kabir Dev Sharma', sex: 'Male' },
-    { id: '2', regionName: 'West', franchiseeCode: 'SK-Dhule-Deopur', description: 'Transfer In from SunoiaKids Nagpur', programName: 'Sunoia Junior', fullName: 'Maya Roy', sex: 'Female' },
-    { id: '3', regionName: 'West', franchiseeCode: 'SK-Dhule-Deopur', description: 'Transfer Out to SunoiaKids Mumbai', programName: 'Nursery', fullName: 'Arjun Verma', sex: 'Male' },
+    { id: '1', regionName: 'West', franchiseeCode: 'SNK - Dhule - Deopur', description: 'Transfer Out to SunoiaKids Pune', programName: 'Sunoia Senior', fullName: 'Kabir Dev Sharma', sex: 'Male' },
+    { id: '2', regionName: 'West', franchiseeCode: 'SNK - Dhule - Deopur', description: 'Transfer In from SunoiaKids Nagpur', programName: 'Sunoia Junior', fullName: 'Maya Roy', sex: 'Female' },
+    { id: '3', regionName: 'West', franchiseeCode: 'SNK - Dhule - Deopur', description: 'Transfer Out to SunoiaKids Mumbai', programName: 'Nursery', fullName: 'Arjun Verma', sex: 'Male' },
   ];
 
   export default function TransferredStudentReportPage() {
     const [data] = useState<TransferredStudentRow[]>(dummyTransferredStudents);
     const [findText, setFindText] = useState('');
-    const franchisee = 'SK-Dhule-Deopur';
+    const franchisee = 'SNK - Dhule - Deopur';
 
     const handleExport = (format: 'word' | 'excel' | 'powerpoint' | 'pdf') => {
       const exportData = data.map(d => ({

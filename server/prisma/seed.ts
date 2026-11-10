@@ -110,7 +110,7 @@ async function main() {
 
   // ── Batches ────────────────────────────────────────────────
   for (const program of programs) {
-    const batchTimes = ['Morning Shift', 'Evening Shift'];
+    const batchTimes = ['Morning Shift', 'Late Morning Shift'];
     for (const timeSlot of batchTimes) {
       const existingBatch = await prisma.batch.findFirst({
         where: { programId: program.id, schoolId: school.id, timeSlot },
@@ -234,13 +234,212 @@ async function main() {
 
   console.log('✅ Users created (password: Admin@123)');
 
+  // ── Core Sample Admissions & Students ─────────────────────
+  const sampleStudents = [
+    {
+      uin: 'SNK/3201/0001/2027',
+      firstName: 'Gurvesh',
+      middleName: 'Ganesh',
+      lastName: 'Rathod',
+      dob: new Date('2022-04-10'),
+      gender: 'BOY' as const,
+      fatherName: 'Ganesh Rathod',
+      motherName: 'Rekha Rathod',
+      fatherMobile: '9822114455',
+      motherMobile: '9822114456',
+      fatherEmail: 'ganesh.rathod@sunoiakids.com',
+      program: 'Nursery',
+      term1Amount: 15800,
+      term2Amount: 8000,
+      paidAmount: 0,
+    },
+    {
+      uin: 'SNK/3201/0002/2027',
+      firstName: 'Shourya',
+      middleName: 'Sachin',
+      lastName: 'Bhoyar',
+      dob: new Date('2021-08-14'),
+      gender: 'BOY' as const,
+      fatherName: 'Sachin Bhoyar',
+      motherName: 'Savita Bhoyar',
+      fatherMobile: '8149811545',
+      motherMobile: '8999313214',
+      fatherEmail: 'sachin.bhoyar@sunoiakids.com',
+      program: 'SUNOIA Junior',
+      term1Amount: 25000,
+      term2Amount: 20000,
+      paidAmount: 25000,
+    },
+    {
+      uin: 'SNK/3201/0003/2027',
+      firstName: 'Aarohi',
+      middleName: 'Santosh',
+      lastName: 'Sonare',
+      dob: new Date('2021-11-20'),
+      gender: 'GIRL' as const,
+      fatherName: 'Santosh Sonare',
+      motherName: 'Kavita Sonare',
+      fatherMobile: '9370005720',
+      motherMobile: '9325944111',
+      fatherEmail: 'santosh.sonare@sunoiakids.com',
+      program: 'SUNOIA Junior',
+      term1Amount: 25000,
+      term2Amount: 20000,
+      paidAmount: 15000,
+    },
+    {
+      uin: 'SNK/3201/0004/2027',
+      firstName: 'Dnyanda',
+      middleName: 'Nandkishor',
+      lastName: 'Bawane',
+      dob: new Date('2021-09-05'),
+      gender: 'GIRL' as const,
+      fatherName: 'Nandkishor Bawane',
+      motherName: 'Sunita Bawane',
+      fatherMobile: '9552407021',
+      motherMobile: '9145460195',
+      fatherEmail: 'nandkishor.bawane@sunoiakids.com',
+      program: 'SUNOIA Junior',
+      term1Amount: 25000,
+      term2Amount: 20000,
+      paidAmount: 20000,
+    },
+    {
+      uin: 'SNK/3201/0005/2027',
+      firstName: 'Alfaz',
+      middleName: 'Baig',
+      lastName: 'Mirza',
+      dob: new Date('2021-05-18'),
+      gender: 'BOY' as const,
+      fatherName: 'Furhan Baig Mirza',
+      motherName: 'Sultana Mirza',
+      fatherMobile: '7721024102',
+      motherMobile: '7400051112',
+      fatherEmail: 'furhan.mirza@sunoiakids.com',
+      program: 'SUNOIA Junior',
+      term1Amount: 25000,
+      term2Amount: 20000,
+      paidAmount: 12000,
+    },
+    {
+      uin: 'SNK/3201/0006/2027',
+      firstName: 'Rudransh',
+      middleName: 'Vaibhav',
+      lastName: 'Deshmukh',
+      dob: new Date('2020-07-22'),
+      gender: 'BOY' as const,
+      fatherName: 'Vaibhav Deshmukh',
+      motherName: 'Megha Deshmukh',
+      fatherMobile: '9673966580',
+      motherMobile: '8208466635',
+      fatherEmail: 'vaibhav.deshmukh@sunoiakids.com',
+      program: 'SUNOIA Senior',
+      term1Amount: 27000,
+      term2Amount: 23000,
+      paidAmount: 27000,
+    },
+  ];
+
+  for (const s of sampleStudents) {
+    const program = programs.find((p) => p.name === s.program) || programs[0];
+    const batch = await prisma.batch.findFirst({
+      where: { programId: program.id, schoolId: school.id, timeSlot: 'Morning Shift' },
+    });
+
+    const parent = await prisma.parent.create({
+      data: {
+        fatherName: s.fatherName,
+        motherName: s.motherName,
+        fatherMobile: s.fatherMobile,
+        motherMobile: s.motherMobile,
+        fatherEmail: s.fatherEmail,
+        fatherOccupation: 'Business / Service',
+      },
+    });
+
+    const student = await prisma.student.upsert({
+      where: { uin: s.uin },
+      update: {
+        firstName: s.firstName,
+        middleName: s.middleName,
+        lastName: s.lastName,
+        dateOfBirth: s.dob,
+        gender: s.gender,
+        parentId: parent.id,
+      },
+      create: {
+        uin: s.uin,
+        firstName: s.firstName,
+        middleName: s.middleName,
+        lastName: s.lastName,
+        dateOfBirth: s.dob,
+        gender: s.gender,
+        parentId: parent.id,
+        address: 'Dhule, Maharashtra',
+        city: 'Dhule',
+        state: 'Maharashtra',
+        postalCode: '424002',
+        country: 'India',
+      },
+    });
+
+    const existingAdm = await prisma.admission.findFirst({
+      where: { studentId: student.id, academicYearId: ay2627.id },
+    });
+
+    if (!existingAdm) {
+      const admission = await prisma.admission.create({
+        data: {
+          studentId: student.id,
+          schoolId: school.id,
+          academicYearId: ay2627.id,
+          programId: program.id,
+          batchId: batch?.id,
+          admissionDate: new Date('2026-04-01'),
+          status: 'ACTIVE',
+          type: 'OFFLINE',
+        },
+      });
+
+      const totalAmount = s.term1Amount + s.term2Amount;
+      const invoice = await prisma.invoice.create({
+        data: {
+          invoiceNumber: s.uin,
+          admissionId: admission.id,
+          term1Amount: s.term1Amount,
+          term2Amount: s.term2Amount,
+          totalAmount,
+          discountAmount: 0,
+          netAmount: totalAmount,
+          status: s.paidAmount >= totalAmount ? 'PAID' : s.paidAmount > 0 ? 'PARTIALLY_PAID' : 'GENERATED',
+        },
+      });
+
+      if (s.paidAmount > 0) {
+        await prisma.receipt.create({
+          data: {
+            receiptNumber: `REC-${s.uin.replace(/[^0-9]/g, '').slice(-4)}-1`,
+            admissionId: admission.id,
+            invoiceId: invoice.id,
+            receiptDate: new Date('2026-04-05'),
+            amount: s.paidAmount,
+            paymentMode: 'CASH',
+            notes: 'Advance Receipt - Term 1',
+          },
+        });
+      }
+    }
+  }
+
+  console.log('✅ Core sample students and admissions created with standard UINs');
+
   // ── Sample Enquiries ───────────────────────────────────────
   const sampleEnquiries = [
-    { name: 'Aarav Sharma', parent: 'Rajesh Sharma', mobile: '9876543001', program: 'Play Group' },
-    { name: 'Ananya Patel', parent: 'Vikram Patel', mobile: '9876543002', program: 'Nursery' },
-    { name: 'Vivaan Gupta', parent: 'Arun Gupta', mobile: '9876543003', program: 'SUNOIA Junior' },
-    { name: 'Diya Singh', parent: 'Priya Singh', mobile: '9876543004', program: 'SUNOIA Senior' },
-    { name: 'Arjun Reddy', parent: 'Suresh Reddy', mobile: '9876543005', program: 'Play Group' },
+    { name: 'Aarav Sharma', parent: 'Rajesh Sharma', mobile: '9876543001', program: 'Play Group', uin: 'SNK/3201/0007/2027' },
+    { name: 'Ananya Patel', parent: 'Vikram Patel', mobile: '9876543002', program: 'Nursery', uin: 'SNK/3201/0008/2027' },
+    { name: 'Vivaan Gupta', parent: 'Arun Gupta', mobile: '9876543003', program: 'SUNOIA Junior', uin: 'SNK/3201/0009/2027' },
+    { name: 'Diya Singh', parent: 'Priya Singh', mobile: '9876543004', program: 'SUNOIA Senior', uin: 'SNK/3201/0010/2027' },
+    { name: 'Arjun Reddy', parent: 'Suresh Reddy', mobile: '9876543005', program: 'Play Group', uin: 'SNK/3201/0011/2027' },
   ];
 
   for (const eq of sampleEnquiries) {
@@ -254,6 +453,7 @@ async function main() {
     if (!existingStudent) {
       const student = await prisma.student.create({
         data: {
+          uin: eq.uin,
           firstName,
           lastName,
           dateOfBirth: new Date('2022-06-15'),
@@ -266,7 +466,7 @@ async function main() {
           enquirerName: eq.parent,
           enquirerMobile: eq.mobile,
           enquirerEmail: `${eq.parent.toLowerCase().replace(' ', '.')}@email.com`,
-          enquirerAddress: 'Sample Address, Pune',
+          enquirerAddress: 'Sample Address, Dhule',
           stage: 'NEW',
           studentId: student.id,
           programId: program.id,

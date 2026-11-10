@@ -32,7 +32,7 @@
 //         lastName: ln,
 //         dateOfBirth: new Date(new Date().setFullYear(new Date().getFullYear() - 3 - Math.floor(Math.random() * 3))),
 //         gender: Math.random() > 0.5 ? 'BOY' : 'GIRL',
-//         uin: `UIN${Math.floor(10000 + Math.random() * 90000)}`,
+//         uin: `SNK/3201/${String(i + 1).padStart(4, '0')}/2027`,
 //       }
 //     });
 

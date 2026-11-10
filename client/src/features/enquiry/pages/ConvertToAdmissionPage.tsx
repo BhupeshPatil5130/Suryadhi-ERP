@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import api from '@/api/client';
@@ -25,6 +25,29 @@ export default function ConvertToAdmissionPage() {
   const [programs, setPrograms] = useState<any[]>([]);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
   const [batches, setBatches] = useState<any[]>([]);
+
+  // Standardize batches system-wide to strictly 2 non-duplicate batches: Morning Shift & Late Morning Shift
+  const cleanBatches = useMemo(() => {
+    const source = batches.length > 0 ? batches : [
+      { id: 'batch-morning', timeSlot: 'Morning Shift' },
+      { id: 'batch-late-morning', timeSlot: 'Late Morning Shift' },
+    ];
+    const seen = new Set<string>();
+    const list: any[] = [];
+    for (const b of source) {
+      const raw = (b.timeSlot || '').toLowerCase();
+      const slot = (raw.includes('late') || raw.includes('evening') || raw.includes('afternoon') || raw.includes('11') || raw.includes('12'))
+        ? 'Late Morning Shift'
+        : 'Morning Shift';
+      if (!seen.has(slot)) {
+        seen.add(slot);
+        list.push({ ...b, timeSlot: slot });
+      }
+    }
+    if (!seen.has('Morning Shift')) list.unshift({ id: 'batch-morning', timeSlot: 'Morning Shift' });
+    if (!seen.has('Late Morning Shift')) list.push({ id: 'batch-late-morning', timeSlot: 'Late Morning Shift' });
+    return list.sort((a, b) => a.timeSlot.localeCompare(b.timeSlot));
+  }, [batches]);
   
   const [enquirerMap, setEnquirerMap] = useState('fathers');
 
@@ -443,10 +466,7 @@ export default function ConvertToAdmissionPage() {
                 <Select value={form.batchId} onValueChange={v => setField('batchId', v)}>
                   <SelectTrigger className="h-8 text-[13px] border-slate-300 shadow-none rounded-sm bg-white"><SelectValue placeholder="Select Batch" /></SelectTrigger>
                   <SelectContent>
-                    {(batches.length > 0 ? batches : [
-                      { id: 'morning', timeSlot: 'Morning Shift' },
-                      { id: 'evening', timeSlot: 'Evening Shift' }
-                    ]).map(b => (
+                    {cleanBatches.map((b: any) => (
                       <SelectItem key={b.id} value={b.id}>
                         {b.timeSlot}
                       </SelectItem>

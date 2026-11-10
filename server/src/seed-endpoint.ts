@@ -63,7 +63,7 @@ router.get('/trigger-seed', async (req: Request, res: Response) => {
 
     // ── Batches ────────────────────────────────────────────────
     for (const program of programs) {
-      const batchTimes = ['Morning Shift', 'Evening Shift'];
+      const batchTimes = ['Morning Shift', 'Late Morning Shift'];
       for (const timeSlot of batchTimes) {
         const existingBatch = await prisma.batch.findFirst({
           where: { programId: program.id, schoolId: school.id, timeSlot },
@@ -141,8 +141,9 @@ router.get('/trigger-seed', async (req: Request, res: Response) => {
       const program = programs[Math.floor(Math.random() * programs.length)];
       const source = dbSources[Math.floor(Math.random() * dbSources.length)];
       
+      const uin = `SNK/3201/${String(existingStudentCount + i + 1).padStart(4, '0')}/2027`;
       const student = await prisma.student.create({
-        data: { firstName: fn, lastName: ln, dateOfBirth: new Date(2022, Math.floor(Math.random() * 12), Math.floor(1 + Math.random() * 28)), gender: Math.random() > 0.5 ? 'BOY' : 'GIRL' }
+        data: { uin, firstName: fn, lastName: ln, dateOfBirth: new Date(2022, Math.floor(Math.random() * 12), Math.floor(1 + Math.random() * 28)), gender: Math.random() > 0.5 ? 'BOY' : 'GIRL' }
       });
 
       const isAdmitted = Math.random() > 0.4;
@@ -186,7 +187,7 @@ router.get('/trigger-seed', async (req: Request, res: Response) => {
 
         const invoice = await prisma.invoice.create({
           data: {
-            invoiceNumber: `INV-${Date.now()}-${i}`,
+            invoiceNumber: uin,
             admissionId: adm.id,
             term1Amount: term1,
             term2Amount: term2,

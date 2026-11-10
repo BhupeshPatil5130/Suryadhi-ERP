@@ -145,11 +145,10 @@ export class AdmissionService {
       const academicYear = await tx.academicYear.findUnique({ where: { id: input.academicYearId } });
       const seq = await getNextSequenceValue(`UIN_${input.academicYearId}`, schoolId, tx);
 
-      const ayStart = academicYear?.startDate.getFullYear().toString().slice(-2) || '24';
-      const ayEnd = academicYear?.endDate.getFullYear().toString().slice(-2) || '25';
-      const aySuffix = `${ayStart}${ayEnd}`;
+      const schoolCode = (school?.code?.replace(/[^0-9]/g, '') || '3201').slice(-4).padStart(4, '0');
+      const ayYear = academicYear?.endDate ? new Date(academicYear.endDate).getFullYear().toString() : '2027';
       
-      const newUin = `SNK/${school?.code || '3201'}/${seq.toString().padStart(4, '0')}/${aySuffix}`;
+      const newUin = `SNK/${schoolCode}/${seq.toString().padStart(4, '0')}/${ayYear}`;
 
       // Create or update student record
       let student;
@@ -272,9 +271,7 @@ export class AdmissionService {
         const netAmount = totalAmount - discountAmount;
 
         // Create Invoice with invoice number matching student UIN
-        const invoiceNumber = admission.student?.uin
-          ? `INV-${admission.student.uin}`
-          : await getNextSequenceNumber('SK',schoolId, tx, 6);
+        const invoiceNumber = admission.student?.uin || newUin;
 
         const invoice = await tx.invoice.create({
           data: {
@@ -497,9 +494,7 @@ export class AdmissionService {
 
           const netAmount = totalAmount - discountAmount;
 
-          const invoiceNumber = existing.student?.uin
-            ? `INV-${existing.student.uin}`
-            : await getNextSequenceNumber('INV', schoolId, tx, 6);
+          const invoiceNumber = existing.student?.uin || `SNK/3201/${id.slice(-4)}/2027`;
 
           await tx.invoice.create({
             data: {

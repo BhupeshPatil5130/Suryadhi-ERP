@@ -23,7 +23,7 @@ const APPROVED_FEE_RATES: FeeStructure[] = [
 
 export default function FeeRateCardPage() {
   const [rates] = useState<FeeStructure[]>(APPROVED_FEE_RATES);
-  const franchisee = 'SK-Dhule-Deopur';
+  const franchisee = 'SNK - Dhule - Deopur';
   const approvedYear = 'Apr 26 - Mar 27';
 
   return (

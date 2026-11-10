@@ -38,8 +38,8 @@ export const BRAND = {
   groupName: 'Suryadhi Group',
 
   /** Default franchise details */
-  franchiseCode: 'SK-Dhule-Deopur',
-  franchiseName: 'Suryadhi Kids - Dhule Deopur',
+  franchiseCode: 'SNK-Dhule-Deopur',
+  franchiseName: 'SNK - Dhule - Deopur',
 
   /** System version tag shown in sidebar */
   version: 'SEMS v2.0',

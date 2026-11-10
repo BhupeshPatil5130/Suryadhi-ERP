@@ -24,7 +24,7 @@ const dummyCancelledReceipts: CancelledReceiptRow[] = [
   {
     id: '1',
     regionName: 'West',
-    franchiseeCode: 'SK-Dhule-Deopur',
+    franchiseeCode: 'SNK - Dhule - Deopur',
     studentName: 'Aarav Rahul Sharma',
     receiptNumber: 'REC-2026-000042',
     amountInRs: 18500,
@@ -34,7 +34,7 @@ const dummyCancelledReceipts: CancelledReceiptRow[] = [
   {
     id: '2',
     regionName: 'West',
-    franchiseeCode: 'SK-Dhule-Deopur',
+    franchiseeCode: 'SNK - Dhule - Deopur',
     studentName: 'Mahi Sachin Rathod',
     receiptNumber: 'REC-2026-000089',
     amountInRs: 25000,
@@ -46,7 +46,7 @@ const dummyCancelledReceipts: CancelledReceiptRow[] = [
 export default function CancelledReceiptsReportPage() {
   const [data] = useState<CancelledReceiptRow[]>(dummyCancelledReceipts);
   const [findText, setFindText] = useState('');
-  const franchisee = 'SK-Dhule-Deopur';
+  const franchisee = 'SNK - Dhule - Deopur';
 
   const handleExport = (format: 'word' | 'excel' | 'powerpoint' | 'pdf') => {
     const exportData = data.map(d => ({

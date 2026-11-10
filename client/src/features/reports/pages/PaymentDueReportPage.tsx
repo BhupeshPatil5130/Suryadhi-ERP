@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { type ColumnDef } from '@tanstack/react-table';
 import DataTable from '@/components/shared/DataTable';
 import PageHeader from '@/components/shared/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -35,14 +35,15 @@ interface ProgramSummaryItem {
   totalBalance: number;
 }
 
-const PROGRAMS = ['Play Group', 'Nursery', 'Sunoia Junior', 'Sunoia Senior'];
+const DEFAULT_PROGRAMS = ['Play Group', 'Nursery', 'Sunoia Junior', 'Sunoia Senior'];
 
 export default function PaymentDueReportPage() {
   const [data, setData] = useState<PaymentDueItem[]>([]);
+  const [programsList, setProgramsList] = useState<string[]>(DEFAULT_PROGRAMS);
   const [isLoading, setIsLoading] = useState(true);
 
   // Filters
-  const [selectedPrograms, setSelectedPrograms] = useState<string[]>(PROGRAMS);
+  const [selectedProgram, setSelectedProgram] = useState<string>('ALL');
   const [viewMode, setViewMode] = useState<'detail' | 'summary'>('detail');
 
   // Modal for detail view
@@ -54,6 +55,16 @@ export default function PaymentDueReportPage() {
       const res = await api.get('/reports/payment-due');
       if (res.data.success && Array.isArray(res.data.data)) {
         setData(res.data.data);
+
+        // Extract any distinct program names from backend data
+        const extracted: string[] = Array.from(new Set(
+          res.data.data
+            .map((item: any) => item.program?.name)
+            .filter((name: any): name is string => Boolean(name && name.trim()))
+        ));
+        if (extracted.length > 0) {
+          setProgramsList((_prev: string[]) => Array.from(new Set<string>([...DEFAULT_PROGRAMS, ...extracted])));
+        }
       }
     } catch (err) {
       console.error('Failed to fetch payment due report', err);
@@ -66,43 +77,37 @@ export default function PaymentDueReportPage() {
     fetchPaymentDue();
   }, [fetchPaymentDue]);
 
-  const toggleProgram = (program: string) => {
-    setSelectedPrograms((prev) =>
-      prev.includes(program) ? prev.filter((p) => p !== program) : [...prev, program]
-    );
-  };
-
-  const handleSelectAllPrograms = () => {
-    if (selectedPrograms.length === PROGRAMS.length) {
-      setSelectedPrograms([]);
-    } else {
-      setSelectedPrograms(PROGRAMS);
-    }
-  };
-
   const handleReset = () => {
-    setSelectedPrograms(PROGRAMS);
+    setSelectedProgram('ALL');
     setViewMode('detail');
   };
 
-  // Filter items based on program checkboxes
-  const filteredData = data.filter((item) => {
-    const prog = (item.program?.name || '').toLowerCase();
-    if (selectedPrograms.length === 0) return true;
-    return selectedPrograms.some((sp) => prog.includes(sp.toLowerCase()));
-  });
+  // Filter items based on selected program dropdown
+  const filteredData = useMemo(() => {
+    return data.filter((item) => {
+      if (selectedProgram === 'ALL') return true;
+      const prog = (item.program?.name || '').toLowerCase();
+      return prog.includes(selectedProgram.toLowerCase());
+    });
+  }, [data, selectedProgram]);
 
   // Calculate summary grouped by program
-  const summaryData: ProgramSummaryItem[] = PROGRAMS.map((pName) => {
-    const items = data.filter((d) => (d.program?.name || '').toLowerCase().includes(pName.toLowerCase()));
-    return {
-      programName: pName,
-      studentCount: items.length,
-      totalInvoiced: items.reduce((sum, i) => sum + i.totalAmount, 0),
-      totalPaid: items.reduce((sum, i) => sum + i.totalPaid, 0),
-      totalBalance: items.reduce((sum, i) => sum + i.balance, 0),
-    };
-  }).filter((s) => selectedPrograms.length === 0 || selectedPrograms.includes(s.programName));
+  const summaryData: ProgramSummaryItem[] = useMemo(() => {
+    const listToSummarize = selectedProgram === 'ALL'
+      ? programsList
+      : programsList.filter((p) => p.toLowerCase().includes(selectedProgram.toLowerCase()));
+
+    return listToSummarize.map((pName) => {
+      const items = data.filter((d) => (d.program?.name || '').toLowerCase().includes(pName.toLowerCase()));
+      return {
+        programName: pName,
+        studentCount: items.length,
+        totalInvoiced: items.reduce((sum, i) => sum + i.totalAmount, 0),
+        totalPaid: items.reduce((sum, i) => sum + i.totalPaid, 0),
+        totalBalance: items.reduce((sum, i) => sum + i.balance, 0),
+      };
+    });
+  }, [data, programsList, selectedProgram]);
 
   const totalDueAmount = filteredData.reduce((sum, d) => sum + d.balance, 0);
   const totalStudentsDue = filteredData.length;
@@ -228,7 +233,7 @@ export default function PaymentDueReportPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-full overflow-hidden">
       <PageHeader
         title="Payment Due Report"
         description="Monitor outstanding fee balances and defaulter records across programs"
@@ -236,124 +241,120 @@ export default function PaymentDueReportPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <Card className="border-l-4 border-l-red-500 shadow-sm">
+        <Card className="border-l-4 border-l-red-500 shadow-sm bg-white overflow-hidden">
           <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Total Outstanding Due</p>
-              <h3 className="text-2xl font-black text-red-600 mt-1">{formatCurrency(totalDueAmount)}</h3>
+            <div className="min-w-0 pr-2">
+              <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider truncate">Total Outstanding Due</p>
+              <h3 className="text-2xl font-black text-red-600 mt-1 truncate">{formatCurrency(totalDueAmount)}</h3>
             </div>
-            <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-500">
+            <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-500 shrink-0">
               <DollarSign className="w-5 h-5" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-amber-500 shadow-sm">
+        <Card className="border-l-4 border-l-amber-500 shadow-sm bg-white overflow-hidden">
           <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Defaulter Students</p>
-              <h3 className="text-2xl font-black text-amber-700 mt-1">{totalStudentsDue}</h3>
+            <div className="min-w-0 pr-2">
+              <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider truncate">Defaulter Students</p>
+              <h3 className="text-2xl font-black text-amber-700 mt-1 truncate">{totalStudentsDue}</h3>
             </div>
-            <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-500">
+            <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-500 shrink-0">
               <Users className="w-5 h-5" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-blue-500 shadow-sm">
+        <Card className="border-l-4 border-l-blue-500 shadow-sm bg-white overflow-hidden">
           <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Report Mode</p>
-              <h3 className="text-lg font-bold text-blue-700 mt-1 uppercase">{viewMode} Mode</h3>
+            <div className="min-w-0 pr-2">
+              <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider truncate">Report Mode</p>
+              <h3 className="text-lg font-bold text-blue-700 mt-1 uppercase truncate">{viewMode} Mode</h3>
             </div>
-            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
+            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
               <AlertCircle className="w-5 h-5" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filter Controls Card */}
-      <Card className="shadow-lg">
-        <CardHeader className="border-b border-border/50 py-4">
-          <div className="space-y-4">
-            {/* Program Checkboxes */}
-            <div className="flex flex-wrap items-center gap-4">
-              <span className="text-xs font-bold text-slate-700">Program Filter:</span>
-              <label className="flex items-center gap-1.5 text-xs cursor-pointer font-medium">
-                <input
-                  type="checkbox"
-                  checked={selectedPrograms.length === PROGRAMS.length}
-                  onChange={handleSelectAllPrograms}
-                  className="rounded border-slate-300"
-                />
-                All Programs
-              </label>
-              {PROGRAMS.map((prog) => (
-                <label key={prog} className="flex items-center gap-1.5 text-xs cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedPrograms.includes(prog)}
-                    onChange={() => toggleProgram(prog)}
-                    className="rounded border-slate-300"
-                  />
-                  {prog}
-                </label>
-              ))}
-            </div>
+      {/* Filter Controls Card with Program Dropdown */}
+      <Card className="shadow-sm border-slate-200 bg-white overflow-hidden">
+        <CardHeader className="border-b border-border/50 py-3.5 px-5 bg-white">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-5">
+              {/* 1. Program Filter Dropdown */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-700">Program:</span>
+                <div className="relative">
+                  <select
+                    value={selectedProgram}
+                    onChange={(e) => setSelectedProgram(e.target.value)}
+                    className="appearance-none h-8 pl-3 pr-8 text-xs font-medium rounded-md border border-slate-300 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer min-w-[180px] shadow-none"
+                  >
+                    <option value="ALL">All Programs</option>
+                    {programsList.map((prog) => (
+                      <option key={prog} value={prog}>{prog}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                </div>
+              </div>
 
-            {/* View Mode Dropdown + Reset Button */}
-            <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t">
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-bold text-slate-700">Status View:</span>
+              {/* 2. Status View Mode Dropdown */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-700">Status View:</span>
                 <div className="relative">
                   <select
                     value={viewMode}
                     onChange={(e) => setViewMode(e.target.value as 'detail' | 'summary')}
-                    className="appearance-none h-8 pl-3 pr-8 text-xs font-medium rounded-md border border-border bg-background hover:bg-muted focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer min-w-[150px]"
+                    className="appearance-none h-8 pl-3 pr-8 text-xs font-medium rounded-md border border-slate-300 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer min-w-[140px] shadow-none"
                   >
                     <option value="detail">Detail View</option>
                     <option value="summary">Summary View</option>
                   </select>
-                  <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
                 </div>
               </div>
+            </div>
 
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 text-xs gap-1"
-                  onClick={handleReset}
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  Cancel / Reset
-                </Button>
-              </div>
+            {/* Reset Button */}
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs gap-1 border-slate-300 text-slate-700 hover:bg-slate-100 shadow-none font-medium"
+                onClick={handleReset}
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Reset Filters
+              </Button>
             </div>
           </div>
         </CardHeader>
 
-        <CardContent className="p-0">
-          {viewMode === 'detail' ? (
-            <DataTable
-              columns={detailColumns}
-              data={filteredData}
-              isLoading={isLoading}
-              searchPlaceholder="Search student, UIN, or invoice no..."
-              showExportBox={true}
-              exportTitle="payment_due_detail_report"
-            />
-          ) : (
-            <DataTable
-              columns={summaryColumns}
-              data={summaryData}
-              isLoading={isLoading}
-              searchPlaceholder="Search program..."
-              showExportBox={true}
-              exportTitle="payment_due_summary_report"
-            />
-          )}
+        <CardContent className="p-4">
+          <div className="overflow-x-auto w-full">
+            {viewMode === 'detail' ? (
+              <DataTable
+                columns={detailColumns}
+                data={filteredData}
+                isLoading={isLoading}
+                searchPlaceholder="Search student, UIN, or invoice no..."
+                showExportBox={true}
+                exportTitle="payment_due_detail_report"
+              />
+            ) : (
+              <DataTable
+                columns={summaryColumns}
+                data={summaryData}
+                isLoading={isLoading}
+                searchPlaceholder="Search program..."
+                showExportBox={true}
+                exportTitle="payment_due_summary_report"
+              />
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -362,44 +363,45 @@ export default function PaymentDueReportPage() {
         <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-base font-bold">Student Payment Due Details</DialogTitle>
+              <DialogTitle className="text-base font-bold text-slate-800">
+                Payment Due Details — {selectedItem.student?.firstName} {selectedItem.student?.lastName}
+              </DialogTitle>
             </DialogHeader>
-            <div className="space-y-3 pt-2 text-sm">
-              <div className="bg-muted/40 p-3 rounded-lg space-y-1.5">
+
+            <div className="space-y-4 pt-2 text-xs">
+              <div className="bg-slate-50 p-3 rounded-lg border space-y-1.5">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground text-xs">Student:</span>
-                  <span className="font-semibold">{selectedItem.student.firstName} {selectedItem.student.lastName}</span>
+                  <span className="text-muted-foreground">UIN:</span>
+                  <span className="font-mono font-medium">{selectedItem.student?.uin || '-'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground text-xs">UIN:</span>
-                  <span className="font-mono text-xs">{selectedItem.student.uin}</span>
+                  <span className="text-muted-foreground">Program:</span>
+                  <span className="font-medium">{selectedItem.program?.name || '-'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground text-xs">Program:</span>
-                  <span>{selectedItem.program.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground text-xs">Invoice Number:</span>
-                  <span className="font-mono text-xs">{selectedItem.invoiceNumber}</span>
+                  <span className="text-muted-foreground">Invoice No:</span>
+                  <span className="font-mono font-medium">{selectedItem.invoiceNumber || '-'}</span>
                 </div>
               </div>
 
-              <div className="border rounded-lg p-3 space-y-2">
-                <div className="flex justify-between text-xs">
-                  <span>Total Invoiced Amount:</span>
-                  <span className="font-mono font-medium">{formatCurrency(selectedItem.totalAmount)}</span>
+              <div className="space-y-2 border-t pt-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Total Billed Fees:</span>
+                  <span className="font-mono font-semibold">{formatCurrency(selectedItem.totalAmount)}</span>
                 </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-emerald-700">Total Paid / Received:</span>
-                  <span className="font-mono text-emerald-700 font-medium">{formatCurrency(selectedItem.totalPaid)}</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-emerald-700">Total Amount Paid:</span>
+                  <span className="font-mono font-semibold text-emerald-700">
+                    {formatCurrency(selectedItem.totalPaid)}
+                  </span>
                 </div>
-                <div className="flex justify-between text-sm font-bold pt-2 border-t text-red-600">
-                  <span>Remaining Balance Due:</span>
+                <div className="flex justify-between text-base font-bold border-t pt-2 text-red-600">
+                  <span>Balance Outstanding Due:</span>
                   <span className="font-mono">{formatCurrency(selectedItem.balance)}</span>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="pt-2 flex justify-end">
                 <Button size="sm" variant="outline" onClick={() => setSelectedItem(null)}>
                   Close
                 </Button>

@@ -167,13 +167,13 @@ router.get('/batches', optionalAuth, async (req, res, next) => {
     const effectiveSchoolId = (schoolId as string) || req.user?.schoolId || (await prisma.school.findFirst({ select: { id: true } }))?.id;
 
     if (programId && effectiveSchoolId) {
-      // Ensure Morning Shift and Evening Shift exist for this program
+      // Ensure Morning Shift and Late Morning Shift exist for this program
       const existing = await prisma.batch.findMany({
         where: { programId: programId as string, schoolId: effectiveSchoolId },
       });
 
-      const hasMorning = existing.some(b => b.timeSlot?.toLowerCase().includes('morning'));
-      const hasEvening = existing.some(b => b.timeSlot?.toLowerCase().includes('evening'));
+      const hasMorning = existing.some(b => b.timeSlot?.toLowerCase() === 'morning shift');
+      const hasLateMorning = existing.some(b => b.timeSlot?.toLowerCase().includes('late morning') || b.timeSlot?.toLowerCase().includes('evening'));
 
       if (!hasMorning) {
         await prisma.batch.create({
@@ -186,12 +186,12 @@ router.get('/batches', optionalAuth, async (req, res, next) => {
         }).catch(() => {});
       }
 
-      if (!hasEvening) {
+      if (!hasLateMorning) {
         await prisma.batch.create({
           data: {
             programId: programId as string,
             schoolId: effectiveSchoolId,
-            timeSlot: 'Evening Shift',
+            timeSlot: 'Late Morning Shift',
             capacity: 25,
           },
         }).catch(() => {});
@@ -206,33 +206,35 @@ router.get('/batches', optionalAuth, async (req, res, next) => {
       select: { id: true, timeSlot: true, capacity: true, program: { select: { name: true } } },
     });
 
-    // Normalize any legacy timeSlot labels to Morning Shift / Evening Shift
-    const formatted = batches.map(b => {
-      let slot = b.timeSlot;
-      const lower = slot.toLowerCase();
-      if (lower.includes('evening') || lower.includes('late') || lower.includes('afternoon') || lower.includes('11') || lower.includes('12') || lower.includes('2:00')) {
-        slot = 'Evening Shift';
-      } else {
-        slot = 'Morning Shift';
-      }
-      return {
-        ...b,
-        timeSlot: slot,
-      };
-    });
+    // Normalize any legacy timeSlot labels and deduplicate so there are strictly 2 shifts:
+    // 1. Morning Shift
+    // 2. Late Morning Shift
+    const seen = new Set<string>();
+    const deduplicated: Array<{ id: string; timeSlot: string; capacity?: number; program?: any }> = [];
 
-    // If still empty, return standard static shifts with dummy IDs for selector fallback
-    if (formatted.length === 0) {
-      return res.json({
-        success: true,
-        data: [
-          { id: 'batch-morning', timeSlot: 'Morning Shift', capacity: 25 },
-          { id: 'batch-evening', timeSlot: 'Evening Shift', capacity: 25 },
-        ],
-      });
+    for (const b of batches) {
+      const lower = (b.timeSlot || '').toLowerCase();
+      const slot = (lower.includes('late') || lower.includes('evening') || lower.includes('afternoon') || lower.includes('11') || lower.includes('12') || lower.includes('2:00'))
+        ? 'Late Morning Shift'
+        : 'Morning Shift';
+
+      if (!seen.has(slot)) {
+        seen.add(slot);
+        deduplicated.push({ ...b, timeSlot: slot });
+      }
     }
 
-    res.json({ success: true, data: formatted });
+    if (!seen.has('Morning Shift')) {
+      deduplicated.unshift({ id: 'batch-morning', timeSlot: 'Morning Shift', capacity: 25 });
+    }
+    if (!seen.has('Late Morning Shift')) {
+      deduplicated.push({ id: 'batch-late-morning', timeSlot: 'Late Morning Shift', capacity: 25 });
+    }
+
+    // Sort so Morning Shift comes first, then Late Morning Shift
+    deduplicated.sort((a, b) => a.timeSlot.localeCompare(b.timeSlot));
+
+    return res.json({ success: true, data: deduplicated });
   } catch (error) { next(error); }
 });
 

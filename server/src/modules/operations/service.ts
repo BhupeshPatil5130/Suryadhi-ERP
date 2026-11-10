@@ -24,7 +24,7 @@ export class OperationsService {
           notes: 'Delivered in good condition',
           items: {
             orderType: 'Welcome Kit (WK) Order',
-            program: 'Euro Junior',
+            program: 'SUNOIA Junior',
             supplier: 'Suryadhi Central Supply HQ',
             transporter: 'Blue Dart / LR-519315',
             estimatedDeliveryDate: '2026-06-08',
@@ -99,7 +99,7 @@ export class OperationsService {
           notes: 'Winter coats and sweaters batch',
           items: {
             orderType: 'Winter Wear PO',
-            program: 'Euro Senior',
+            program: 'SUNOIA Senior',
             supplier: 'Suryadhi Garments Division',
             transporter: 'Trackon Logistics / LR-771890',
             estimatedDeliveryDate: '2026-06-18',

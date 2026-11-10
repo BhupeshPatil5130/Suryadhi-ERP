@@ -262,7 +262,7 @@ export default function OnlinePaymentReportPage() {
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-1.5 text-xs text-slate-600">
                 <Calendar className="w-4 h-4 text-slate-400" />
-                <span>1. From Date:</span>
+                <span>From Date:</span>
                 <Input
                   type="date"
                   value={fromDate}
@@ -272,7 +272,7 @@ export default function OnlinePaymentReportPage() {
               </div>
 
               <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                <span>2. To Date:</span>
+                <span>To Date:</span>
                 <Input
                   type="date"
                   value={toDate}

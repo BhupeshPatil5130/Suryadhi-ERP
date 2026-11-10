@@ -40,7 +40,7 @@ const DEFAULT_ENQUIRY_ROWS: LSQEnquiryRow[] = [
     enquirerName: 'Gaurav Pandurang Jadhav',
     enquiryDate: '04-06-2024',
     enquirerMobile: '9763339897',
-    programRequired: 'Euro Junior',
+    programRequired: 'SUNOIA Junior',
     locality: 'Dhule',
     studentName: 'Gaurav Pandurang Jadhav',
   },
@@ -88,7 +88,7 @@ const formatDateDDMMYYYY = (dateStr: string | Date | undefined | null): string =
 export default function LSQReportPage() {
   const [programSummary, setProgramSummary] = useState<ProgramSummaryItem[]>(DEFAULT_PROGRAM_CARDS);
   const [data, setData] = useState<LSQEnquiryRow[]>(DEFAULT_ENQUIRY_ROWS);
-  const [franchiseeCode, setFranchiseeCode] = useState<string>('SK-Dhule-Deopur');
+  const [franchiseeCode, setFranchiseeCode] = useState<string>('SNK - Dhule - Deopur');
   const [isLoading, setIsLoading] = useState(true);
   const [pageSize, setPageSize] = useState('25');
 

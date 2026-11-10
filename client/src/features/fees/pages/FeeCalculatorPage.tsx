@@ -21,12 +21,12 @@ const PROGRAM_CONFIG: Record<string, ProgramFeeConfig> = {
     termFee: 6000,
     annualTuition: 11000,
   },
-  'Euro Junior': {
+  'SUNOIA Junior': {
     registration: 8000,
     termFee: 6500,
     annualTuition: 12500,
   },
-  'Euro Senior': {
+  'SUNOIA Senior': {
     registration: 8500,
     termFee: 7000,
     annualTuition: 14000,
@@ -64,7 +64,7 @@ export default function FeeCalculatorPage() {
   const [calculated, setCalculated] = useState<boolean>(false);
 
   // Franchisee & Year details
-  const franchisee = 'SK-Dhule-Deopur';
+  const franchisee = 'SNK - Dhule - Deopur';
   const selectedYear = useUIStore((s) => s.academicYear);
   const academicYear = selectedYear || 'Apr 26 - Mar 27';
 
@@ -206,8 +206,8 @@ export default function FeeCalculatorPage() {
                 >
                   <option value="Play Group">Play Group</option>
                   <option value="Nursery">Nursery</option>
-                  <option value="Euro Junior">Euro Junior</option>
-                  <option value="Euro Senior">Euro Senior</option>
+                  <option value="SUNOIA Junior">SUNOIA Junior</option>
+                  <option value="SUNOIA Senior">SUNOIA Senior</option>
                 </select>
               </div>
 

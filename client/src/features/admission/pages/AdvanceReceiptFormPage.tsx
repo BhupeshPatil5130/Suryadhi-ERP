@@ -52,12 +52,12 @@ interface ReceiptRow {
 }
 
 const DUMMY_FALLBACK_ADMISSIONS: Record<string, Partial<AdmissionData>> = {
-  '1': { studentName: 'Gurvesh Ganesh Rathod', uin: 'EK/3201/0002/2027', fatherName: 'Ganesh Rathod', motherName: 'Rekha Rathod', fatherMobile: '9822114455', motherMobile: '9822114456', program: 'Nursery', term1Amount: 15800, term2Amount: 8000, totalAmount: 23800, netAmount: 23800 },
-  '2': { studentName: 'Shourya Sachin Bhoyar', uin: 'SLPL3201/0071/2027', fatherName: 'Sachin Bhoyar', motherName: 'Savita Bhoyar', fatherMobile: '8149811545', motherMobile: '8999313214', program: 'SUNOIA Junior', term1Amount: 25000, term2Amount: 20000, totalAmount: 45000, netAmount: 45000 },
-  '3': { studentName: 'Aarohi Santosh Sonare', uin: 'SLPL3201/0002/2027', fatherName: 'Santosh Sonare', motherName: 'Kavita Sonare', fatherMobile: '9370005720', motherMobile: '9325944111', program: 'SUNOIA Junior', term1Amount: 25000, term2Amount: 20000, totalAmount: 45000, netAmount: 45000 },
-  '4': { studentName: 'Dnyanda Nandkishor Bawane', uin: 'SLPL3201/0014/2027', fatherName: 'Nandkishor Bawane', motherName: 'Sunita Bawane', fatherMobile: '9552407021', motherMobile: '9145460195', program: 'SUNOIA Junior', term1Amount: 25000, term2Amount: 20000, totalAmount: 45000, netAmount: 45000 },
-  '5': { studentName: 'Alfaz Baig Mirza', uin: 'SLPL3201/0023/2027', fatherName: 'Furhan Baig Mirza', motherName: 'Sultana Mirza', fatherMobile: '7721024102', motherMobile: '7400051112', program: 'SUNOIA Junior', term1Amount: 25000, term2Amount: 20000, totalAmount: 45000, netAmount: 45000 },
-  '6': { studentName: 'Rudransh Vaibhav Deshmukh', uin: 'SLPL3201/0068/2027', fatherName: 'Vaibhav Deshmukh', motherName: 'Megha Deshmukh', fatherMobile: '9673966580', motherMobile: '8208466635', program: 'SUNOIA Senior', term1Amount: 27000, term2Amount: 23000, totalAmount: 50000, netAmount: 50000 },
+  '1': { studentName: 'Gurvesh Ganesh Rathod', uin: 'SNK/3201/0001/2027', fatherName: 'Ganesh Rathod', motherName: 'Rekha Rathod', fatherMobile: '9822114455', motherMobile: '9822114456', program: 'Nursery', term1Amount: 15800, term2Amount: 8000, totalAmount: 23800, netAmount: 23800 },
+  '2': { studentName: 'Shourya Sachin Bhoyar', uin: 'SNK/3201/0002/2027', fatherName: 'Sachin Bhoyar', motherName: 'Savita Bhoyar', fatherMobile: '8149811545', motherMobile: '8999313214', program: 'SUNOIA Junior', term1Amount: 25000, term2Amount: 20000, totalAmount: 45000, netAmount: 45000 },
+  '3': { studentName: 'Aarohi Santosh Sonare', uin: 'SNK/3201/0003/2027', fatherName: 'Santosh Sonare', motherName: 'Kavita Sonare', fatherMobile: '9370005720', motherMobile: '9325944111', program: 'SUNOIA Junior', term1Amount: 25000, term2Amount: 20000, totalAmount: 45000, netAmount: 45000 },
+  '4': { studentName: 'Dnyanda Nandkishor Bawane', uin: 'SNK/3201/0004/2027', fatherName: 'Nandkishor Bawane', motherName: 'Sunita Bawane', fatherMobile: '9552407021', motherMobile: '9145460195', program: 'SUNOIA Junior', term1Amount: 25000, term2Amount: 20000, totalAmount: 45000, netAmount: 45000 },
+  '5': { studentName: 'Alfaz Baig Mirza', uin: 'SNK/3201/0005/2027', fatherName: 'Furhan Baig Mirza', motherName: 'Sultana Mirza', fatherMobile: '7721024102', motherMobile: '7400051112', program: 'SUNOIA Junior', term1Amount: 25000, term2Amount: 20000, totalAmount: 45000, netAmount: 45000 },
+  '6': { studentName: 'Rudransh Vaibhav Deshmukh', uin: 'SNK/3201/0006/2027', fatherName: 'Vaibhav Deshmukh', motherName: 'Megha Deshmukh', fatherMobile: '9673966580', motherMobile: '8208466635', program: 'SUNOIA Senior', term1Amount: 27000, term2Amount: 23000, totalAmount: 50000, netAmount: 50000 },
 };
 
 export default function AdvanceReceiptFormPage() {
@@ -80,7 +80,7 @@ export default function AdvanceReceiptFormPage() {
         const d = res.data.data;
         const invoice = d.invoices?.[0];
         const uin = d.student?.uin || 'N/A';
-        const invoiceNumber = invoice?.invoiceNumber || (uin !== 'N/A' ? `EK/3201/${uin.replace(/[^0-9]/g, '').slice(-4) || '0002'}/2027` : 'Not Generated');
+        const invoiceNumber = invoice?.invoiceNumber || (uin !== 'N/A' ? (uin.startsWith('SNK/') ? uin : `SNK/3201/${uin.replace(/[^0-9]/g, '').slice(-4) || '0001'}/2027`) : 'Not Generated');
 
         const rawReceipts: any[] = d.receipts || [];
         const mappedReceipts: ReceiptRow[] = rawReceipts.map((r: any) => {
@@ -148,17 +148,17 @@ export default function AdvanceReceiptFormPage() {
           motherName: d.student?.parent?.motherName || 'Rekha Rathod',
           fatherMobile: d.student?.parent?.fatherMobile || '9822114455',
           motherMobile: d.student?.parent?.motherMobile || '9822114456',
-          email: d.student?.parent?.fatherEmail || d.student?.parent?.motherEmail || 'parent@eurokids.com',
+          email: d.student?.parent?.fatherEmail || d.student?.parent?.motherEmail || 'parent@sunoiakids.com',
           address: d.student?.address || 'Dhule',
           academicYear: d.academicYear?.label || 'Apr 26 - Mar 27',
-          franchisee: d.school?.name || 'EK-Dhule-Deopur',
+          franchisee: d.school?.name || 'SNK - Dhule - Deopur',
         });
 
         setReceipts(mappedReceipts);
       }
     } catch {
       const fallback = DUMMY_FALLBACK_ADMISSIONS[admissionId || '1'] || DUMMY_FALLBACK_ADMISSIONS['1'];
-      const uin = fallback.uin || 'EK/3201/0002/2027';
+      const uin = fallback.uin || 'SNK/3201/0001/2027';
       const term1Amount = fallback.term1Amount || 15800;
       const term2Amount = fallback.term2Amount || 8000;
       const totalAmount = term1Amount + term2Amount;
@@ -170,7 +170,7 @@ export default function AdvanceReceiptFormPage() {
         studentName: fallback.studentName || 'Gurvesh Ganesh Rathod',
         program: fallback.program || 'Nursery',
         uin,
-        invoiceNumber: uin.startsWith('EK/') ? uin : `EK/3201/0002/2027`,
+        invoiceNumber: uin.startsWith('SNK/') ? uin : `SNK/3201/0001/2027`,
         invoiceId: 'inv-1',
         invoiceStatus: 'GENERATED',
         term1Amount,
@@ -282,7 +282,7 @@ function MainView({
       showToast('Please enter a valid Online Amount', 'error');
       return;
     }
-    const link = `https://pay.eurokidsindia.com/pay?inv=${encodeURIComponent(data.invoiceNumber)}&amt=${onlineAmount}`;
+    const link = `https://pay.sunoiakids.com/pay?inv=${encodeURIComponent(data.invoiceNumber)}&amt=${onlineAmount}`;
     navigator.clipboard?.writeText(link);
     showToast(`Payment link for ₹${onlineAmount} generated & copied to clipboard!`, 'success');
   };

@@ -39,7 +39,7 @@ const feeRateCards = [
     ],
   },
   {
-    program: 'Euro Junior',
+    program: 'Junior',
     status: 'HO Approved',
     fees: [
       { type: 'Registration Fee', term1: 5000, term2: 0, total: 5000 },
@@ -49,7 +49,7 @@ const feeRateCards = [
     ],
   },
   {
-    program: 'Euro Senior',
+    program: 'Senior',
     status: 'HO Approved',
     fees: [
       { type: 'Registration Fee', term1: 5000, term2: 0, total: 5000 },
@@ -83,38 +83,38 @@ function FeeRateAccordion({ card }: { card: typeof feeRateCards[0] }) {
         </div>
         <span className="text-sm font-bold text-success">{formatCurrency(total)}</span>
       </button>
-        {open && (
-          <div
-            className="overflow-hidden"
-          >
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/30">
-                  <TableHead>Fee Type</TableHead>
-                  <TableHead className="text-right">Term 1</TableHead>
-                  <TableHead className="text-right">Term 2</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
+      {open && (
+        <div
+          className="overflow-hidden"
+        >
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/30">
+                <TableHead>Fee Type</TableHead>
+                <TableHead className="text-right">Term 1</TableHead>
+                <TableHead className="text-right">Term 2</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {card.fees.map((fee) => (
+                <TableRow key={fee.type}>
+                  <TableCell className="font-medium text-sm">{fee.type}</TableCell>
+                  <TableCell className="text-right font-mono text-sm">{formatCurrency(fee.term1)}</TableCell>
+                  <TableCell className="text-right font-mono text-sm">{formatCurrency(fee.term2)}</TableCell>
+                  <TableCell className="text-right font-mono text-sm font-semibold">{formatCurrency(fee.total)}</TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {card.fees.map((fee) => (
-                  <TableRow key={fee.type}>
-                    <TableCell className="font-medium text-sm">{fee.type}</TableCell>
-                    <TableCell className="text-right font-mono text-sm">{formatCurrency(fee.term1)}</TableCell>
-                    <TableCell className="text-right font-mono text-sm">{formatCurrency(fee.term2)}</TableCell>
-                    <TableCell className="text-right font-mono text-sm font-semibold">{formatCurrency(fee.total)}</TableCell>
-                  </TableRow>
-                ))}
-                <TableRow className="bg-muted/20 font-bold">
-                  <TableCell>Total</TableCell>
-                  <TableCell className="text-right font-mono">{formatCurrency(card.fees.reduce((s, f) => s + f.term1, 0))}</TableCell>
-                  <TableCell className="text-right font-mono">{formatCurrency(card.fees.reduce((s, f) => s + f.term2, 0))}</TableCell>
-                  <TableCell className="text-right font-mono text-primary">{formatCurrency(total)}</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </div>
-        )}
+              ))}
+              <TableRow className="bg-muted/20 font-bold">
+                <TableCell>Total</TableCell>
+                <TableCell className="text-right font-mono">{formatCurrency(card.fees.reduce((s, f) => s + f.term1, 0))}</TableCell>
+                <TableCell className="text-right font-mono">{formatCurrency(card.fees.reduce((s, f) => s + f.term2, 0))}</TableCell>
+                <TableCell className="text-right font-mono text-primary">{formatCurrency(total)}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 }
@@ -261,7 +261,7 @@ export default function DashboardPage() {
                   </TableBody>
                 </Table>
               ) : (
-                 <div className="p-8 text-center text-muted-foreground text-sm">No recent admissions to show</div>
+                <div className="p-8 text-center text-muted-foreground text-sm">No recent admissions to show</div>
               )}
             </CardContent>
           </Card>
@@ -310,7 +310,7 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-               {data?.recentEnquiries?.length > 0 ? (
+              {data?.recentEnquiries?.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/10">
@@ -329,9 +329,9 @@ export default function DashboardPage() {
                     ))}
                   </TableBody>
                 </Table>
-               ) : (
-                 <div className="p-8 text-center text-muted-foreground text-sm">No recent enquiries</div>
-               )}
+              ) : (
+                <div className="p-8 text-center text-muted-foreground text-sm">No recent enquiries</div>
+              )}
             </CardContent>
           </Card>
         </div>

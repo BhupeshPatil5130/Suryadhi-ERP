@@ -69,7 +69,7 @@ export default function AdmissionCountReportPage() {
       'Program Name': r.programName,
       'Admission Count': r.admissionCount,
       'Month': selectedMonth,
-      'Center': 'SK-Dhule-Deopur'
+      'Center': 'SNK - Dhule - Deopur'
     }));
     downloadAsCSV(exportRows, `Admission_Count_${selectedMonth.replace(' ', '_')}`);
   };
@@ -90,7 +90,7 @@ export default function AdmissionCountReportPage() {
                  Admission Count as per Sunoiakids
               </CardTitle>
               <p className="text-xs text-slate-500 mt-0.5">
-                Center: <span className="font-semibold text-blue-700">SK-Dhule-Deopur</span>
+                Center: <span className="font-semibold text-blue-700">SNK - Dhule - Deopur</span>
               </p>
             </div>
 

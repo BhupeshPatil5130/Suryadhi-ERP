@@ -67,8 +67,8 @@ const ORDER_TYPES = [
 const PROGRAM_OPTIONS = [
   'Play Group',
   'Nursery',
-  'Euro Junior',
-  'Euro Senior',
+  'SUNOIA Junior',
+  'SUNOIA Senior',
   'All Programs',
 ];
 
@@ -116,7 +116,7 @@ const initialPOs: PurchaseOrder[] = [
     deliveryDate: '2026-06-08',
     noOfBoxes: 12,
     supplier: 'Suryadhi Central Supply HQ',
-    program: 'Euro Junior',
+    program: 'SUNOIA Junior',
     remarks: 'Delivered in good condition',
     depositReceiptNo: 'DEP-2026-0038',
     depositAmount: 125000,
@@ -191,7 +191,7 @@ const initialPOs: PurchaseOrder[] = [
     deliveryDate: '—',
     noOfBoxes: 8,
     supplier: 'Suryadhi Garments Division',
-    program: 'Euro Senior',
+    program: 'SUNOIA Senior',
     remarks: 'Winter coats and sweaters batch',
     depositReceiptNo: 'DEP-2026-0051',
     depositAmount: 85000,
@@ -242,7 +242,7 @@ export default function PurchaseOrderPage() {
   const [viewDepositModal, setViewDepositModal] = useState<PurchaseOrder | null>(null);
 
   // Franchise Details
-  const franchiseCode = 'SK-Dhule-Deopur';
+  const franchiseCode = 'SNK - Dhule - Deopur';
   const franchiseName = 'Suryadhi Preschool - Deopur Center';
   const franchiseAddress = 'Plot No. 14, Near Deopur Chowk, Dhule, Maharashtra - 424002';
 
@@ -271,7 +271,7 @@ export default function PurchaseOrderPage() {
               deliveryDate: p.deliveredAt ? new Date(p.deliveredAt).toISOString().split('T')[0] : '—',
               noOfBoxes: Number(meta.noOfBoxes || 4),
               supplier: meta.supplier || 'Suryadhi Central Supply HQ',
-              program: meta.program || 'Euro Junior',
+              program: meta.program || 'SUNOIA Junior',
               remarks: p.notes || meta.remarks || '',
               depositReceiptNo: meta.depositReceiptNo || `DEP-2026-${(idx + 40).toString().padStart(4, '0')}`,
               depositAmount: Number(meta.depositAmount || p.totalAmount || 0),

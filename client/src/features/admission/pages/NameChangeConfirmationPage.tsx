@@ -27,7 +27,8 @@ export default function NameChangeConfirmationPage() {
   const [programs, setPrograms] = useState<ProgramRow[]>([
     { id: '1', name: 'Play Group', confirmed: false },
     { id: '2', name: 'Nursery', confirmed: false },
-    { id: '3', name: 'Euro Junior', confirmed: false },
+    { id: '3', name: 'SUNOIA Junior', confirmed: false },
+    { id: '4', name: 'SUNOIA Senior', confirmed: false },
   ]);
 
   const [students, setStudents] = useState<StudentRecord[]>([]);
@@ -51,8 +52,8 @@ export default function NameChangeConfirmationPage() {
         if (adm) {
           const student = adm.student || {};
           const fullName = [student.firstName, student.middleName, student.lastName].filter(Boolean).join(' ') || adm.name || 'Student';
-          const progName = adm.program?.name || adm.programName || 'Euro Junior';
-          const uinVal = student.uin || adm.uin || 'SLPL3201/0071/2027';
+          const progName = adm.program?.name || adm.programName || 'SUNOIA Junior';
+          const uinVal = student.uin || adm.uin || 'SNK/3201/0001/2027';
           const admDate = adm.admissionDate 
             ? new Date(adm.admissionDate).toLocaleDateString('en-GB').replace(/\//g, '-')
             : '01-04-2026';

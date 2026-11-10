@@ -18,15 +18,15 @@ interface EnquiryReportRow {
 }
 
 const dummyEnquiryReportData: EnquiryReportRow[] = [
-  { id: '1', regionName: 'West', franchiseeCode: 'SK-Dhule-Deopur', programName: 'Sunoia Senior', converted: 8, notConverted: 2, total: 10 },
-  { id: '2', regionName: 'West', franchiseeCode: 'SK-Dhule-Deopur', programName: 'Sunoia Junior', converted: 18, notConverted: 7, total: 25 },
-  { id: '3', regionName: 'West', franchiseeCode: 'SK-Dhule-Deopur', programName: 'Nursery', converted: 9, notConverted: 2, total: 11 },
-  { id: '4', regionName: 'West', franchiseeCode: 'SK-Dhule-Deopur', programName: 'Play Group', converted: 12, notConverted: 3, total: 15 },
+  { id: '1', regionName: 'West', franchiseeCode: 'SNK - Dhule - Deopur', programName: 'Sunoia Senior', converted: 8, notConverted: 2, total: 10 },
+  { id: '2', regionName: 'West', franchiseeCode: 'SNK - Dhule - Deopur', programName: 'Sunoia Junior', converted: 18, notConverted: 7, total: 25 },
+  { id: '3', regionName: 'West', franchiseeCode: 'SNK - Dhule - Deopur', programName: 'Nursery', converted: 9, notConverted: 2, total: 11 },
+  { id: '4', regionName: 'West', franchiseeCode: 'SNK - Dhule - Deopur', programName: 'Play Group', converted: 12, notConverted: 3, total: 15 },
 ];
 
 export default function EnquiryDetailsReportPage() {
   const [data] = useState<EnquiryReportRow[]>(dummyEnquiryReportData);
-  const franchisee = 'SK-Dhule-Deopur';
+  const franchisee = 'SNK - Dhule - Deopur';
 
   const handleExport = (format: 'word' | 'excel' | 'powerpoint' | 'pdf') => {
     const exportData = data.map(d => ({

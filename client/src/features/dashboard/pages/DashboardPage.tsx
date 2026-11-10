@@ -38,7 +38,7 @@ const feeRateCards = [
     ],
   },
   {
-    program: 'Euro Junior',
+    program: 'Sunoia  Junior',
     status: 'HO Approved',
     fees: [
       { type: 'Registration Fee', term1: 5000, term2: 0, total: 5000 },
@@ -48,7 +48,7 @@ const feeRateCards = [
     ],
   },
   {
-    program: 'Euro Senior',
+    program: 'Sunoia  Senior',
     status: 'HO Approved',
     fees: [
       { type: 'Registration Fee', term1: 5000, term2: 0, total: 5000 },
