@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { FileEdit, Eye, FileText, Forward, X, Plane, Pen, Coins } from 'lucide-react';
+import { FileEdit, Eye, ReceiptText, FileText, Forward, X, Plane, Pen, Coins } from 'lucide-react';
 
 interface AdmissionActionButtonsProps {
   id: string;
@@ -36,19 +36,33 @@ export default function AdmissionActionButtons({ id }: AdmissionActionButtonsPro
           </Tooltip>
         </div>
 
-        {/* Row 2: Invoice | Graduate To */}
+        {/* Row 2: Add Receipt | Invoice */}
         <div className="flex items-center justify-between relative">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Link to={`/admissions/${id}/receipt`}>
+              <Link to={`/admissions/${id}/receipt?tab=new`}>
+                <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Add Receipt">
+                  <ReceiptText className="h-[14px] w-[14px] text-emerald-700 stroke-[2.5]" />
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="top"><p className="text-xs">Add Receipt</p></TooltipContent>
+          </Tooltip>
+          <div className="w-[1px] h-[14px] bg-slate-300"></div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link to={`/admissions/${id}/invoice`}>
                 <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Invoice">
-                  <FileText className="h-[14px] w-[14px] text-emerald-700 stroke-[2.5]" />
+                  <FileText className="h-[14px] w-[14px] text-blue-800 stroke-[2.5]" />
                 </Button>
               </Link>
             </TooltipTrigger>
             <TooltipContent side="top"><p className="text-xs">Invoice</p></TooltipContent>
           </Tooltip>
-          <div className="w-[1px] h-[14px] bg-slate-300"></div>
+        </div>
+
+        {/* Row 3: Graduate To | Quit Admission */}
+        <div className="flex items-center justify-between relative">
           <Tooltip>
             <TooltipTrigger asChild>
               <Link to={`/graduation?admissionId=${id}`}>
@@ -59,10 +73,7 @@ export default function AdmissionActionButtons({ id }: AdmissionActionButtonsPro
             </TooltipTrigger>
             <TooltipContent side="top"><p className="text-xs">Graduate To</p></TooltipContent>
           </Tooltip>
-        </div>
-
-        {/* Row 3: Quit Admission | Transfer Out */}
-        <div className="flex items-center justify-between relative">
+          <div className="w-[1px] h-[14px] bg-slate-300"></div>
           <Tooltip>
             <TooltipTrigger asChild>
               <Link to={`/quit-admission?admissionId=${id}`}>
@@ -73,7 +84,10 @@ export default function AdmissionActionButtons({ id }: AdmissionActionButtonsPro
             </TooltipTrigger>
             <TooltipContent side="top"><p className="text-xs">Quit Admission</p></TooltipContent>
           </Tooltip>
-          <div className="w-[1px] h-[14px] bg-slate-300"></div>
+        </div>
+
+        {/* Row 4: Transfer Out | Name/DOB Change */}
+        <div className="flex items-center justify-between relative">
           <Tooltip>
             <TooltipTrigger asChild>
               <Link to={`/transfer-out?admissionId=${id}`}>
@@ -84,10 +98,7 @@ export default function AdmissionActionButtons({ id }: AdmissionActionButtonsPro
             </TooltipTrigger>
             <TooltipContent side="top"><p className="text-xs">Transfer Out</p></TooltipContent>
           </Tooltip>
-        </div>
-
-        {/* Row 4: Name/DOB Change | Royalty Action Button */}
-        <div className="flex items-center justify-between relative">
+          <div className="w-[1px] h-[14px] bg-slate-300"></div>
           <Tooltip>
             <TooltipTrigger asChild>
               <Link to={`/name-change?admissionId=${id}`}>
@@ -98,7 +109,10 @@ export default function AdmissionActionButtons({ id }: AdmissionActionButtonsPro
             </TooltipTrigger>
             <TooltipContent side="top"><p className="text-xs">Name/DOB Change</p></TooltipContent>
           </Tooltip>
-          <div className="w-[1px] h-[14px] bg-slate-300"></div>
+        </div>
+
+        {/* Row 5: Royalty Action Button */}
+        <div className="flex items-center relative">
           <Tooltip>
             <TooltipTrigger asChild>
               <Link to={`/franchisee/royalty-forecast?admissionId=${id}`}>

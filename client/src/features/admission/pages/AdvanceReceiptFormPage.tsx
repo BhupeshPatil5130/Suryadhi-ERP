@@ -5,7 +5,7 @@ import api from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Loader2, Printer, Mail, Link as LinkIcon, Pencil, Eye, Trash2, X } from 'lucide-react';
+import { Search, Loader2, Printer, Mail, Link as LinkIcon, Pencil, Eye, Trash2, X, FileText } from 'lucide-react';
 import { showToast } from '@/lib/toast';
 import ReceiptDetailsViewer, {
   buildReceiptPrintHtml,
@@ -949,6 +949,7 @@ function MainView({
   onBack: () => void;
   onRefresh: () => void;
 }) {
+  const navigate = useNavigate();
   const [onlineAmount, setOnlineAmount] = useState('');
   const [posAmount, setPosAmount] = useState('');
   const [selectedReceiptForModal, setSelectedReceiptForModal] = useState<ReceiptRow | null>(null);
@@ -1013,7 +1014,28 @@ function MainView({
   return (
     <div className="space-y-4">
       {/* Header */}
-      <h1 className="text-[22px] font-normal text-slate-800">View Receipt</h1>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h1 className="text-[22px] font-normal text-slate-800">View Receipt</h1>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate(`/admissions/${admissionId}/invoice`)}
+            className="h-8 text-xs border-blue-500 text-blue-700 hover:bg-blue-50 flex items-center gap-1.5 font-medium bg-white"
+          >
+            <FileText className="w-3.5 h-3.5 text-blue-600" />
+            <span>View Invoice</span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onBack}
+            className="h-8 text-xs bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700"
+          >
+            Back
+          </Button>
+        </div>
+      </div>
 
       {/* Card 1: ≡ View Receipts */}
       <div className="bg-white border border-slate-300 shadow-sm rounded-t-sm">
@@ -1111,7 +1133,14 @@ function MainView({
             <span>≡ Receipts</span>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Button
+              type="button"
+              onClick={() => navigate(`/admissions/${admissionId}/invoice`)}
+              className="bg-[#28a745] hover:bg-[#218838] text-white text-xs h-7 px-3 rounded shadow-none font-medium flex items-center gap-1"
+            >
+              <FileText className="h-3 w-3" /> View Invoice
+            </Button>
             <Button
               type="button"
               onClick={() => onNavigate('status')}

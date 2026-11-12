@@ -27,6 +27,7 @@ const LSQEnquiryDetailsPage = lazy(() => import('@/features/enquiry/pages/LSQEnq
 const AdmissionListPage = lazy(() => import('@/features/admission/pages/AdmissionListPage'));
 const UpdateAdmissionPage = lazy(() => import('@/features/admission/pages/UpdateAdmissionPage'));
 const AdvanceReceiptFormPage = lazy(() => import('@/features/admission/pages/AdvanceReceiptFormPage'));
+const StudentInvoicePage = lazy(() => import('@/features/admission/pages/StudentInvoicePage'));
 const QuitStudentPage = lazy(() => import('@/features/admission/pages/QuitStudentPage'));
 const TransferRequestPage = lazy(() => import('@/features/admission/pages/TransferRequestPage'));
 const TransferInPage = lazy(() => import('@/features/admission/pages/TransferInPage'));
@@ -136,6 +137,11 @@ export default function AppRoutes() {
           <Route path={PATHS.ADMISSION.EDIT()} element={<UpdateAdmissionPage />} />
           <Route path={PATHS.ADMISSION.RECEIPT()} element={<AdvanceReceiptFormPage />} />
           <Route path={PATHS.ADMISSION.VIEW_RECEIPT} element={<PrintReceiptPage />} />
+          <Route path="/admissions/:id/invoice" element={<StudentInvoicePage />} />
+          <Route path="/admissions/invoice/:id" element={<StudentInvoicePage />} />
+          <Route path="/admission/:id/invoice" element={<StudentInvoicePage />} />
+          <Route path="/invoice/:id" element={<StudentInvoicePage />} />
+          <Route path="/invoice" element={<StudentInvoicePage />} />
           <Route path="/graduation" element={<NameChangeConfirmationPage />} />
           <Route path={PATHS.GRADUATION.ROOT} element={<NameChangeConfirmationPage />} />
           <Route path={PATHS.GRADUATION.HOMEBUDDY} element={<GraduationHomebuddyPage />} />
