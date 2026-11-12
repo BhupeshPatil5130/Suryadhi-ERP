@@ -9,10 +9,10 @@ router.use(schoolScope);
 // GET /api/quit/list - Get quit records
 router.get('/list', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const schoolId = req.user!.schoolId!;
+    const schoolId = req.user?.schoolId;
     const { from, to } = req.query;
 
-    const where: any = { admission: { schoolId } };
+    const where: any = schoolId ? { admission: { schoolId } } : {};
     if (from || to) {
       where.quitDate = {};
       if (from) where.quitDate.gte = new Date(from as string);
@@ -24,7 +24,16 @@ router.get('/list', async (req: Request, res: Response, next: NextFunction) => {
       include: {
         admission: {
           include: {
-            student: { select: { firstName: true, lastName: true, uin: true, dateOfBirth: true } },
+            student: {
+              select: {
+                firstName: true,
+                lastName: true,
+                uin: true,
+                dateOfBirth: true,
+                parent: { select: { fatherName: true, motherName: true, fatherMobile: true } },
+              },
+            },
+            batch: { select: { timeSlot: true } },
             program: { select: { name: true, shortName: true } },
           },
         },

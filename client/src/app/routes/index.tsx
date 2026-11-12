@@ -144,7 +144,13 @@ export default function AppRoutes() {
           <Route path={PATHS.TRANSFERS.MANAGE_STAGE} element={<ManageTransferStagePage />} />
           <Route path={PATHS.TRANSFERS.REQUESTS} element={<SchoolTransferRequestsPage />} />
           <Route path={PATHS.QUIT.ADMISSION} element={<QuitStudentPage />} />
-          <Route path={PATHS.QUIT.MANAGE} element={<ManageQuitAdmissionPage />} />
+          <Route path="/quit" element={<QuitStudentPage />} />
+          <Route path="/quit-admission" element={<QuitStudentPage />} />
+          <Route path="/admission/quit" element={<QuitStudentPage />} />
+          <Route path="/admissions/quit" element={<QuitStudentPage />} />
+          <Route path="/Admission/ShowAllQuit" element={<QuitStudentPage />} />
+          <Route path="/show-all-quit" element={<QuitStudentPage />} />
+          <Route path={PATHS.QUIT.MANAGE} element={<QuitStudentPage />} />
           <Route path={PATHS.TRANSFERS.OUT} element={<TransferOutPage />} />
           <Route path="/transfers/out" element={<TransferOutPage />} />
           <Route path={PATHS.NAME_CHANGE.REQUEST} element={<NameDobChangePage />} />
@@ -191,6 +197,9 @@ export default function AppRoutes() {
           {/* Franchisee */}
           <Route path={PATHS.FRANCHISEE.INVOICES} element={<ViewInvoicePage />} />
           <Route path={PATHS.FRANCHISEE.ROYALTY_FORECAST} element={<StudentForecastedRoyaltyPage />} />
+          <Route path="/franchisee/student-forecasted-royalty" element={<StudentForecastedRoyaltyPage />} />
+          <Route path="/royalty-forecast" element={<StudentForecastedRoyaltyPage />} />
+          <Route path="/royalty" element={<StudentForecastedRoyaltyPage />} />
           <Route path={PATHS.FRANCHISEE.INVOICE_DOWNLOAD} element={<InvoiceDownloadPage />} />
           <Route path={PATHS.FRANCHISEE.RECEIPT_DOWNLOAD} element={<ReceiptDownloadPage />} />
           <Route path={PATHS.FRANCHISEE.COACH_LIST} element={<CoachListPage />} />
