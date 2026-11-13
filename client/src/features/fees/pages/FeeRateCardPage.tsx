@@ -8,17 +8,17 @@ import { apiDownload } from '@/lib/downloadUtils';
 interface FeeStructure {
   program: string;
   regFee: number;
-  termFee: number;
   tuitionFee: number;
-  uniform: number;
+  homeSunnyAppFee: number;
+  uniforms: number;
   total: number;
 }
 
 const APPROVED_FEE_RATES: FeeStructure[] = [
-  { program: 'Play Group', regFee: 6950, termFee: 5900, tuitionFee: 9500, uniform: 1500, total: 23850 },
-  { program: 'Nursery', regFee: 7500, termFee: 6500, tuitionFee: 11000, uniform: 1500, total: 26500 },
-  { program: 'Sunoia Junior', regFee: 8000, termFee: 7000, tuitionFee: 12500, uniform: 1500, total: 29000 },
-  { program: 'Sunoia Senior', regFee: 8500, termFee: 7500, tuitionFee: 14000, uniform: 1500, total: 31500 },
+  { program: 'Play Group', regFee: 6950, tuitionFee: 9500, homeSunnyAppFee: 5900, uniforms: 1500, total: 23850 },
+  { program: 'Nursery', regFee: 7500, tuitionFee: 11000, homeSunnyAppFee: 6500, uniforms: 1500, total: 26500 },
+  { program: 'Sunoia Junior', regFee: 8000, tuitionFee: 12500, homeSunnyAppFee: 7000, uniforms: 1500, total: 29000 },
+  { program: 'Sunoia Senior', regFee: 8500, tuitionFee: 14000, homeSunnyAppFee: 7500, uniforms: 1500, total: 31500 },
 ];
 
 export default function FeeRateCardPage() {
@@ -60,9 +60,9 @@ export default function FeeRateCardPage() {
               rates.map(r => ({
                 'Program': r.program,
                 'Registration Fee': r.regFee,
-                'Term Fee': r.termFee,
-                'Tuition Fees': r.tuitionFee,
-                'Uniform': r.uniform,
+                'Tuition Fee': r.tuitionFee,
+                'HomeSunny App Fee': r.homeSunnyAppFee,
+                'Uniforms': r.uniforms,
                 'Total': r.total,
               })),
               'fee-rate-card'
@@ -86,6 +86,10 @@ export default function FeeRateCardPage() {
                   <span>Reg: {formatCurrency(r.regFee)}</span>
                   <span>Tuition: {formatCurrency(r.tuitionFee)}</span>
                 </div>
+                <div className="text-[11px] text-slate-500 flex justify-between">
+                  <span>HomeSunny: {formatCurrency(r.homeSunnyAppFee)}</span>
+                  <span>Uniforms: {formatCurrency(r.uniforms)}</span>
+                </div>
                 <div className="mt-2 h-1 w-full rounded" style={{ backgroundColor: colors[idx % colors.length] }}></div>
               </CardContent>
             </Card>
@@ -107,9 +111,9 @@ export default function FeeRateCardPage() {
               <tr className="bg-[#f9f9f9]">
                 <th className="p-2.5 border border-[#ccc] font-bold text-[#333]">Program</th>
                 <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Registration Fee</th>
-                <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Term Fee</th>
-                <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Tuition Fees</th>
-                <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Uniform</th>
+                <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Tuition Fee</th>
+                <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">HomeSunny App Fee</th>
+                <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Uniforms</th>
                 <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Total</th>
               </tr>
             </thead>
@@ -118,9 +122,9 @@ export default function FeeRateCardPage() {
                 <tr key={row.program} className="hover:bg-slate-50">
                   <td className="p-2.5 border border-[#ccc] font-semibold text-slate-800">{row.program}</td>
                   <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.regFee)}</td>
-                  <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.termFee)}</td>
                   <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.tuitionFee)}</td>
-                  <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.uniform)}</td>
+                  <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.homeSunnyAppFee)}</td>
+                  <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.uniforms)}</td>
                   <td className="p-2.5 border border-[#ccc] text-right font-mono font-bold text-[#0056b3]">{formatCurrency(row.total)}</td>
                 </tr>
               ))}
