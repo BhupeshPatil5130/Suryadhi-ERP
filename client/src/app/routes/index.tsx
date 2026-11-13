@@ -124,19 +124,32 @@ export default function AppRoutes() {
 
           {/* Enquiry */}
           <Route path={PATHS.ENQUIRY.LIST} element={<EnquiryListPage />} />
+          <Route path="/enquiries" element={<EnquiryListPage />} />
           <Route path={PATHS.ENQUIRY.CREATE} element={<CreateEnquiryPage />} />
           <Route path={PATHS.ENQUIRY.EDIT()} element={<UpdateEnquiryPage />} />
+          <Route path="/enquiries/:id/edit" element={<UpdateEnquiryPage />} />
           <Route path={PATHS.ENQUIRY.FOLLOW_UP()} element={<EnquiryFollowUpPage />} />
+          <Route path="/enquiries/:id/follow-up" element={<EnquiryFollowUpPage />} />
           <Route path={PATHS.ENQUIRY.CONVERT()} element={<ConvertToAdmissionPage />} />
+          <Route path="/enquiries/:id/convert" element={<ConvertToAdmissionPage />} />
           <Route path={PATHS.ENQUIRY.RECEIPTS()} element={<ViewReceiptPage />} />
+          <Route path="/enquiries/:id/receipts" element={<ViewReceiptPage />} />
           <Route path={PATHS.ENQUIRY.ADD_RECEIPT()} element={<EnquiryAddReceiptPage />} />
+          <Route path="/enquiries/:id/receipts/add" element={<EnquiryAddReceiptPage />} />
           <Route path={PATHS.ENQUIRY.LSQ} element={<LSQEnquiryDetailsPage />} />
 
           {/* Admission */}
           <Route path={PATHS.ADMISSION.LIST} element={<AdmissionListPage />} />
+          <Route path="/admissions" element={<AdmissionListPage />} />
           <Route path={PATHS.ADMISSION.EDIT()} element={<UpdateAdmissionPage />} />
+          <Route path="/admission/:id/edit" element={<UpdateAdmissionPage />} />
           <Route path={PATHS.ADMISSION.RECEIPT()} element={<AdvanceReceiptFormPage />} />
+          <Route path="/admission/:id/receipt" element={<AdvanceReceiptFormPage />} />
+          <Route path="/admissions/:id/receipts" element={<AdvanceReceiptFormPage />} />
+          <Route path="/admission/:id/receipts" element={<AdvanceReceiptFormPage />} />
           <Route path={PATHS.ADMISSION.VIEW_RECEIPT} element={<PrintReceiptPage />} />
+          <Route path="/admission/view-receipt" element={<PrintReceiptPage />} />
+          <Route path="/admissions/view-receipt" element={<PrintReceiptPage />} />
           <Route path="/admissions/:id/invoice" element={<StudentInvoicePage />} />
           <Route path="/admissions/invoice/:id" element={<StudentInvoicePage />} />
           <Route path="/admission/:id/invoice" element={<StudentInvoicePage />} />
@@ -146,6 +159,7 @@ export default function AppRoutes() {
           <Route path={PATHS.GRADUATION.ROOT} element={<NameChangeConfirmationPage />} />
           <Route path={PATHS.GRADUATION.HOMEBUDDY} element={<GraduationHomebuddyPage />} />
           <Route path={PATHS.TRANSFERS.IN} element={<TransferInPage />} />
+          <Route path="/transfer/in" element={<TransferInPage />} />
           <Route path={PATHS.TRANSFERS.MANAGE} element={<TransferInPage />} />
           <Route path={PATHS.TRANSFERS.MANAGE_STAGE} element={<ManageTransferStagePage />} />
           <Route path={PATHS.TRANSFERS.REQUESTS} element={<SchoolTransferRequestsPage />} />
@@ -162,9 +176,14 @@ export default function AppRoutes() {
           <Route path="/Admission/ShowAllQuit" element={<QuitStudentPage />} />
           <Route path="/show-all-quit" element={<QuitStudentPage />} />
           <Route path={PATHS.QUIT.MANAGE} element={<QuitStudentPage />} />
+          <Route path="/quit-admission-manage" element={<QuitStudentPage />} />
           <Route path={PATHS.TRANSFERS.OUT} element={<TransferOutPage />} />
+          <Route path="/transfer-out" element={<TransferOutPage />} />
+          <Route path="/transfer/out" element={<TransferOutPage />} />
           <Route path="/transfers/out" element={<TransferOutPage />} />
           <Route path={PATHS.NAME_CHANGE.REQUEST} element={<NameDobChangePage />} />
+          <Route path="/name-change" element={<NameDobChangePage />} />
+          <Route path="/name-dob-change" element={<NameDobChangePage />} />
           <Route path={PATHS.NAME_CHANGE.CONFIRM} element={<NameChangeConfirmationPage />} />
           <Route path={PATHS.ENROLLMENT.INVENTORY} element={<InventoryDetailsPage />} />
 
@@ -172,6 +191,7 @@ export default function AppRoutes() {
           <Route path={PATHS.ENROLLMENT.SUMMARY} element={<EnrollmentSummaryPage />} />
           <Route path={PATHS.ENROLLMENT.SOURCE_WISE} element={<SourceWiseEnquiriesPage />} />
           <Route path={PATHS.ENROLLMENT.RETENTION_BASE} element={<RetentionBasePage />} />
+          <Route path="/enrollment/retention" element={<RetentionBasePage />} />
           <Route path={PATHS.ENROLLMENT.RETENTION_GROWTH} element={<RetentionGrowthPage />} />
           <Route path={PATHS.ENROLLMENT.NEW_BUSINESS} element={<NewAdmissionsGrowthPage />} />
 
@@ -209,6 +229,7 @@ export default function AppRoutes() {
           <Route path={PATHS.FRANCHISEE.INVOICES} element={<ViewInvoicePage />} />
           <Route path={PATHS.FRANCHISEE.ROYALTY_FORECAST} element={<StudentForecastedRoyaltyPage />} />
           <Route path="/franchisee/student-forecasted-royalty" element={<StudentForecastedRoyaltyPage />} />
+          <Route path="/franchisee/royalty" element={<StudentForecastedRoyaltyPage />} />
           <Route path="/royalty-forecast" element={<StudentForecastedRoyaltyPage />} />
           <Route path="/royalty" element={<StudentForecastedRoyaltyPage />} />
           <Route path={PATHS.FRANCHISEE.INVOICE_DOWNLOAD} element={<InvoiceDownloadPage />} />

@@ -102,7 +102,9 @@ export default function QuitStudentPage() {
   // Determine initial view mode
   const isShowAllPath =
     location.pathname.toLowerCase().includes('showallquit') ||
-    location.pathname.toLowerCase().includes('show-all-quit');
+    location.pathname.toLowerCase().includes('show-all-quit') ||
+    location.pathname.toLowerCase().includes('quit-admission-manage') ||
+    location.pathname.toLowerCase().includes('manage-quit');
   const [viewMode, setViewMode] = useState<'form' | 'list'>(
     isShowAllPath ? 'list' : urlAdmissionId ? 'form' : 'form'
   );
