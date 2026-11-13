@@ -152,8 +152,13 @@ export default function AppRoutes() {
           <Route path={PATHS.QUIT.ADMISSION} element={<QuitStudentPage />} />
           <Route path="/quit" element={<QuitStudentPage />} />
           <Route path="/quit-admission" element={<QuitStudentPage />} />
+          <Route path="/quit-student" element={<QuitStudentPage />} />
+          <Route path="/quit-student/:id" element={<QuitStudentPage />} />
+          <Route path="/quit/:admissionId" element={<QuitStudentPage />} />
           <Route path="/admission/quit" element={<QuitStudentPage />} />
+          <Route path="/admission/:id/quit" element={<QuitStudentPage />} />
           <Route path="/admissions/quit" element={<QuitStudentPage />} />
+          <Route path="/admissions/:id/quit" element={<QuitStudentPage />} />
           <Route path="/Admission/ShowAllQuit" element={<QuitStudentPage />} />
           <Route path="/show-all-quit" element={<QuitStudentPage />} />
           <Route path={PATHS.QUIT.MANAGE} element={<QuitStudentPage />} />
