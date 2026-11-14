@@ -90,24 +90,6 @@ const columns: ColumnDef<EnquiryData>[] = [
     cell: ({ row }) => <span className="text-sm">{row.original.lastContacted}</span>,
   },
   {
-    accessorKey: 'receivableAmount',
-    header: 'Receivable',
-    cell: ({ row }) => (
-      <span className="text-sm font-medium text-slate-700">
-        ₹{row.original.receivableAmount.toLocaleString('en-IN')}
-      </span>
-    ),
-  },
-  {
-    accessorKey: 'collectionAmount',
-    header: 'Collection',
-    cell: ({ row }) => (
-      <span className={`text-sm font-semibold ${row.original.collectionAmount > 0 ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
-        ₹{row.original.collectionAmount.toLocaleString('en-IN')}
-      </span>
-    ),
-  },
-  {
     id: 'actions',
     header: 'Action',
     enableSorting: false,
