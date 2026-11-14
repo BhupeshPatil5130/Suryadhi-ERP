@@ -354,26 +354,26 @@ function getFeeBreakdown(r: ReceiptRow) {
   }
   if (r.amount === 7000) {
     return [
-      { label: 'Registration Fee', amount: 4250 },
+      { label: 'Online Admission Form', amount: 4250 },
       { label: 'Term Fee', amount: 2750 },
     ];
   }
   if (r.amount === 15800) {
     return [
-      { label: 'Registration Fee', amount: 7800 },
+      { label: 'Online Admission Form', amount: 7800 },
       { label: 'Term Fee', amount: 8000 },
     ];
   }
   if (r.amount <= 10000) {
     const reg = Math.min(4250, Math.round(r.amount * 0.607));
     return [
-      { label: 'Registration Fee', amount: reg },
+      { label: 'Online Admission Form', amount: reg },
       { label: 'Term Fee', amount: r.amount - reg },
     ];
   }
   const reg = 7800;
   return [
-    { label: 'Registration Fee', amount: reg },
+    { label: 'Online Admission Form', amount: reg },
     { label: 'Term Fee', amount: r.amount - reg },
   ];
 }
@@ -1291,7 +1291,7 @@ function NewReceiptView({
   // Term 1 items: proportional to 15800 (Term Fee 3050, Reg Fee 7800, Tuition 4950)
   const term1Items = useMemo(() => [
     { type: 'Term Fee', receivable: 3050.00, received: 0.00, balance: 3050.00 },
-    { type: 'Registration Fee', receivable: 7800.00, received: 0.00, balance: 7800.00 },
+    { type: 'Online Admission Form', receivable: 7800.00, received: 0.00, balance: 7800.00 },
     { type: 'Tuition Fee', receivable: 4950.00, received: 0.00, balance: 4950.00 },
   ], []);
 

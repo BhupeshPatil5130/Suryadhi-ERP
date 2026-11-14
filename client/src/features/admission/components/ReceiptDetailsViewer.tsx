@@ -141,15 +141,15 @@ export function getFeeBreakdown(receipt: ReceiptItem): { label: string; amount: 
   const amt = receipt.amount || 0;
   const cat = (receipt.category || '').toLowerCase();
 
-  if (cat.includes('reg') || cat.includes('form') || cat.includes('admission')) {
-    return [{ label: 'Registration Fee', amount: amt }];
+  if (cat.includes('reg') || cat.includes('form') || cat.includes('admission') || cat.includes('online')) {
+    return [{ label: 'Online Admission Form', amount: amt }];
   }
   if (cat.includes('term 1') || cat.includes('first term')) {
     if (amt > 5000) {
       const reg = Math.min(amt * 0.6, 4250);
       const term = amt - reg;
       return [
-        { label: 'Registration Fee', amount: Math.round(reg) },
+        { label: 'Online Admission Form', amount: Math.round(reg) },
         { label: 'Term Fee', amount: Math.round(term) },
       ];
     }
@@ -164,7 +164,7 @@ export function getFeeBreakdown(receipt: ReceiptItem): { label: string; amount: 
     const reg = 4250;
     const term = amt - reg;
     return [
-      { label: 'Registration Fee', amount: reg },
+      { label: 'Online Admission Form', amount: reg },
       { label: 'Term Fee', amount: term },
     ];
   }
@@ -172,7 +172,7 @@ export function getFeeBreakdown(receipt: ReceiptItem): { label: string; amount: 
     const reg = Math.round(amt * 0.35);
     const term = amt - reg;
     return [
-      { label: 'Registration Fee', amount: reg },
+      { label: 'Online Admission Form', amount: reg },
       { label: 'Term Fee', amount: term },
     ];
   }
