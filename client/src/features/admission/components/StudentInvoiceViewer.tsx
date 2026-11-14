@@ -423,7 +423,7 @@ export default function StudentInvoiceViewer({
                 All fee once paid shall not be refunded under any circumtances.
               </li>
               <li>
-                Fees and other amount shall be paid in accordance with the fee structure issued and authorized by Lighthouse (The copy of which is available at the Lighthouse Preschool).
+                Fees and other amount shall be paid in accordance with the fee structure issued and authorized by Suryadhi (The copy of which is available at the Suryadhi Preschool).
               </li>
               <li>
                 Please ensure that you keep the fee receipts safely so that the same can be produced as and when required.

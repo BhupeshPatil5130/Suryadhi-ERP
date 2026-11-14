@@ -144,6 +144,9 @@ export function getFeeBreakdown(receipt: ReceiptItem): { label: string; amount: 
   if (cat.includes('reg') || cat.includes('form') || cat.includes('admission') || cat.includes('online')) {
     return [{ label: 'Online Admission Form', amount: amt }];
   }
+  if (amt <= 1000) {
+    return [{ label: 'Online Admission Form', amount: amt }];
+  }
   if (cat.includes('term 1') || cat.includes('first term')) {
     if (amt > 5000) {
       const reg = Math.min(amt * 0.6, 4250);
@@ -192,7 +195,7 @@ export function buildReceiptPrintHtml(r: ReceiptItem, data: AdmissionReceiptData
     .map(
       (row) => `
       <tr>
-        <td style="border:1.2px solid #333;padding:6px 10px;text-align:left;">${row.label}</td>
+        <td style="border:1.2px solid #333;padding:6px 10px;text-align:left;">${row.label.replace(/registration\s*fee/gi, 'Online Admission Form')}</td>
         <td style="border:1.2px solid #333;padding:6px 10px;text-align:right;font-family:monospace;">${row.amount}</td>
       </tr>`
     )
@@ -496,8 +499,8 @@ export function buildReceiptPrintHtml(r: ReceiptItem, data: AdmissionReceiptData
       <div class="terms-title">TERMS & CONDITIONS</div>
       <p>All payments shall be made strictly by a/c payee local cheque or demand draft only. NO CASH PAYMENTS SHALL BE ACCEPTED.</p>
       <p>All fee once paid shall not be refunded under any circumstances.</p>
-      <p>Fees and other amount shall be paid in accordance with the fee structure issued and authorized by Lighthouse</p>
-      <p>(The copy of which is available at the Lighthouse Preschool).</p>
+      <p>Fees and other amount shall be paid in accordance with the fee structure issued and authorized by Suryadhi</p>
+      <p>(The copy of which is available at the Suryadhi Preschool).</p>
       <p>Please ensure that you keep the fee receipts safely so that the same can be produced as and when required.</p>
       <p>In case of cheque dishonour,penalty of Rs.500/- shall be charged.</p>
     </div>
@@ -929,7 +932,9 @@ export default function ReceiptDetailsViewer({
                 <tbody>
                   {breakdownRows.map((row, idx) => (
                     <tr key={idx}>
-                      <td className="border border-slate-700 p-2 text-slate-800">{row.label}</td>
+                      <td className="border border-slate-700 p-2 text-slate-800">
+                        {row.label.replace(/registration\s*fee/gi, 'Online Admission Form')}
+                      </td>
                       <td className="border border-slate-700 p-2 text-right font-mono font-medium">
                         {row.amount}
                       </td>
@@ -1001,9 +1006,9 @@ export default function ReceiptDetailsViewer({
                 <p>All fee once paid shall not be refunded under any circumstances.</p>
                 <p>
                   Fees and other amount shall be paid in accordance with the fee structure issued and
-                  authorized by Lighthouse
+                  authorized by Suryadhi
                 </p>
-                <p>(The copy of which is available at the Lighthouse Preschool).</p>
+                <p>(The copy of which is available at the Suryadhi Preschool).</p>
                 <p>
                   Please ensure that you keep the fee receipts safely so that the same can be produced as and
                   when required.
