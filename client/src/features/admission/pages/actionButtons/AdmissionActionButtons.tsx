@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { FileEdit, Eye, ReceiptText, FileText, Forward, X, Plane, Pen, Coins } from 'lucide-react';
+import { FileEdit, Eye, ReceiptText, FileText, Forward, X, Plane, Pen, Coins, Info } from 'lucide-react';
 
 interface AdmissionActionButtonsProps {
   id: string;
@@ -125,7 +125,7 @@ export default function AdmissionActionButtons({ id }: AdmissionActionButtonsPro
             <TooltipTrigger asChild>
               <Link to={`/franchisee/royalty-forecast?admissionId=${id}`}>
                 <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Royalty Action Button">
-                  <Coins className="h-[14px] w-[14px] text-amber-600 stroke-[2.5]" />
+                  <Info className="h-[14px] w-[14px] text-amber-600 stroke-[2.5]" />
                 </Button>
               </Link>
             </TooltipTrigger>
