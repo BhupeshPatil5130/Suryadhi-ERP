@@ -141,47 +141,45 @@ export function formatInvoiceNumber(inv?: string | null): string {
 export function getFeeBreakdown(receipt: ReceiptItem): { label: string; amount: number }[] {
   const amt = receipt.amount || 0;
   const cat = (receipt.category || '').toLowerCase();
+  const isOther = Boolean(receipt.isOther || cat.includes('other'));
+  const isForm = cat.includes('form') || (!isOther && amt === 500);
 
-  if (cat.includes('reg') || cat.includes('form') || cat.includes('admission') || cat.includes('online')) {
-    return [{ label: 'Online Admission Form', amount: amt }];
-  }
-  if (amt <= 1000) {
-    return [{ label: 'Online Admission Form', amount: amt }];
-  }
-  if (cat.includes('term 1') || cat.includes('first term')) {
-    if (amt > 5000) {
-      const reg = Math.min(amt * 0.6, 4250);
-      const term = amt - reg;
-      return [
-        { label: 'Online Admission Form', amount: Math.round(reg) },
-        { label: 'Term Fee', amount: Math.round(term) },
-      ];
-    }
-    return [{ label: 'Term Fee', amount: amt }];
-  }
-  if (cat.includes('term 2') || cat.includes('second term')) {
-    return [{ label: 'Term Fee (Second Installment)', amount: amt }];
+  // 1. Admission Form Receipt
+  if (isForm) {
+    return [{ label: 'Admission Form', amount: amt }];
   }
 
-  // Realistic split matching screenshot when amt is around 7000
-  if (amt >= 6000 && amt <= 8000) {
-    const reg = 4250;
+  // 2. Other Receipt
+  if (isOther) {
+    const label = receipt.category && !receipt.category.toLowerCase().includes('other')
+      ? receipt.category
+      : 'Other Fee';
+    return [{ label, amount: amt }];
+  }
+
+  // 3. Fee for Academic Year April 2026 to March 2027 (Format from reference screenshot)
+  if (amt === 7000) {
+    return [
+      { label: 'Admission Fee', amount: 4250 },
+      { label: 'Term Fee', amount: 2750 },
+    ];
+  }
+  if (amt === 15800) {
+    return [
+      { label: 'Admission Fee', amount: 7800 },
+      { label: 'Term Fee', amount: 8000 },
+    ];
+  }
+  if (amt > 1000) {
+    const reg = Math.min(4250, Math.round(amt * 0.607));
     const term = amt - reg;
     return [
-      { label: 'Online Admission Form', amount: reg },
+      { label: 'Admission Fee', amount: reg },
       { label: 'Term Fee', amount: term },
     ];
   }
-  if (amt > 10000) {
-    const reg = Math.round(amt * 0.35);
-    const term = amt - reg;
-    return [
-      { label: 'Online Admission Form', amount: reg },
-      { label: 'Term Fee', amount: term },
-    ];
-  }
 
-  return [{ label: 'Tuition / Course Fee', amount: amt }];
+  return [{ label: 'Admission Fee', amount: amt }];
 }
 
 export function buildReceiptPrintHtml(r: ReceiptItem, data: AdmissionReceiptData): string {
@@ -196,7 +194,7 @@ export function buildReceiptPrintHtml(r: ReceiptItem, data: AdmissionReceiptData
     .map(
       (row) => `
       <tr>
-        <td style="border:1.2px solid #333;padding:6px 10px;text-align:left;">${row.label.replace(/registration\s*fee/gi, 'Online Admission Form')}</td>
+       <td style="border:1.2px solid #333;padding:6px 10px;text-align:left;">${row.label.replace(/registration\s*fee/gi, 'Admission Form')}</td>
         <td style="border:1.2px solid #333;padding:6px 10px;text-align:right;font-family:monospace;">${row.amount}</td>
       </tr>`
     )
@@ -397,17 +395,16 @@ export function buildReceiptPrintHtml(r: ReceiptItem, data: AdmissionReceiptData
           <polygon points="58,74 50,77 58,80" fill="#eab308" stroke="#ca8a04" stroke-width="1" />
           <circle cx="50" cy="77" r="2.2" fill="#ca8a04" />
         </svg>
-        <div class="logo-title">SK Kids</div>
+        <div class="logo-title">Sunoia Kids</div>
         <div class="logo-sub">Pre-School</div>
       </div>
 
-      <div class="receipt-title">${
-        r.isOther || r.category?.toLowerCase().includes('other')
-          ? 'OTHER RECEIPT'
-          : r.category?.toLowerCase().includes('form') || r.amount === 500
-          ? 'RECEIPT – FORM'
-          : 'RECEIPT – FEE FOR ACADEMIC YEAR APRIL 2026 TO MARCH 2027'
-      }</div>
+      <div class="receipt-title">${r.isOther || r.category?.toLowerCase().includes('other')
+      ? 'OTHER RECEIPT'
+      : r.category?.toLowerCase().includes('form') || r.amount === 500
+        ? 'RECEIPT – FORM'
+        : 'RECEIPT – FEE FOR ACADEMIC YEAR APRIL 2026 TO MARCH 2027'
+    }</div>
 
       <div class="franchise-box">
         <div class="franchise-name">${data.franchiseeContactPerson || 'Rahul Khandale'}</div>
@@ -619,9 +616,8 @@ export default function ReceiptDetailsViewer({
       }
     >
       <div
-        className={`bg-[#e8e6df] rounded border border-[#b8b5ab] shadow-2xl flex flex-col w-full ${
-          isModal ? 'max-w-[890px] max-h-[95vh]' : ''
-        }`}
+        className={`bg-[#e8e6df] rounded border border-[#b8b5ab] shadow-2xl flex flex-col w-full ${isModal ? 'max-w-[890px] max-h-[95vh]' : ''
+          }`}
       >
         {/* Top Window Title (SSRS style) */}
         <div className="bg-[#f0eee6] px-4 py-2 border-b border-[#cfccc3] flex items-center justify-between select-none">
@@ -836,7 +832,7 @@ export default function ReceiptDetailsViewer({
                 {/* Blue border frame around SK Kids */}
                 <div className="border border-[#1d4ed8] px-2.5 py-1 mt-1 bg-white">
                   <div className="text-[19px] font-black text-[#1d4ed8] tracking-tight leading-tight">
-                    SK Kids
+                    Sunoia Kids
                   </div>
                 </div>
                 <div className="text-[11px] font-bold text-[#1e3a8a] tracking-widest uppercase mt-1">
@@ -940,7 +936,7 @@ export default function ReceiptDetailsViewer({
                   {breakdownRows.map((row, idx) => (
                     <tr key={idx}>
                       <td className="border border-slate-700 p-2 text-slate-800">
-                        {row.label.replace(/registration\s*fee/gi, 'Online Admission Form')}
+                        {row.label.replace(/registration\s*fee/gi, ' Admission Form')}
                       </td>
                       <td className="border border-slate-700 p-2 text-right font-mono font-medium">
                         {row.amount}
