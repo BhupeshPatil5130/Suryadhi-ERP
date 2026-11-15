@@ -158,6 +158,7 @@ export default function ViewReceiptPage() {
                     <tr>
                       <th className="px-4 py-3 text-center border-r border-slate-200">Receipt Date</th>
                       <th className="px-4 py-3 text-center border-r border-slate-200">Receipt Number</th>
+                      <th className="px-4 py-3 text-center border-r border-slate-200">Particular</th>
                       <th className="px-4 py-3 text-center border-r border-slate-200">Payment Mode</th>
                       <th className="px-4 py-3 text-center border-r border-slate-200">Cheque / Bank Details</th>
                       <th className="px-4 py-3 text-center border-r border-slate-200">Amount</th>
@@ -167,9 +168,9 @@ export default function ViewReceiptPage() {
                   <tbody>
                     {receipts.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="h-24 bg-white text-center text-slate-500 text-xs border-b border-slate-200 py-6">
+                        <td colSpan={7} className="h-24 bg-white text-center text-slate-500 text-xs border-b border-slate-200 py-6">
                           <Receipt className="h-6 w-6 text-slate-300 mx-auto mb-1" />
-                          No advance receipts recorded for this enquiry yet.
+                          No receipts recorded for this enquiry yet.
                         </td>
                       </tr>
                     ) : (
@@ -180,6 +181,9 @@ export default function ViewReceiptPage() {
                           </td>
                           <td className="px-4 py-3 text-center border-r border-slate-200 font-mono text-xs font-semibold text-slate-800">
                             {r.receiptNumber}
+                          </td>
+                          <td className="px-4 py-3 text-center border-r border-slate-200 font-medium text-slate-800">
+                            Admission
                           </td>
                           <td className="px-4 py-3 text-center border-r border-slate-200 capitalize text-slate-700">
                             {r.paymentMode?.toLowerCase().replace('_', ' ')}
@@ -203,11 +207,12 @@ export default function ViewReceiptPage() {
                                   const printContent = `
                                     <html><head><title>Receipt ${r.receiptNumber}</title>
                                     <style>body{font-family:Arial,sans-serif;padding:40px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:8px}h2{color:#333}</style></head>
-                                    <body><h2>Advance Receipt</h2>
+                                    <body><h2>Receipt</h2>
                                     <p><strong>Receipt No:</strong> ${r.receiptNumber}</p>
                                     <p><strong>Date:</strong> ${r.receiptDate ? new Date(r.receiptDate).toLocaleDateString('en-GB') : 'N/A'}</p>
                                     <p><strong>Student:</strong> ${studentName}</p>
                                     <p><strong>Program:</strong> ${programName}</p>
+                                    <p><strong>Particular:</strong> Admission</p>
                                     <p><strong>Payment Mode:</strong> ${r.paymentMode?.toLowerCase().replace('_', ' ')}</p>
                                     <p><strong>Amount:</strong> ₹${Number(r.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
                                     <br/><p style="color:#888;font-size:12px">This is a computer-generated receipt.</p>

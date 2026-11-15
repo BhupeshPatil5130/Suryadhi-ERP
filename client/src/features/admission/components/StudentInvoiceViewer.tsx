@@ -47,7 +47,7 @@ const DEFAULT_INVOICE_DATA: StudentInvoiceData = {
   invoiceNumber: '0031/2526',
   date: '12 - Jun - 25',
   batch: 'Early Morning Shift',
-  academicYear: 'Apr 25 - Mar 26',
+  academicYear: 'Apr 26 - Mar 27',
   franchiseeName: 'Dyandeep',
   franchiseeAddress: '51, Keshar Nagar, Deopur, Dhule 424002',
   franchiseePhone: '02562275135',

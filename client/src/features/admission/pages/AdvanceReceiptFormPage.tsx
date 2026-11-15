@@ -581,7 +581,13 @@ function _unusedPrint(r: ReceiptRow, data: AdmissionData) {
         <div class="sk-brand">Sunoia Kids</div>
         <div class="sk-sub">Pre-School</div>
       </div>
-      <div class="receipt-title">RECEIPT</div>
+      <div class="receipt-title">${
+        r.isOther
+          ? 'OTHER RECEIPT'
+          : r.category?.toLowerCase().includes('form') || r.amount === 500
+          ? 'RECEIPT – FORM'
+          : 'RECEIPT – FEE FOR ACADEMIC YEAR APRIL 2026 TO MARCH 2027'
+      }</div>
       <div class="franchise-box">
         <div class="franchise-name">${data.franchiseeContactPerson || 'Rahul Khandale'}</div>
         <div>${data.franchiseeAddress || 'Mohanlal Mangal Karyalay, Yavatmal road in front of forest office, ward number-1, At Post Taluka-Arni, District'}</div>
@@ -666,7 +672,7 @@ function _unusedPrint(r: ReceiptRow, data: AdmissionData) {
       <ol>
         <li>All payments shall be made strictly by a/c payee local cheque or demand draft only. NO CASH PAYMENTS SHALL BE ACCEPTED.</li>
         <li>All fee once paid shall not be refunded under any circumstances.</li>
-        <li>Fees and other amount shall be paid in accordance with the fee structure issued and authorized by Suryadhi. (The copy of which is available at the Sunoia Kids Pre-School).</li>
+        <li>Fees and other amount shall be paid in accordance with the fee structure issued and authorized by Suryadhi (The copy of which is available at the Suryadhi Preschool).</li>
         <li>Please ensure that you keep the fee receipts safely so that the same can be produced as and when required.</li>
         <li>In case of cheque dishonour, penalty of Rs.500/- shall be charged.</li>
       </ol>
@@ -719,7 +725,13 @@ function _unusedOldModal(receipt: any, data: any, onClose: any, onPrint: any, on
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
         <div className="bg-white rounded-lg shadow-2xl border border-slate-300 w-full max-w-[860px] my-6 flex flex-col max-h-[92vh]">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-bold text-slate-800">Receipt Details</h2>
+            <h2 className="text-base font-bold text-slate-800">
+              {receipt.isOther
+                ? 'Other Receipt'
+                : receipt.category?.toLowerCase().includes('form') || receipt.amount === 500
+                ? 'Receipt – Form'
+                : 'Receipt – Fee for Academic Year April 2026 to March 2027'}
+            </h2>
             <span className="text-xs text-slate-500 font-mono bg-white px-2 py-0.5 rounded border border-slate-200">
               {receipt.receiptNumber}
             </span>
@@ -923,7 +935,7 @@ function _unusedOldModal(receipt: any, data: any, onClose: any, onPrint: any, on
               <ol className="list-decimal pl-4 space-y-1">
                 <li>All payments shall be made strictly by a/c payee local cheque or demand draft only NO CASH PAYMENTS SHALL BE ACCEPTED.</li>
                 <li>All fee once paid shall not be refunded under any circumstances.</li>
-                <li>Fees and other amount shall be paid in accordance with the fee structure issued and authorized by Sunoia Kids Pre-School. (The copy of which is available at the Sunoia Kids Pre-School).</li>
+                <li>Fees and other amount shall be paid in accordance with the fee structure issued and authorized by Suryadhi (The copy of which is available at the Suryadhi Preschool).</li>
                 <li>Please ensure that you keep the fee receipts safely so that the same can be produced as and when required.</li>
                 <li>In case of cheque dishonour, penalty of Rs.500/- shall be charged.</li>
               </ol>

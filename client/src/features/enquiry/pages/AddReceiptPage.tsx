@@ -183,7 +183,7 @@ export default function AddReceiptPage() {
                 <table className="w-full text-sm text-left">
                   <thead className="bg-[#f5f5f5] text-slate-700 font-bold border-b border-slate-300 text-[13px]">
                     <tr>
-                      <th className="px-6 py-3 w-1/3 border-r border-slate-200 text-center">Fee Types</th>
+                      <th className="px-6 py-3 w-1/3 border-r border-slate-200 text-center">Particular</th>
                       <th className="px-6 py-3 w-1/3 border-r border-slate-200 text-center">Receipt Amount (₹)</th>
                       <th className="px-6 py-3 w-1/3 text-center">Confirm Receipt Amount (₹)</th>
                     </tr>
@@ -191,7 +191,7 @@ export default function AddReceiptPage() {
                   <tbody>
                     <tr className="border-b border-slate-200 bg-white">
                       <td className="px-6 py-4 text-center font-medium text-[13px] text-slate-700 border-r border-slate-200">
-                        Advance Admission / Form Fee
+                        Admission
                       </td>
                       <td className="px-6 py-3 border-r border-slate-200">
                         <Input 

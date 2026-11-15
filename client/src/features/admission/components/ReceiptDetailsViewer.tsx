@@ -47,6 +47,7 @@ export interface ReceiptItem {
   paymentMode: string;
   category?: string;
   invoiceId?: string | null;
+  isOther?: boolean;
 }
 
 export function numberToWords(amount: number): string {
@@ -400,7 +401,13 @@ export function buildReceiptPrintHtml(r: ReceiptItem, data: AdmissionReceiptData
         <div class="logo-sub">Pre-School</div>
       </div>
 
-      <div class="receipt-title">RECEIPT</div>
+      <div class="receipt-title">${
+        r.isOther || r.category?.toLowerCase().includes('other')
+          ? 'OTHER RECEIPT'
+          : r.category?.toLowerCase().includes('form') || r.amount === 500
+          ? 'RECEIPT – FORM'
+          : 'RECEIPT – FEE FOR ACADEMIC YEAR APRIL 2026 TO MARCH 2027'
+      }</div>
 
       <div class="franchise-box">
         <div class="franchise-name">${data.franchiseeContactPerson || 'Rahul Khandale'}</div>
@@ -450,7 +457,7 @@ export function buildReceiptPrintHtml(r: ReceiptItem, data: AdmissionReceiptData
       <table>
         <thead>
           <tr>
-            <th>Fees for Academic year ${data.academicYear || 'Jun 24 - May 25'}</th>
+            <th>Fees for Academic year ${data.academicYear || 'April 2026 to March 2027'}</th>
             <th style="text-align:right;width:95px;">Amount Rs.</th>
           </tr>
         </thead>
@@ -924,7 +931,7 @@ export default function ReceiptDetailsViewer({
                 <thead>
                   <tr className="bg-[#f2f2f2] font-bold text-slate-900">
                     <th className="border border-slate-700 p-2 text-left">
-                      Fees for Academic year {data.academicYear || 'Jun 24 - May 25'}
+                      Fees for Academic year {data.academicYear || 'April 2026 to March 2027'}
                     </th>
                     <th className="border border-slate-700 p-2 text-right w-24">Amount Rs.</th>
                   </tr>
