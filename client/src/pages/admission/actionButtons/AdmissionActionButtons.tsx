@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { FileEdit, Eye, ReceiptText, FileText, Forward, X, Plane, Pen, Coins } from 'lucide-react';
+import { FileEdit, Eye, FileText, Forward, X, Plane, Pen, Coins } from 'lucide-react';
 
 interface AdmissionActionButtonsProps {
   id: string;
@@ -36,19 +36,8 @@ export default function AdmissionActionButtons({ id }: AdmissionActionButtonsPro
           </Tooltip>
         </div>
 
-        {/* Row 2: Add Receipt | Invoice */}
-        <div className="flex items-center justify-between relative">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link to={`/admissions/${id}/receipt?tab=new`}>
-                <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="Add Receipt">
-                  <ReceiptText className="h-[14px] w-[14px] text-emerald-700 stroke-[2.5]" />
-                </Button>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="top"><p className="text-xs">Add Receipt</p></TooltipContent>
-          </Tooltip>
-          <div className="w-[1px] h-[14px] bg-slate-300"></div>
+        {/* Row 2: Invoice (Add Receipt removed, retained View Receipt & Invoice) */}
+        <div className="flex items-center justify-end relative">
           <Tooltip>
             <TooltipTrigger asChild>
               <Link to={`/admissions/${id}/invoice`}>
