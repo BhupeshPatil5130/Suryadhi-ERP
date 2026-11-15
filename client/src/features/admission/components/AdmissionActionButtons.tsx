@@ -35,12 +35,12 @@ export function AdmissionActionButtons({ id }: AdmissionActionButtonsProps) {
           <Tooltip>
             <TooltipTrigger asChild>
               <Link to={`/admissions/${id}/receipt`}>
-                <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="View">
+                <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none" title="View Receipt">
                   <Eye className="h-[14px] w-[14px] text-blue-700 stroke-[2.5]" />
                 </Button>
               </Link>
             </TooltipTrigger>
-            <TooltipContent side="top"><p className="text-xs">View</p></TooltipContent>
+            <TooltipContent side="top"><p className="text-xs">View Receipt</p></TooltipContent>
           </Tooltip>
         </div>
 

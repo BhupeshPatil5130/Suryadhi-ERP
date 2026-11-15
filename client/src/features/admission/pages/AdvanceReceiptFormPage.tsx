@@ -732,9 +732,10 @@ function _unusedOldModal(receipt: any, data: any, onClose: any, onPrint: any, on
               variant="outline"
               size="sm"
               className="h-7 text-xs px-2.5 bg-white border-slate-300 text-slate-700 hover:bg-slate-50 flex items-center gap-1.5"
+              title="Print Receipt"
             >
               <Printer className="w-3.5 h-3.5 text-blue-600" />
-              <span>Print</span>
+              <span>Print Receipt</span>
             </Button>
             <Button
               type="button"
@@ -742,9 +743,10 @@ function _unusedOldModal(receipt: any, data: any, onClose: any, onPrint: any, on
               variant="outline"
               size="sm"
               className="h-7 text-xs px-2.5 bg-white border-slate-300 text-slate-700 hover:bg-slate-50 flex items-center gap-1.5"
+              title="Send Receipt"
             >
               <Mail className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Email</span>
+              <span>Send Receipt</span>
             </Button>
             <Button
               type="button"
@@ -977,17 +979,28 @@ function MainView({
   };
 
   const handleEmail = (r: ReceiptRow) => {
-    const parentEmail = data.email || '';
-    const subject = encodeURIComponent(`Fee Receipt - ${r.receiptNumber} (${data.studentName})`);
+    const parentEmail = (data?.email || (data as any)?.student?.parent?.email || (data as any)?.student?.parent?.fatherEmail || (data as any)?.student?.parent?.motherEmail || '').trim();
+    if (!parentEmail) {
+      showToast('Parent email ID not found in records.', 'error');
+      return;
+    }
+    const studentName = data?.studentName || 'Student';
+    const subject = encodeURIComponent(`Fee Receipt - ${r.receiptNumber} (${studentName})`);
     const body = encodeURIComponent(
-      `Dear Parent,\n\nPlease find fee receipt details below:\nReceipt No: ${r.receiptNumber}\nDate: ${formatReceiptDate(
-        r.receiptDate
-      )}\nStudent: ${data.studentName}\nProgram: ${data.program}\nBatch: ${data.batch || 'Morning Shift'}\nAmount: Rs. ${r.amount.toFixed(
-        2
-      )}\nMode: ${r.paymentMode}\n\nThank you,\nSunoia Kids Pre-School`
+      `Dear Parent,\n\nPlease find the fee receipt details below:\n` +
+      `Receipt No: ${r.receiptNumber}\n` +
+      `Date: ${formatReceiptDate(r.receiptDate)}\n` +
+      `Student Name: ${studentName}\n` +
+      `Program: ${data?.program || 'N/A'}\n` +
+      `Batch: ${data?.batch || 'Morning Shift'}\n` +
+      `Amount Paid: Rs. ${r.amount.toFixed(2)}\n` +
+      `Category: ${r.category}\n` +
+      `Payment Mode: ${r.paymentMode}\n` +
+      (r.chequeNumber ? `Cheque No: ${r.chequeNumber} (${r.chequeDate || ''})\nBank: ${r.bankName || ''}\n` : '') +
+      `\nThank you,\nSŪNOIAKIDS™ Pre-School / Suryadhi Learning Pvt. Ltd.`
     );
     window.open(`mailto:${parentEmail}?subject=${subject}&body=${body}`, '_blank');
-    showToast(`Email draft opened for ${parentEmail || 'parent'}`, 'success');
+    showToast(`Email draft opened for ${parentEmail}`, 'success');
   };
 
   const handleDeleteReceipt = async (r: ReceiptRow) => {
@@ -1201,7 +1214,7 @@ function MainView({
                           size="sm"
                           variant="ghost"
                           className="h-6 w-6 p-0 hover:bg-blue-50 text-blue-600"
-                          title="View Receipt"
+                          title="Receipt Details"
                           onClick={() => setSelectedReceiptForModal(r)}
                         >
                           <Eye className="h-3.5 w-3.5" />
@@ -1210,7 +1223,7 @@ function MainView({
                           size="sm"
                           variant="ghost"
                           className="h-6 w-6 p-0 hover:bg-red-50 text-red-600"
-                          title="Delete Receipt"
+                          title="Delete"
                           onClick={() => handleDeleteReceipt(r)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -1228,7 +1241,7 @@ function MainView({
                           size="sm"
                           variant="ghost"
                           className="h-6 w-6 p-0 hover:bg-emerald-50 text-emerald-600"
-                          title="Email Receipt"
+                          title="Send Receipt"
                           onClick={() => handleEmail(r)}
                         >
                           <Mail className="h-3.5 w-3.5" />

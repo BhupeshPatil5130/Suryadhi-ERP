@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Eye, Banknote, Share2, MessageSquare, Printer, Edit } from 'lucide-react';
+import { Eye, Download, Share2, MessageSquare, Edit } from 'lucide-react';
 
 interface EnquiryActionButtonsProps {
   id: string;
@@ -24,11 +24,11 @@ export default function EnquiryActionButtons({ id }: EnquiryActionButtonsProps) 
         </Link>
       </div>
 
-      {/* Row 2: Fees Receipt | Convert to Admission */}
+      {/* Row 2: View Receipt | Convert to Admission */}
       <div className="flex items-center justify-between">
-        <Link to={`/enquiry/${id}/receipts`} title="Fees Receipt">
+        <Link to={`/enquiry/${id}/receipts`} title="View Receipt">
           <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none">
-            <Banknote className="h-[13px] w-[13px] text-black stroke-[2.5]" />
+            <Eye className="h-[13px] w-[13px] text-blue-700 stroke-[2.5]" />
           </Button>
         </Link>
         <div className="w-[1px] h-[14px] bg-slate-300" />
@@ -39,7 +39,7 @@ export default function EnquiryActionButtons({ id }: EnquiryActionButtonsProps) 
         </Link>
       </div>
 
-      {/* Row 3: Follow Up | Print */}
+      {/* Row 3: Follow Up | Download */}
       <div className="flex items-center justify-between">
         <Link to={`/enquiry/${id}/follow-up`} title="Follow Up">
           <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none">
@@ -47,9 +47,9 @@ export default function EnquiryActionButtons({ id }: EnquiryActionButtonsProps) 
           </Button>
         </Link>
         <div className="w-[1px] h-[14px] bg-slate-300" />
-        <Link to={`/enquiry/${id}/receipts`} title="Print Receipt">
+        <Link to={`/enquiry/${id}/receipts`} title="Download">
           <Button variant="ghost" className="h-5 w-5 p-0 hover:bg-slate-200 rounded-none">
-            <Printer className="h-[13px] w-[13px] text-black stroke-[2.5]" />
+            <Download className="h-[13px] w-[13px] text-blue-700 stroke-[2.5]" />
           </Button>
         </Link>
       </div>

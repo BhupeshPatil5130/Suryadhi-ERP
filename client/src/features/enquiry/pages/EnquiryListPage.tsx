@@ -266,8 +266,8 @@ export default function EnquiryListPage() {
                 Create Enquiry
               </Button>
             </Link>
-            {/* <Button
-              className="bg-[#333] hover:bg-[#222] text-white h-9 shadow-none"
+            <Button
+              className="bg-[#333] hover:bg-[#222] text-white h-9 shadow-none flex items-center gap-1.5"
               onClick={() => apiDownload(
                 'enquiries',
                 {},
@@ -279,14 +279,14 @@ export default function EnquiryListPage() {
                   'Stage': d.stage,
                   'Sub Stage': d.subStage,
                   'Last Contacted': d.lastContacted,
-                  'Receivable (₹)': d.receivableAmount,
-                  'Collection (₹)': d.collectionAmount,
                 })),
                 'enquiries-report'
               )}
+              title="Download Report"
             >
-             
-            </Button> */}
+              <Download className="h-4 w-4" />
+              Download
+            </Button>
           </div>
         </div>
         <div className="p-0">
