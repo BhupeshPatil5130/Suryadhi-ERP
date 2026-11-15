@@ -14,33 +14,33 @@ interface FeeStructure {
   total: number;
 }
 
-const APPROVED_FEE_RATES: FeeStructure[] = [
-  { program: 'Play Group', regFee: 6950, tuitionFee: 9500, homeSunnyAppFee: 5900, uniforms: 1500, total: 23850 },
-  { program: 'Nursery', regFee: 7500, tuitionFee: 11000, homeSunnyAppFee: 6500, uniforms: 1500, total: 26500 },
+const FEE_RATES: FeeStructure[] = [
+  { program: 'Play Group', regFee: 6950, tuitionFee: 9500, homeSunnyAppFee: 5900, uniforms: 0, total: 22350 },
+  { program: 'Nursery', regFee: 7500, tuitionFee: 11000, homeSunnyAppFee: 6500, uniforms: 0, total: 25000 },
   { program: 'Sunoia Junior', regFee: 8000, tuitionFee: 12500, homeSunnyAppFee: 7000, uniforms: 1500, total: 29000 },
   { program: 'Sunoia Senior', regFee: 8500, tuitionFee: 14000, homeSunnyAppFee: 7500, uniforms: 1500, total: 31500 },
 ];
 
 export default function FeeRateCardPage() {
-  const [rates] = useState<FeeStructure[]>(APPROVED_FEE_RATES);
+  const [rates] = useState<FeeStructure[]>(FEE_RATES);
   const franchisee = 'SNK - Dhule - Deopur';
-  const approvedYear = 'Apr 26 - May 27';
+  const feeYear = 'Apr 26 - Mar 27';
 
   return (
     <div className="max-w-[1400px] mx-auto pb-12 pt-2 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h1 className="text-[24px] font-normal text-[#333]">Fee Rate Card</h1>
+          <h1 className="text-[24px] font-normal text-[#333]">Fee Card</h1>
           <div className="text-xs text-slate-600 mt-1 flex items-center gap-3">
             <span><strong>Franchisee:</strong> {franchisee}</span>
             <span>•</span>
-            <span><strong>Approved Fee Card:</strong> {approvedYear}</span>
+            <span><strong>Fee Card:</strong> {feeYear}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs rounded-sm">
-            <CheckCircle className="w-3.5 h-3.5" /> Approved Rate Card
+            <CheckCircle className="w-3.5 h-3.5" /> Fee Card
           </div>
           <Button
             variant="outline"
@@ -55,17 +55,17 @@ export default function FeeRateCardPage() {
             size="sm"
             className="h-8 text-xs gap-1.5 bg-white"
             onClick={() => apiDownload(
-              'fee-rate-card',
+              'fee-card',
               {},
               rates.map(r => ({
                 'Program': r.program,
                 'Registration Fee': r.regFee,
                 'Tuition Fee': r.tuitionFee,
                 'HomeSunny App Fee': r.homeSunnyAppFee,
-                'Uniforms': r.uniforms,
+                'Uniforms': r.uniforms > 0 ? r.uniforms : 'Nil',
                 'Total': r.total,
               })),
-              'fee-rate-card'
+              'fee-card'
             )}
           >
             <Download className="w-3.5 h-3.5" /> Export CSV
@@ -88,7 +88,7 @@ export default function FeeRateCardPage() {
                 </div>
                 <div className="text-[11px] text-slate-500 flex justify-between">
                   <span>HomeSunny: {formatCurrency(r.homeSunnyAppFee)}</span>
-                  <span>Uniforms: {formatCurrency(r.uniforms)}</span>
+                  <span>Uniforms: {r.uniforms > 0 ? formatCurrency(r.uniforms) : 'Nil'}</span>
                 </div>
                 <div className="mt-2 h-1 w-full rounded" style={{ backgroundColor: colors[idx % colors.length] }}></div>
               </CardContent>
@@ -101,7 +101,7 @@ export default function FeeRateCardPage() {
       <div className="bg-white border border-[#ccc] shadow-sm rounded-sm">
         <div className="bg-[#f2f2f2] px-4 py-2.5 border-b border-[#ccc] flex items-center justify-between">
           <span className="font-semibold text-[13px] text-slate-700">
-            ≡ Approved Fee Card {approvedYear} — Franchisee: {franchisee}
+            ≡ Fee Card {feeYear} — Franchisee: {franchisee}
           </span>
         </div>
 
@@ -124,7 +124,9 @@ export default function FeeRateCardPage() {
                   <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.regFee)}</td>
                   <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.tuitionFee)}</td>
                   <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.homeSunnyAppFee)}</td>
-                  <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.uniforms)}</td>
+                  <td className="p-2.5 border border-[#ccc] text-right font-mono font-medium">
+                    {row.uniforms > 0 ? formatCurrency(row.uniforms) : 'Nil'}
+                  </td>
                   <td className="p-2.5 border border-[#ccc] text-right font-mono font-bold text-[#0056b3]">{formatCurrency(row.total)}</td>
                 </tr>
               ))}
