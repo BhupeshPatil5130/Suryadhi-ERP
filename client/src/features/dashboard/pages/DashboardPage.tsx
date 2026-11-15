@@ -21,40 +21,42 @@ const feeRateCards = [
     program: 'Play Group',
     status: 'HO Approved',
     fees: [
-      { type: 'Registration Fee', term1: 5000, term2: 0, total: 5000 },
-      { type: 'Tuition Fee', term1: 15000, term2: 15000, total: 30000 },
-      { type: 'Activity Fee', term1: 3000, term2: 3000, total: 6000 },
-      { type: 'Material Fee', term1: 2500, term2: 0, total: 2500 },
+      { type: 'Registration Fee', term1: 6950, term2: 0, total: 6950 },
+      { type: 'Term Fee', term1: 2750, term2: 2750, total: 5500 },
+      { type: 'Tuition Fee', term1: 4750, term2: 4750, total: 9500 },
+      { type: 'HomeSunny App Fee', term1: 5900, term2: 0, total: 5900 },
     ],
   },
   {
     program: 'Nursery',
     status: 'HO Approved',
     fees: [
-      { type: 'Registration Fee', term1: 5000, term2: 0, total: 5000 },
-      { type: 'Tuition Fee', term1: 18000, term2: 18000, total: 36000 },
-      { type: 'Activity Fee', term1: 3500, term2: 3500, total: 7000 },
-      { type: 'Material Fee', term1: 3000, term2: 0, total: 3000 },
+      { type: 'Registration Fee', term1: 7500, term2: 0, total: 7500 },
+      { type: 'Term Fee', term1: 3000, term2: 3000, total: 6000 },
+      { type: 'Tuition Fee', term1: 5500, term2: 5500, total: 11000 },
+      { type: 'HomeSunny App Fee', term1: 6500, term2: 0, total: 6500 },
     ],
   },
   {
-    program: 'Sunoia  Junior',
+    program: 'Sunoia Junior',
     status: 'HO Approved',
     fees: [
-      { type: 'Registration Fee', term1: 5000, term2: 0, total: 5000 },
-      { type: 'Tuition Fee', term1: 20000, term2: 20000, total: 40000 },
-      { type: 'Activity Fee', term1: 4000, term2: 4000, total: 8000 },
-      { type: 'Material Fee', term1: 3500, term2: 0, total: 3500 },
+      { type: 'Registration Fee', term1: 8000, term2: 0, total: 8000 },
+      { type: 'Term Fee', term1: 3250, term2: 3250, total: 6500 },
+      { type: 'Tuition Fee', term1: 6250, term2: 6250, total: 12500 },
+      { type: 'HomeSunny App Fee', term1: 7000, term2: 0, total: 7000 },
+      { type: 'Uniform Fee', term1: 1500, term2: 0, total: 1500 },
     ],
   },
   {
-    program: 'Sunoia  Senior',
+    program: 'Sunoia Senior',
     status: 'HO Approved',
     fees: [
-      { type: 'Registration Fee', term1: 5000, term2: 0, total: 5000 },
-      { type: 'Tuition Fee', term1: 22000, term2: 22000, total: 44000 },
-      { type: 'Activity Fee', term1: 4500, term2: 4500, total: 9000 },
-      { type: 'Material Fee', term1: 4000, term2: 0, total: 4000 },
+      { type: 'Registration Fee', term1: 8500, term2: 0, total: 8500 },
+      { type: 'Term Fee', term1: 3500, term2: 3500, total: 7000 },
+      { type: 'Tuition Fee', term1: 7000, term2: 7000, total: 14000 },
+      { type: 'HomeSunny App Fee', term1: 7500, term2: 0, total: 7500 },
+      { type: 'Uniform Fee', term1: 1500, term2: 0, total: 1500 },
     ],
   },
 ];
@@ -214,7 +216,7 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="bg-primary/5 pb-4 border-b border-primary/10">
               <CardTitle className="text-base flex items-center justify-between">
-                <span className="flex items-center gap-2"><IndianRupee className="h-4 w-4 text-primary" /> Fee Rate Cards</span>
+                <span className="flex items-center gap-2"><IndianRupee className="h-4 w-4 text-primary" /> Approved Fee Card</span>
                 <Button variant="outline" size="sm" asChild>
                   <Link to="/reports/fee-card">View All</Link>
                 </Button>
