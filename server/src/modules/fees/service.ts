@@ -82,15 +82,49 @@ export class FeeService {
     if (feeStructures.length === 0) {
       const progName = program?.name || input.programId || 'Play Group';
       const clean = progName.toLowerCase();
-      let reg = 6950, term = 5500, tuition = 8800;
-      if (clean.includes('nurse')) { reg = 7500; term = 6000; tuition = 11000; }
-      else if (clean.includes('junior') || clean.includes('jr')) { reg = 8000; term = 6500; tuition = 12500; }
-      else if (clean.includes('senior') || clean.includes('sr')) { reg = 8500; term = 7000; tuition = 14000; }
+      let reg = 6950, term = 5500, tuition = 9500, homeSunny = 5900, uniforms = 0;
+      if (clean.includes('nurse')) { reg = 7500; term = 6000; tuition = 11000; homeSunny = 6500; uniforms = 0; }
+      else if (clean.includes('junior') || clean.includes('jr')) { reg = 8000; term = 6500; tuition = 12500; homeSunny = 7000; uniforms = 1500; }
+      else if (clean.includes('senior') || clean.includes('sr')) { reg = 8500; term = 7000; tuition = 14000; homeSunny = 7500; uniforms = 1500; }
+
+      // Check admission month for term 1 vs term 2 prorating
+      const admDate = input.admissionDate ? new Date(input.admissionDate) : new Date();
+      const month = admDate.getUTCMonth(); // 0 = Jan, 3 = Apr, 7 = Aug, 8 = Sep, 9 = Oct
+      const isTerm2Month = month >= 9 || month <= 2; // Oct (9), Nov (10), Dec (11), Jan (0), Feb (1), Mar (2)
+
+      const term1Term = isTerm2Month ? 0 : term / 2;
+      const term2Term = term / 2;
+
+      let term1Tuit = 0;
+      let term2Tuit = 0;
+      const monthlyTuit = tuition / 12;
+
+      if (isTerm2Month) {
+        term1Tuit = 0;
+        let remaining = 6;
+        if (month === 10) remaining = 5; // Nov
+        else if (month === 11) remaining = 4; // Dec
+        else if (month === 0) remaining = 3; // Jan
+        else if (month === 1) remaining = 2; // Feb
+        else if (month === 2) remaining = 1; // Mar
+        term2Tuit = Math.round(monthlyTuit * remaining);
+      } else {
+        let remaining = 6;
+        if (month === 4) remaining = 5; // May
+        else if (month === 5) remaining = 4; // Jun
+        else if (month === 6) remaining = 3; // Jul
+        else if (month === 7) remaining = 2; // Aug
+        else if (month === 8) remaining = 1; // Sep
+        term1Tuit = Math.round(monthlyTuit * remaining);
+        term2Tuit = tuition / 2;
+      }
 
       feeStructures = [
         { id: 'fs-reg', feeType: 'REGISTRATION' as any, totalAmount: reg, term1Amount: reg, term2Amount: 0 } as any,
-        { id: 'fs-term', feeType: 'TERM_FEE' as any, totalAmount: term, term1Amount: term / 2, term2Amount: term / 2 } as any,
-        { id: 'fs-tuit', feeType: 'TUITION_FEE' as any, totalAmount: tuition, term1Amount: tuition / 2, term2Amount: tuition / 2 } as any,
+        { id: 'fs-term', feeType: 'TERM_FEE' as any, totalAmount: term1Term + term2Term, term1Amount: term1Term, term2Amount: term2Term } as any,
+        { id: 'fs-tuit', feeType: 'TUITION_FEE' as any, totalAmount: term1Tuit + term2Tuit, term1Amount: term1Tuit, term2Amount: term2Tuit } as any,
+        { id: 'fs-app', feeType: 'ACTIVITY_FEE' as any, totalAmount: homeSunny, term1Amount: homeSunny, term2Amount: 0 } as any,
+        { id: 'fs-uni', feeType: 'UNIFORM_FEE' as any, totalAmount: uniforms, term1Amount: uniforms, term2Amount: 0 } as any,
       ];
     }
 

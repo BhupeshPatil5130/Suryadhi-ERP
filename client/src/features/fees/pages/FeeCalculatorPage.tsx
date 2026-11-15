@@ -9,39 +9,49 @@ interface ProgramFeeConfig {
   registration: number;
   termFee: number;
   annualTuition: number;
+  homeSunnyAppFee: number;
+  uniforms: number;
 }
 
 const PROGRAM_CONFIG: Record<string, ProgramFeeConfig> = {
   'Play Group': {
     registration: 6950,
     termFee: 5500,
-    annualTuition: 8800,
+    annualTuition: 9500,
+    homeSunnyAppFee: 5900,
+    uniforms: 0,
   },
   'Nursery': {
     registration: 7500,
     termFee: 6000,
     annualTuition: 11000,
+    homeSunnyAppFee: 6500,
+    uniforms: 0,
   },
   'Sunoia Junior': {
     registration: 8000,
     termFee: 6500,
     annualTuition: 12500,
+    homeSunnyAppFee: 7000,
+    uniforms: 1500,
   },
   'Sunoia Senior': {
     registration: 8500,
     termFee: 7000,
     annualTuition: 14000,
+    homeSunnyAppFee: 7500,
+    uniforms: 1500,
   },
 };
 
 export const STANDARD_PROGRAMS = [
   'Play Group',
   'Nursery',
-  'SUNOIA Junior',
-  'SUNOIA Senior',
+  'Sunoia Junior',
+  'Sunoia Senior',
 ] as const;
 
-// Academic Year: Apr to May
+// Academic Year: April 2026 to March 2027 (Term 1: Apr-Sep, Term 2: Oct-Mar)
 export const MONTH_OPTIONS = [
   'Apr 2026',
   'May 2026',
@@ -55,8 +65,6 @@ export const MONTH_OPTIONS = [
   'Jan 2027',
   'Feb 2027',
   'Mar 2027',
-  'Apr 2027',
-  'May 2027',
 ];
 
 const DISCOUNT_OPTIONS = [
@@ -76,6 +84,12 @@ interface FeeBreakupResult {
   tuitT1: number;
   tuitT2: number;
   tuitTotal: number;
+  homeSunnyT1: number;
+  homeSunnyT2: number;
+  homeSunnyTotal: number;
+  uniformsT1: number;
+  uniformsT2: number;
+  uniformsTotal: number;
   totalT1: number;
   totalT2: number;
   grossTotal: number;
@@ -105,52 +119,74 @@ function computeFeeBreakup(
   const normProg = progName.toLowerCase();
   let config = PROGRAM_CONFIG['Play Group'];
   if (normProg.includes('nurse')) config = PROGRAM_CONFIG['Nursery'];
-  else if (normProg.includes('junior') || normProg.includes('jr')) config = PROGRAM_CONFIG['SUNOIA Junior'];
-  else if (normProg.includes('senior') || normProg.includes('sr')) config = PROGRAM_CONFIG['SUNOIA Senior'];
+  else if (normProg.includes('junior') || normProg.includes('jr')) config = PROGRAM_CONFIG['Sunoia Junior'];
+  else if (normProg.includes('senior') || normProg.includes('sr')) config = PROGRAM_CONFIG['Sunoia Senior'];
   else if (normProg.includes('play')) config = PROGRAM_CONFIG['Play Group'];
 
-  // Term 1: Apr 2026 - Sep 2026
-  // Term 2: Oct 2026 - May 2027
-  const isTerm2Month = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'].some((m) => admMonth.startsWith(m)) ||
-    admMonth.includes('2027');
+  const isJuniorOrSenior = normProg.includes('junior') || normProg.includes('jr') || normProg.includes('senior') || normProg.includes('sr');
 
+  // Academic Year: April 2026 to March 2027
+  // Term 1: April to September
+  // Term 2: October to March
+  const isTerm2Month = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'].some((m) => admMonth.startsWith(m));
+
+  // 1. Registration Fee: Full at admission (Term 1)
   const regT1 = config.registration;
   const regT2 = 0;
+  const regTotal = regT1 + regT2;
 
+  // 2. Term Fee:
+  // Breakup 1 & 2 (Admitted Apr-Sep): 1 & 2 Term (Term 1 = 50%, Term 2 = 50%)
+  // Breakup 3 & 4 (Admitted Oct-Mar): 2 Term only (Term 1 = 0, Term 2 = 50%)
   const termT1 = isTerm2Month ? 0 : config.termFee / 2;
   const termT2 = config.termFee / 2;
+  const termTotal = termT1 + termT2;
 
+  // 3. Tuition Fee:
+  // Annual tuition divided over 12 months
+  const monthlyTuition = config.annualTuition / 12;
   let tuitT1 = 0;
   let tuitT2 = 0;
 
-  const isSep = admMonth.startsWith('Sep');
-
-  if (isSep && normProg.includes('play')) {
-    tuitT1 = 2933.33;
-    tuitT2 = 3666.67;
-  } else if (isTerm2Month) {
+  if (isTerm2Month) {
+    // Breakup 3: Oct 2026 to Mar 2027 (Term 1 = 0, Term 2 = Oct 26 to Mar 27, 6 months)
+    // Breakup 4: Jan 2027 to Mar 2027 (Term 1 = 0, Term 2 = Jan 27 to Mar 27, 3 months)
     tuitT1 = 0;
-    const term2Months = ['Oct 2026', 'Nov 2026', 'Dec 2026', 'Jan 2027', 'Feb 2027', 'Mar 2027', 'Apr 2027', 'May 2027'];
-    const idx = term2Months.findIndex((m) => admMonth === m || admMonth.startsWith(m.slice(0, 3)));
-    const remaining = Math.max(1, 6 - (idx === -1 ? 0 : Math.min(idx, 5)));
-    tuitT2 = (config.annualTuition / 12) * remaining;
+    const term2Months = ['Oct 2026', 'Nov 2026', 'Dec 2026', 'Jan 2027', 'Feb 2027', 'Mar 2027'];
+    const idx = term2Months.findIndex((m) => admMonth.startsWith(m.slice(0, 3)));
+    const remainingT2 = idx === -1 ? 6 : Math.max(1, 6 - idx);
+    tuitT2 = Math.round(monthlyTuition * remainingT2 * 100) / 100;
   } else {
+    // Breakup 1: Apr 2026 to Mar 2027 (Term 1 = 6 months, Term 2 = 6 months)
+    // Breakup 2: Aug 2026 to Mar 2027 (Term 1 = Aug 26 to Sep 26 [2 months], Term 2 = Oct 26 to Mar 27 [6 months])
     const term1Months = ['Apr 2026', 'May 2026', 'Jun 2026', 'Jul 2026', 'Aug 2026', 'Sep 2026'];
-    const idx = term1Months.findIndex((m) => admMonth === m || admMonth.startsWith(m.slice(0, 3)));
-    const remainingT1 = Math.max(1, 6 - (idx === -1 ? 0 : idx));
-    tuitT1 = (config.annualTuition / 12) * remainingT1;
+    const idx = term1Months.findIndex((m) => admMonth.startsWith(m.slice(0, 3)));
+    const remainingT1 = idx === -1 ? 6 : Math.max(1, 6 - idx);
+    tuitT1 = Math.round(monthlyTuition * remainingT1 * 100) / 100;
     tuitT2 = config.annualTuition / 2;
   }
+  const tuitTotal = tuitT1 + tuitT2;
+
+  // 4. HomeSunny App Fee
+  const homeSunnyT1 = config.homeSunnyAppFee;
+  const homeSunnyT2 = 0;
+  const homeSunnyTotal = homeSunnyT1 + homeSunnyT2;
+
+  // 5. Uniforms: Only Sunoia Junior & Sunoia Senior
+  const uniformRate = isJuniorOrSenior ? config.uniforms : 0;
+  const uniformsT1 = uniformRate;
+  const uniformsT2 = 0;
+  const uniformsTotal = uniformsT1 + uniformsT2;
+
+  const grossT1 = regT1 + termT1 + tuitT1 + homeSunnyT1 + uniformsT1;
+  const grossT2 = regT2 + termT2 + tuitT2 + homeSunnyT2 + uniformsT2;
+  const grossTotal = grossT1 + grossT2;
 
   let discountRate = 0;
   let discountFlat = 0;
   if (discType === 'sibling') discountRate = 0.1;
   else if (discType === 'staff') discountRate = 0.2;
   else if (discType === 'early') discountFlat = 1500;
-
-  const grossT1 = regT1 + termT1 + tuitT1;
-  const grossT2 = regT2 + termT2 + tuitT2;
-  const grossTotal = grossT1 + grossT2;
 
   const discountAmount = discountFlat > 0 ? discountFlat : grossTotal * discountRate;
   const netTotal = Math.max(0, grossTotal - discountAmount);
@@ -166,13 +202,19 @@ function computeFeeBreakup(
   return {
     regT1,
     regT2,
-    regTotal: regT1 + regT2,
+    regTotal,
     termT1,
     termT2,
-    termTotal: termT1 + termT2,
+    termTotal,
     tuitT1,
     tuitT2,
-    tuitTotal: tuitT1 + tuitT2,
+    tuitTotal,
+    homeSunnyT1,
+    homeSunnyT2,
+    homeSunnyTotal,
+    uniformsT1,
+    uniformsT2,
+    uniformsTotal,
     totalT1: finalT1,
     totalT2: finalT2,
     grossTotal,
@@ -197,7 +239,7 @@ export default function FeeCalculatorPage() {
   // Franchisee & Year details
   const franchisee = 'SNK - Dhule - Deopur';
   const selectedYear = useUIStore((s) => s.academicYear);
-  const academicYear = selectedYear || 'Apr 26 - May 27';
+  const academicYear = selectedYear || 'Apr 26 - Mar 27';
 
   // Fetch programs from backend lookup to ensure dynamic alignment (mapping Euro -> Sunoia)
   useEffect(() => {
@@ -249,6 +291,8 @@ export default function FeeCalculatorPage() {
         const regItem = d.feeBreakup?.find((f: any) => f.feeType === 'REGISTRATION');
         const termItem = d.feeBreakup?.find((f: any) => f.feeType === 'TERM_FEE');
         const tuitItem = d.feeBreakup?.find((f: any) => f.feeType === 'TUITION_FEE');
+        const appItem = d.feeBreakup?.find((f: any) => f.feeType === 'ACTIVITY_FEE' || f.feeType === 'HOMESUNNY_APP_FEE');
+        const uniItem = d.feeBreakup?.find((f: any) => f.feeType === 'UNIFORM_FEE' || f.feeType === 'UNIFORMS');
 
         finalResult = {
           regT1: regItem?.term1Amount ?? localBreakup.regT1,
@@ -260,6 +304,12 @@ export default function FeeCalculatorPage() {
           tuitT1: tuitItem?.term1Amount ?? localBreakup.tuitT1,
           tuitT2: tuitItem?.term2Amount ?? localBreakup.tuitT2,
           tuitTotal: tuitItem?.totalAmount ?? localBreakup.tuitTotal,
+          homeSunnyT1: appItem?.term1Amount ?? localBreakup.homeSunnyT1,
+          homeSunnyT2: appItem?.term2Amount ?? localBreakup.homeSunnyT2,
+          homeSunnyTotal: appItem?.totalAmount ?? localBreakup.homeSunnyTotal,
+          uniformsT1: uniItem?.term1Amount ?? localBreakup.uniformsT1,
+          uniformsT2: uniItem?.term2Amount ?? localBreakup.uniformsT2,
+          uniformsTotal: uniItem?.totalAmount ?? localBreakup.uniformsTotal,
           totalT1: d.term1Total ?? localBreakup.totalT1,
           totalT2: d.term2Total ?? localBreakup.totalT2,
           grossTotal: d.subtotal ?? localBreakup.grossTotal,
@@ -318,13 +368,25 @@ export default function FeeCalculatorPage() {
         'Total Invoice Amount': calculatedResult.tuitTotal.toFixed(2),
       },
       {
+        Fees: 'HomeSunny App Fee',
+        'Term 1 Invoice Amount': calculatedResult.homeSunnyT1.toFixed(2),
+        'Term 2 Invoice Amount': calculatedResult.homeSunnyT2.toFixed(2),
+        'Total Invoice Amount': calculatedResult.homeSunnyTotal.toFixed(2),
+      },
+      {
+        Fees: 'Uniforms (Only Sunoia Junior & Sunoia Senior)',
+        'Term 1 Invoice Amount': calculatedResult.uniformsT1.toFixed(2),
+        'Term 2 Invoice Amount': calculatedResult.uniformsT2.toFixed(2),
+        'Total Invoice Amount': calculatedResult.uniformsTotal.toFixed(2),
+      },
+      {
         Fees: 'Total Amount',
         'Term 1 Invoice Amount': calculatedResult.totalT1.toFixed(2),
         'Term 2 Invoice Amount': calculatedResult.totalT2.toFixed(2),
         'Total Invoice Amount': calculatedResult.totalAmountNumber.toFixed(2),
       },
     ];
-    downloadAsCSV(rows, `Fee_Breakup_${calculatedResult.programName}_${calculatedResult.admissionMonth}`);
+    downloadAsCSV(rows, `Fee_Breakup_${calculatedResult.programName}_${calculatedResult.admissionMonth.replace(/\s+/g, '_')}`);
     showToast('Fee Breakup downloaded successfully', 'success');
   };
 
@@ -338,6 +400,9 @@ export default function FeeCalculatorPage() {
             <div className="flex items-center gap-2">
               <Menu className="w-4 h-4 text-[#333]" />
               <span className="text-xs md:text-sm font-bold text-[#333]">Fee Calculator</span>
+            </div>
+            <div className="text-[11px] text-slate-500 font-medium hidden sm:block">
+              शैक्षणिक सत्र: Apr 2026 to Mar 2027 (Term 1: Apr–Sep | Term 2: Oct–Mar)
             </div>
           </div>
 
@@ -373,7 +438,7 @@ export default function FeeCalculatorPage() {
                 />
               </div>
 
-              {/* Admission Date (Month Dropdown - Clean Apr-May Academic Cycle, No Sep 2025 duplicate) */}
+              {/* Admission Date (Month Dropdown - Clean Apr-Mar Academic Cycle) */}
               <div className="flex items-center justify-between">
                 <label className="w-32 font-medium text-slate-700">Admission Date</label>
                 <select
@@ -562,6 +627,7 @@ export default function FeeCalculatorPage() {
                     </tr>
                   </thead>
                   <tbody>
+                    {/* 1. Registration Fee */}
                     <tr className="border-b border-[#ccc]">
                       <td className="border border-[#ccc] px-4 py-2 text-slate-800">Registration Fee</td>
                       <td className="border border-[#ccc] px-4 py-2 text-right font-mono text-slate-800">
@@ -574,6 +640,8 @@ export default function FeeCalculatorPage() {
                         {calculatedResult.regTotal.toFixed(2)}
                       </td>
                     </tr>
+
+                    {/* 2. Term Fee */}
                     <tr className="border-b border-[#ccc]">
                       <td className="border border-[#ccc] px-4 py-2 text-slate-800">Term Fee</td>
                       <td className="border border-[#ccc] px-4 py-2 text-right font-mono text-slate-800">
@@ -586,6 +654,8 @@ export default function FeeCalculatorPage() {
                         {calculatedResult.termTotal.toFixed(2)}
                       </td>
                     </tr>
+
+                    {/* 3. Tuition Fee */}
                     <tr className="border-b border-[#ccc]">
                       <td className="border border-[#ccc] px-4 py-2 text-slate-800">Tuition Fee</td>
                       <td className="border border-[#ccc] px-4 py-2 text-right font-mono text-slate-800">
@@ -598,6 +668,38 @@ export default function FeeCalculatorPage() {
                         {calculatedResult.tuitTotal.toFixed(2)}
                       </td>
                     </tr>
+
+                    {/* 4. HomeSunny App Fee */}
+                    <tr className="border-b border-[#ccc]">
+                      <td className="border border-[#ccc] px-4 py-2 text-slate-800">HomeSunny App Fee</td>
+                      <td className="border border-[#ccc] px-4 py-2 text-right font-mono text-slate-800">
+                        {calculatedResult.homeSunnyT1.toFixed(2)}
+                      </td>
+                      <td className="border border-[#ccc] px-4 py-2 text-right font-mono text-slate-800">
+                        {calculatedResult.homeSunnyT2.toFixed(2)}
+                      </td>
+                      <td className="border border-[#ccc] px-4 py-2 text-right font-mono text-slate-800">
+                        {calculatedResult.homeSunnyTotal.toFixed(2)}
+                      </td>
+                    </tr>
+
+                    {/* 5. Uniforms (Only Sunoia Junior & Sunoia Senior) */}
+                    <tr className="border-b border-[#ccc]">
+                      <td className="border border-[#ccc] px-4 py-2 text-slate-800">
+                        Uniforms (Only Sunoia Junior & Sunoia Senior)
+                      </td>
+                      <td className="border border-[#ccc] px-4 py-2 text-right font-mono text-slate-800">
+                        {calculatedResult.uniformsT1.toFixed(2)}
+                      </td>
+                      <td className="border border-[#ccc] px-4 py-2 text-right font-mono text-slate-800">
+                        {calculatedResult.uniformsT2.toFixed(2)}
+                      </td>
+                      <td className="border border-[#ccc] px-4 py-2 text-right font-mono text-slate-800">
+                        {calculatedResult.uniformsTotal.toFixed(2)}
+                      </td>
+                    </tr>
+
+                    {/* Total Amount */}
                     <tr className="font-bold border-t-2 border-[#3b5998] bg-[#f9f9f9]">
                       <td className="border border-[#ccc] px-4 py-2 text-slate-900">Total Amount</td>
                       <td className="border border-[#ccc] px-4 py-2 text-right font-mono text-slate-900">
