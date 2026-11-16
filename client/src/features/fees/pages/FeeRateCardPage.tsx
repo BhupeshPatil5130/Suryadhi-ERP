@@ -64,7 +64,7 @@ export default function FeeRateCardPage() {
                 'Term Fee': r.termFee,
                 'Tuition Fee': r.tuitionFee,
                 'HomeSunny App Fee': r.homeSunnyAppFee,
-                'Uniform Fee': r.uniforms > 0 ? r.uniforms : 'Nil',
+                'Uniform Fee': r.uniforms > 0 ? r.uniforms : '',
                 'Total': r.total,
               })),
               'approved-fee-card'
@@ -93,7 +93,7 @@ export default function FeeRateCardPage() {
                   <span>HomeSunny: {formatCurrency(r.homeSunnyAppFee)}</span>
                 </div>
                 <div className="text-[11px] text-slate-500 flex justify-between">
-                  <span>Uniforms: {r.uniforms > 0 ? formatCurrency(r.uniforms) : 'Nil'}</span>
+                  <span>{r.uniforms > 0 ? `Uniforms: ${formatCurrency(r.uniforms)}` : ''}</span>
                 </div>
                 <div className="mt-2 h-1 w-full rounded" style={{ backgroundColor: colors[idx % colors.length] }}></div>
               </CardContent>
@@ -132,7 +132,7 @@ export default function FeeRateCardPage() {
                   <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.tuitionFee)}</td>
                   <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.homeSunnyAppFee)}</td>
                   <td className="p-2.5 border border-[#ccc] text-right font-mono font-medium">
-                    {row.uniforms > 0 ? formatCurrency(row.uniforms) : 'Nil'}
+                    {row.uniforms > 0 ? formatCurrency(row.uniforms) : ''}
                   </td>
                   <td className="p-2.5 border border-[#ccc] text-right font-mono font-bold text-[#0056b3]">{formatCurrency(row.total)}</td>
                 </tr>
