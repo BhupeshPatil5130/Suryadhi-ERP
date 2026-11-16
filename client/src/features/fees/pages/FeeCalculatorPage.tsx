@@ -373,12 +373,16 @@ export default function FeeCalculatorPage() {
         'Term 2 Invoice Amount': calculatedResult.homeSunnyT2.toFixed(2),
         'Total Invoice Amount': calculatedResult.homeSunnyTotal.toFixed(2),
       },
-      {
-        Fees: 'Uniforms',
-        'Term 1 Invoice Amount': calculatedResult.uniformsT1.toFixed(2),
-        'Term 2 Invoice Amount': calculatedResult.uniformsT2.toFixed(2),
-        'Total Invoice Amount': calculatedResult.uniformsTotal.toFixed(2),
-      },
+      ...(calculatedResult.uniformsTotal > 0
+        ? [
+            {
+              Fees: 'Uniforms',
+              'Term 1 Invoice Amount': calculatedResult.uniformsT1.toFixed(2),
+              'Term 2 Invoice Amount': calculatedResult.uniformsT2.toFixed(2),
+              'Total Invoice Amount': calculatedResult.uniformsTotal.toFixed(2),
+            },
+          ]
+        : []),
       {
         Fees: 'Total Amount',
         'Term 1 Invoice Amount': calculatedResult.totalT1.toFixed(2),
@@ -683,21 +687,23 @@ export default function FeeCalculatorPage() {
                       </td>
                     </tr>
 
-                    {/* 5. Uniforms */}
-                    <tr className="border-b border-[#ccc]">
-                      <td className="border border-[#ccc] px-4 py-2 text-slate-800">
-                        Uniforms
-                      </td>
-                      <td className="border border-[#ccc] px-4 py-2 text-right font-mono text-slate-800">
-                        {calculatedResult.uniformsT1.toFixed(2)}
-                      </td>
-                      <td className="border border-[#ccc] px-4 py-2 text-right font-mono text-slate-800">
-                        {calculatedResult.uniformsT2.toFixed(2)}
-                      </td>
-                      <td className="border border-[#ccc] px-4 py-2 text-right font-mono text-slate-800">
-                        {calculatedResult.uniformsTotal.toFixed(2)}
-                      </td>
-                    </tr>
+                    {/* 5. Uniforms (Only for Sunoia Junior & Sunoia Senior, hidden if nil/0) */}
+                    {calculatedResult.uniformsTotal > 0 && (
+                      <tr className="border-b border-[#ccc]">
+                        <td className="border border-[#ccc] px-4 py-2 text-slate-800">
+                          Uniforms
+                        </td>
+                        <td className="border border-[#ccc] px-4 py-2 text-right font-mono text-slate-800">
+                          {calculatedResult.uniformsT1.toFixed(2)}
+                        </td>
+                        <td className="border border-[#ccc] px-4 py-2 text-right font-mono text-slate-800">
+                          {calculatedResult.uniformsT2.toFixed(2)}
+                        </td>
+                        <td className="border border-[#ccc] px-4 py-2 text-right font-mono text-slate-800">
+                          {calculatedResult.uniformsTotal.toFixed(2)}
+                        </td>
+                      </tr>
+                    )}
 
                     {/* Total Amount */}
                     <tr className="font-bold border-t-2 border-[#3b5998] bg-[#f9f9f9]">
