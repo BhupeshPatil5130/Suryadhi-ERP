@@ -374,7 +374,7 @@ export default function FeeCalculatorPage() {
         'Total Invoice Amount': calculatedResult.homeSunnyTotal.toFixed(2),
       },
       {
-        Fees: 'Uniforms (Only Sunoia Junior & Sunoia Senior)',
+        Fees: 'Uniforms',
         'Term 1 Invoice Amount': calculatedResult.uniformsT1.toFixed(2),
         'Term 2 Invoice Amount': calculatedResult.uniformsT2.toFixed(2),
         'Total Invoice Amount': calculatedResult.uniformsTotal.toFixed(2),
@@ -683,10 +683,10 @@ export default function FeeCalculatorPage() {
                       </td>
                     </tr>
 
-                    {/* 5. Uniforms (Only Sunoia Junior & Sunoia Senior) */}
+                    {/* 5. Uniforms */}
                     <tr className="border-b border-[#ccc]">
                       <td className="border border-[#ccc] px-4 py-2 text-slate-800">
-                        Uniforms (Only Sunoia Junior & Sunoia Senior)
+                        Uniforms
                       </td>
                       <td className="border border-[#ccc] px-4 py-2 text-right font-mono text-slate-800">
                         {calculatedResult.uniformsT1.toFixed(2)}
