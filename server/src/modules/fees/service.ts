@@ -258,8 +258,13 @@ export class FeeService {
     // Separate Invoice (Term) receipts from Other / Independent receipts
     // Only receipts linked to the invoice count towards invoice payment
     // Independent / Other receipts (admission form fee, uniform, transport, etc.) do NOT reduce invoice balance
-    const invoiceReceipts = receipts.filter((r) => !r.isCancelled && r.invoiceId !== null);
-    const otherReceipts = receipts.filter((r) => !r.isCancelled && r.invoiceId === null);
+    const isFormFee = (r: any) => {
+      const branch = (r.bankBranch || '').toLowerCase();
+      const notes = ((r as any).notes || '').toLowerCase();
+      return branch.includes('form') || notes.includes('form') || Number(r.amount) === 500;
+    };
+    const invoiceReceipts = receipts.filter((r) => !r.isCancelled && r.invoiceId !== null && !isFormFee(r));
+    const otherReceipts = receipts.filter((r) => !r.isCancelled && (r.invoiceId === null || isFormFee(r)));
 
     const term1Total = admission.invoices.reduce((sum, inv) => sum + Number(inv.term1Amount), 0);
     const term2Total = admission.invoices.reduce((sum, inv) => sum + Number(inv.term2Amount), 0);

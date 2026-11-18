@@ -138,48 +138,77 @@ export function formatInvoiceNumber(inv?: string | null): string {
   return `SNK/3201/${seq}/2026`;
 }
 
-export function getFeeBreakdown(receipt: ReceiptItem): { label: string; amount: number }[] {
-  const amt = receipt.amount || 0;
-  const cat = (receipt.category || '').toLowerCase();
-  const isOther = Boolean(receipt.isOther || cat.includes('other'));
-  const isForm = cat.includes('form') || (!isOther && amt === 500);
+export interface FeeBreakdownItem {
+  label: string;
+  installment1: number;
+  installment2: number;
+  total: number;
+  amount: number;
+}
 
-  // 1. Admission Form Receipt
-  if (isForm) {
-    return [{ label: 'Admission Form', amount: amt }];
+export function getFeeBreakdown(receipt: ReceiptItem, programName?: string): FeeBreakdownItem[] {
+  const amt = Number(receipt.amount) || 0;
+  const cat = (receipt.category || '').toLowerCase();
+  const notes = (receipt.notes || (receipt as any).particular || '').toLowerCase();
+  const isEnquiry = cat === 'admission' || notes === 'admission' || (receipt as any).source === 'enquiry';
+
+  // 1. Manage Enquiry Page & Admission Form Receipts: Particular is "Admission Form"
+  if (isEnquiry || cat.includes('form') || notes.includes('form')) {
+    return [{ label: 'Admission Form', installment1: amt, installment2: 0, total: amt, amount: amt }];
   }
 
-  // 2. Other Receipt
+  // 3. Other Receipt
+  const isOther = Boolean(receipt.isOther || cat.includes('other'));
   if (isOther) {
     const label = receipt.category && !receipt.category.toLowerCase().includes('other')
       ? receipt.category
       : 'Other Fee';
-    return [{ label, amount: amt }];
+    return [{ label, installment1: amt, installment2: 0, total: amt, amount: amt }];
   }
 
-  // 3. Fee for Academic Year April 2026 to March 2027 (Format from reference screenshot)
-  if (amt === 7000) {
+  // 4. Academic Year Fee Receipt:
+  // Approved Fee Cards with Installment 1 and Installment 2
+  const prog = (programName || '').toLowerCase();
+
+  // 1. PlayGroup
+  if (prog.includes('play')) {
     return [
-      { label: 'Admission Fee', amount: 4250 },
-      { label: 'Term Fee', amount: 2750 },
-    ];
-  }
-  if (amt === 15800) {
-    return [
-      { label: 'Admission Fee', amount: 7800 },
-      { label: 'Term Fee', amount: 8000 },
-    ];
-  }
-  if (amt > 1000) {
-    const reg = Math.min(4250, Math.round(amt * 0.607));
-    const term = amt - reg;
-    return [
-      { label: 'Admission Fee', amount: reg },
-      { label: 'Term Fee', amount: term },
+      { label: 'Registration Fee', installment1: 6950, installment2: 0, total: 6950, amount: 6950 },
+      { label: 'Term Fee', installment1: 2750, installment2: 2750, total: 5500, amount: 5500 },
+      { label: 'Tuition Fee', installment1: 4750, installment2: 4750, total: 9500, amount: 9500 },
+      { label: 'HomeSunny App', installment1: 5900, installment2: 0, total: 5900, amount: 5900 },
     ];
   }
 
-  return [{ label: 'Admission Fee', amount: amt }];
+  // 2. SUNOIA Junior
+  if (prog.includes('junior') || prog.includes('jr')) {
+    return [
+      { label: 'Registration Fee', installment1: 8000, installment2: 0, total: 8000, amount: 8000 },
+      { label: 'Term Fee', installment1: 3250, installment2: 3250, total: 6500, amount: 6500 },
+      { label: 'Tuition Fee', installment1: 6250, installment2: 6250, total: 12500, amount: 12500 },
+      { label: 'HomeSunny App', installment1: 7000, installment2: 0, total: 7000, amount: 7000 },
+      { label: 'Uniform', installment1: 1500, installment2: 0, total: 1500, amount: 1500 },
+    ];
+  }
+
+  // 3. SUNOIA Senior
+  if (prog.includes('senior') || prog.includes('sr')) {
+    return [
+      { label: 'Registration Fee', installment1: 8500, installment2: 0, total: 8500, amount: 8500 },
+      { label: 'Term Fee', installment1: 3500, installment2: 3500, total: 7000, amount: 7000 },
+      { label: 'Tuition Fee', installment1: 7000, installment2: 7000, total: 14000, amount: 14000 },
+      { label: 'HomeSunny App', installment1: 7500, installment2: 0, total: 7500, amount: 7500 },
+      { label: 'Uniform', installment1: 1500, installment2: 0, total: 1500, amount: 1500 },
+    ];
+  }
+
+  // 4. Nursery (Default)
+  return [
+    { label: 'Registration Fee', installment1: 7500, installment2: 0, total: 7500, amount: 7500 },
+    { label: 'Term Fee', installment1: 3000, installment2: 3000, total: 6000, amount: 6000 },
+    { label: 'Tuition Fee', installment1: 5500, installment2: 5500, total: 11000, amount: 11000 },
+    { label: 'HomeSunny App', installment1: 6500, installment2: 0, total: 6500, amount: 6500 },
+  ];
 }
 
 export function buildReceiptPrintHtml(r: ReceiptItem, data: AdmissionReceiptData): string {
@@ -188,17 +217,82 @@ export function buildReceiptPrintHtml(r: ReceiptItem, data: AdmissionReceiptData
   const dateFormatted = formatReceiptDate(r.receiptDate);
   const chequeDateFormatted = r.chequeDate ? formatReceiptDate(r.chequeDate) : dateFormatted;
   const words = numberToWords(r.amount);
-  const breakdownRows = getFeeBreakdown(r);
+  const breakdownRows = getFeeBreakdown(r, data.program);
 
-  const rowsHtml = breakdownRows
-    .map(
-      (row) => `
-      <tr>
-       <td style="border:1.2px solid #333;padding:6px 10px;text-align:left;">${row.label.replace(/registration\s*fee/gi, 'Admission Form')}</td>
-        <td style="border:1.2px solid #333;padding:6px 10px;text-align:right;font-family:monospace;">${row.amount}</td>
-      </tr>`
-    )
-    .join('');
+  const catLower = (r.category || '').toLowerCase();
+  const notesLower = (r.notes || (r as any).particular || '').toLowerCase();
+  const isEnquiry = catLower === 'admission' || notesLower === 'admission' || (r as any).source === 'enquiry';
+  const isForm = catLower.includes('form') || notesLower.includes('form');
+  const isOther = Boolean(r.isOther || catLower.includes('other'));
+  const isSpecialReceipt = isEnquiry || isForm || isOther;
+
+  let feeTableHtml = '';
+  if (isSpecialReceipt) {
+    const singleRows = breakdownRows
+      .map(
+        (row) => `
+        <tr>
+          <td style="border:1.2px solid #333;padding:6px 10px;text-align:left;">${row.label}</td>
+          <td style="border:1.2px solid #333;padding:6px 10px;text-align:right;font-family:monospace;">${row.total.toFixed(2)}</td>
+        </tr>`
+      )
+      .join('');
+
+    feeTableHtml = `
+      <table>
+        <thead>
+          <tr>
+            <th>Fees for Academic year ${data.academicYear || 'April 2026 to March 2027'}</th>
+            <th style="text-align:right;width:105px;">Amount Rs.</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${singleRows}
+          <tr style="font-weight:bold;background:#fafafa;">
+            <td style="text-align:right;">Total</td>
+            <td style="text-align:right;font-family:monospace;">${Number(r.amount).toFixed(2)}</td>
+          </tr>
+        </tbody>
+      </table>`;
+  } else {
+    // Academic Year Course Fee Receipt - Displays Installment 1 and Installment 2 correctly arranged
+    const totalInst1 = breakdownRows.reduce((sum, row) => sum + row.installment1, 0);
+    const totalInst2 = breakdownRows.reduce((sum, row) => sum + row.installment2, 0);
+    const grandTotal = breakdownRows.reduce((sum, row) => sum + row.total, 0);
+
+    const multiRows = breakdownRows
+      .map(
+        (row) => `
+        <tr>
+          <td style="border:1.2px solid #333;padding:6px 8px;text-align:left;font-weight:500;">${row.label}</td>
+          <td style="border:1.2px solid #333;padding:6px 8px;text-align:right;font-family:monospace;">${row.installment1 > 0 ? row.installment1.toFixed(2) : '—'}</td>
+          <td style="border:1.2px solid #333;padding:6px 8px;text-align:right;font-family:monospace;">${row.installment2 > 0 ? row.installment2.toFixed(2) : '—'}</td>
+          <td style="border:1.2px solid #333;padding:6px 8px;text-align:right;font-family:monospace;font-weight:600;">${row.total.toFixed(2)}</td>
+        </tr>`
+      )
+      .join('');
+
+    feeTableHtml = `
+      <table>
+        <thead>
+          <tr style="background:#f2f2f2;">
+            <th style="border:1.2px solid #333;padding:6px 8px;text-align:left;">Fees for Academic year ${data.academicYear || 'April 2026 to March 2027'}</th>
+            <th style="border:1.2px solid #333;padding:6px 8px;text-align:right;width:95px;">Installment 1</th>
+            <th style="border:1.2px solid #333;padding:6px 8px;text-align:right;width:95px;">Installment 2</th>
+            <th style="border:1.2px solid #333;padding:6px 8px;text-align:right;width:95px;">Total Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${multiRows}
+          <tr style="font-weight:bold;background:#fafafa;">
+            <td style="border:1.2px solid #333;padding:6px 8px;text-align:right;">Total</td>
+            <td style="border:1.2px solid #333;padding:6px 8px;text-align:right;font-family:monospace;">${totalInst1.toFixed(2)}</td>
+            <td style="border:1.2px solid #333;padding:6px 8px;text-align:right;font-family:monospace;">${totalInst2.toFixed(2)}</td>
+            <td style="border:1.2px solid #333;padding:6px 8px;text-align:right;font-family:monospace;color:#1d4ed8;">${grandTotal.toFixed(2)}</td>
+          </tr>
+        </tbody>
+      </table>`;
+  }
 
   return `<!DOCTYPE html>
 <html>
@@ -323,8 +417,8 @@ export function buildReceiptPrintHtml(r: ReceiptItem, data: AdmissionReceiptData
     }
     .tables-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      grid-template-columns: 1.55fr 0.85fr;
+      gap: 14px;
       margin-top: 22px;
     }
     table {
@@ -399,12 +493,17 @@ export function buildReceiptPrintHtml(r: ReceiptItem, data: AdmissionReceiptData
         <div class="logo-sub">Pre-School</div>
       </div>
 
-      <div class="receipt-title">${r.isOther || r.category?.toLowerCase().includes('other')
-      ? 'OTHER RECEIPT'
-      : r.category?.toLowerCase().includes('form') || r.amount === 500
-        ? 'RECEIPT – FORM'
-        : 'RECEIPT – FEE FOR ACADEMIC YEAR APRIL 2026 TO MARCH 2027'
-    }</div>
+      <div class="receipt-title">${
+        (r.category || '').toLowerCase() === 'admission' ||
+        (r.notes || (r as any).particular || '').toLowerCase() === 'admission' ||
+        (r as any).source === 'enquiry'
+          ? 'RECEIPT'
+          : r.isOther || r.category?.toLowerCase().includes('other')
+          ? 'OTHER RECEIPT'
+          : r.category?.toLowerCase().includes('form') || (r.notes || '').toLowerCase().includes('form')
+          ? 'RECEIPT – FORM'
+          : 'RECEIPT – FEE FOR ACADEMIC YEAR APRIL 2026 TO MARCH 2027'
+      }</div>
 
       <div class="franchise-box">
         <div class="franchise-name">${data.franchiseeContactPerson || 'Rahul Khandale'}</div>
@@ -450,22 +549,8 @@ export function buildReceiptPrintHtml(r: ReceiptItem, data: AdmissionReceiptData
     </div>
 
     <div class="tables-grid">
-      <!-- Fee Breakdown Table -->
-      <table>
-        <thead>
-          <tr>
-            <th>Fees for Academic year ${data.academicYear || 'April 2026 to March 2027'}</th>
-            <th style="text-align:right;width:95px;">Amount Rs.</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rowsHtml}
-          <tr style="font-weight:bold;background:#fafafa;">
-            <td style="text-align:right;">Total</td>
-            <td style="text-align:right;font-family:monospace;">${r.amount}</td>
-          </tr>
-        </tbody>
-      </table>
+      <!-- Fee Breakdown Table (Dynamic 4-column with Installment 1 and Installment 2, or 2-column for special) -->
+      ${feeTableHtml}
 
       <!-- Invoice Details Table -->
       <table>
@@ -546,7 +631,21 @@ export default function ReceiptDetailsViewer({
   const dateFormatted = formatReceiptDate(receipt.receiptDate);
   const chequeDateFormatted = receipt.chequeDate ? formatReceiptDate(receipt.chequeDate) : dateFormatted;
   const words = numberToWords(receipt.amount);
-  const breakdownRows = getFeeBreakdown(receipt);
+  const breakdownRows = getFeeBreakdown(receipt, data.program);
+
+  const catLower = (receipt.category || '').toLowerCase();
+  const notesLower = (receipt.notes || (receipt as any).particular || '').toLowerCase();
+  const isEnquiry = catLower === 'admission' || notesLower === 'admission' || (receipt as any).source === 'enquiry';
+  const isForm = catLower.includes('form') || notesLower.includes('form');
+  const isOther = Boolean(receipt.isOther || catLower.includes('other'));
+  const isSpecialReceipt = isEnquiry || isForm || isOther;
+  const receiptTitle = isEnquiry
+    ? 'RECEIPT'
+    : isForm
+    ? 'RECEIPT – FORM'
+    : isOther
+    ? 'OTHER RECEIPT'
+    : 'RECEIPT – FEE FOR ACADEMIC YEAR APRIL 2026 TO MARCH 2027';
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank', 'width=900,height=800');
@@ -842,8 +941,8 @@ export default function ReceiptDetailsViewer({
 
               {/* Bold RECEIPT Title */}
               <div className="self-center sm:self-auto text-center sm:pt-3">
-                <h1 className="text-xl sm:text-2xl font-black tracking-widest text-slate-900">
-                  RECEIPT
+                <h1 className="text-xl sm:text-2xl font-black tracking-widest text-slate-900 text-center max-w-[340px]">
+                  {receiptTitle}
                 </h1>
               </div>
 
@@ -921,34 +1020,79 @@ export default function ReceiptDetailsViewer({
             </div>
 
             {/* Two Side-by-Side Tables */}
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1.55fr_0.85fr] gap-4 text-xs">
               {/* Left Table: Fee Breakdown */}
-              <table className="w-full border-collapse border border-slate-700 text-xs">
-                <thead>
-                  <tr className="bg-[#f2f2f2] font-bold text-slate-900">
-                    <th className="border border-slate-700 p-2 text-left">
-                      Fees for Academic year {data.academicYear || 'April 2026 to March 2027'}
-                    </th>
-                    <th className="border border-slate-700 p-2 text-right w-24">Amount Rs.</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {breakdownRows.map((row, idx) => (
-                    <tr key={idx}>
-                      <td className="border border-slate-700 p-2 text-slate-800">
-                        {row.label.replace(/registration\s*fee/gi, ' Admission Form')}
+              {isSpecialReceipt ? (
+                <table className="w-full border-collapse border border-slate-700 text-xs">
+                  <thead>
+                    <tr className="bg-[#f2f2f2] font-bold text-slate-900">
+                      <th className="border border-slate-700 p-2 text-left">
+                        Fees for Academic year {data.academicYear || 'April 2026 to March 2027'}
+                      </th>
+                      <th className="border border-slate-700 p-2 text-right w-24">Amount Rs.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {breakdownRows.map((row, idx) => (
+                      <tr key={idx}>
+                        <td className="border border-slate-700 p-2 text-slate-800">
+                          {row.label}
+                        </td>
+                        <td className="border border-slate-700 p-2 text-right font-mono font-medium">
+                          {row.total.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="font-bold bg-[#fafafa] text-slate-900">
+                      <td className="border border-slate-700 p-2 text-right">Total</td>
+                      <td className="border border-slate-700 p-2 text-right font-mono">{Number(receipt.amount).toFixed(2)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              ) : (
+                <table className="w-full border-collapse border border-slate-700 text-xs">
+                  <thead>
+                    <tr className="bg-[#f2f2f2] font-bold text-slate-900">
+                      <th className="border border-slate-700 p-2 text-left">
+                        Fees for Academic year {data.academicYear || 'April 2026 to March 2027'}
+                      </th>
+                      <th className="border border-slate-700 p-2 text-right w-24">Installment 1</th>
+                      <th className="border border-slate-700 p-2 text-right w-24">Installment 2</th>
+                      <th className="border border-slate-700 p-2 text-right w-24">Total Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {breakdownRows.map((row, idx) => (
+                      <tr key={idx}>
+                        <td className="border border-slate-700 p-2 text-slate-800 font-medium">
+                          {row.label}
+                        </td>
+                        <td className="border border-slate-700 p-2 text-right font-mono">
+                          {row.installment1 > 0 ? row.installment1.toFixed(2) : '—'}
+                        </td>
+                        <td className="border border-slate-700 p-2 text-right font-mono">
+                          {row.installment2 > 0 ? row.installment2.toFixed(2) : '—'}
+                        </td>
+                        <td className="border border-slate-700 p-2 text-right font-mono font-semibold">
+                          {row.total.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="font-bold bg-[#fafafa] text-slate-900">
+                      <td className="border border-slate-700 p-2 text-right">Total</td>
+                      <td className="border border-slate-700 p-2 text-right font-mono">
+                        {breakdownRows.reduce((s, r) => s + r.installment1, 0).toFixed(2)}
                       </td>
-                      <td className="border border-slate-700 p-2 text-right font-mono font-medium">
-                        {row.amount}
+                      <td className="border border-slate-700 p-2 text-right font-mono">
+                        {breakdownRows.reduce((s, r) => s + r.installment2, 0).toFixed(2)}
+                      </td>
+                      <td className="border border-slate-700 p-2 text-right font-mono text-blue-700">
+                        {breakdownRows.reduce((s, r) => s + r.total, 0).toFixed(2)}
                       </td>
                     </tr>
-                  ))}
-                  <tr className="font-bold bg-[#fafafa] text-slate-900">
-                    <td className="border border-slate-700 p-2 text-right">Total</td>
-                    <td className="border border-slate-700 p-2 text-right font-mono">{receipt.amount}</td>
-                  </tr>
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+              )}
 
               {/* Right Table: Invoice Meta */}
               <table className="w-full border-collapse border border-slate-700 text-xs">

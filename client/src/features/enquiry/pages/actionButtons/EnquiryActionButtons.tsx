@@ -30,8 +30,8 @@ export default function EnquiryActionButtons({ id, studentName = 'Student', pare
     <tr><th>Enquiry ID</th><td>${id}</td></tr>
     <tr><th>Student Name</th><td>${studentName}</td></tr>
     <tr><th>Parent / Enquirer Email</th><td>${parentEmail || 'N/A'}</td></tr>
-    <tr><th>Document Type</th><td>Admission Form Fee / Enquiry Summary</td></tr>
-    <tr><th>Amount</th><td>₹500.00 (Online Admission Form Fee)</td></tr>
+    <tr><th>Document Type</th><td>Receipt / Enquiry Summary</td></tr>
+    <tr><th>Amount</th><td>₹500.00 (Particular: Admission)</td></tr>
     <tr><th>Generated Date</th><td>${new Date().toLocaleDateString('en-GB')}</td></tr>
     <tr><th>Status</th><td>Registered</td></tr>
   </table>

@@ -109,7 +109,9 @@ export default function AddReceiptPage() {
         ...(transactionId && { transactionId }),
         ...(transferReference && { transferReference }),
         ...(upiId && { upiId }),
-        ...(notes && { notes }),
+        notes: notes || 'Admission Form',
+        particular: 'Admission Form',
+        category: 'Admission Form',
       };
 
       const res = await api.post(`/enquiries/${id}/advance-receipts`, payload);

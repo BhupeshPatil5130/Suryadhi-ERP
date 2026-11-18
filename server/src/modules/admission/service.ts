@@ -231,7 +231,7 @@ export class AdmissionService {
         });
       }
 
-      // Automatically Generate Invoice and SOA based on Fee Structure
+      // Automatically Generate Invoice and SOA based on Approved Fee Card
       const feeStructures = await tx.feeStructure.findMany({
         where: {
           schoolId,
@@ -241,105 +241,118 @@ export class AdmissionService {
         },
       });
 
+      // Approved rate card defaults:
+      // Play Group: Term 1: 20350, Term 2: 7500, Total: 27850
+      // Nursery: Term 1: 22500, Term 2: 8500, Total: 31000
+      // SUNOIA Junior: Term 1: 26000, Term 2: 9500, Total: 35500
+      // SUNOIA Senior: Term 1: 28000, Term 2: 10500, Total: 38500
+      const progName = (admission.program?.name || '').toLowerCase();
+      let defaultT1 = 22500;
+      let defaultT2 = 8500;
+      let defaultTotal = 31000;
+      if (progName.includes('play')) {
+        defaultT1 = 20350; defaultT2 = 7500; defaultTotal = 27850;
+      } else if (progName.includes('junior') || progName.includes('jr')) {
+        defaultT1 = 26000; defaultT2 = 9500; defaultTotal = 35500;
+      } else if (progName.includes('senior') || progName.includes('sr')) {
+        defaultT1 = 28000; defaultT2 = 10500; defaultTotal = 38500;
+      } else if (progName.includes('nurse')) {
+        defaultT1 = 22500; defaultT2 = 8500; defaultTotal = 31000;
+      }
+
+      let term1Amount = defaultT1;
+      let term2Amount = defaultT2;
+      let totalAmount = defaultTotal;
+
       if (feeStructures.length > 0) {
-        let discount = null;
-        if (input.discountTypeId) {
-          discount = await tx.discountType.findUnique({
-            where: { id: input.discountTypeId },
-          });
-        }
-
-        let term1Amount = 0;
-        let term2Amount = 0;
-        let totalAmount = 0;
-
+        let fsT1 = 0;
+        let fsT2 = 0;
+        let fsTotal = 0;
         feeStructures.forEach((fs) => {
-          term1Amount += Number(fs.term1Amount);
-          term2Amount += Number(fs.term2Amount);
-          totalAmount += Number(fs.totalAmount);
+          fsT1 += Number(fs.term1Amount);
+          fsT2 += Number(fs.term2Amount);
+          fsTotal += Number(fs.totalAmount);
         });
-
-        let discountAmount = 0;
-        if (discount && input.isDiscountApplicable) {
-          if (discount.percentage) {
-            discountAmount = totalAmount * (Number(discount.percentage) / 100);
-          } else if (discount.flatAmount) {
-            discountAmount = Number(discount.flatAmount);
-          }
+        // Only use DB feeStructures if they are realistic (not legacy > 60000 like 81000)
+        if (fsTotal > 0 && fsTotal <= 60000) {
+          term1Amount = fsT1;
+          term2Amount = fsT2;
+          totalAmount = fsTotal;
         }
+      }
 
-        const netAmount = totalAmount - discountAmount;
-
-        // Create Invoice with invoice number matching student UIN
-        const invoiceNumber = admission.student?.uin || newUin;
-
-        const invoice = await tx.invoice.create({
-          data: {
-            invoiceNumber,
-            admissionId: admission.id,
-            term1Amount,
-            term2Amount,
-            totalAmount,
-            discountAmount,
-            netAmount,
-            status: 'GENERATED',
-          },
-        });
-
-        // Adjust enquiry advance receipts: carry them over as admission receipts
-        if (input.enquiryId) {
-          const advanceReceipts = await tx.advanceReceipt.findMany({
-            where: { enquiryId: input.enquiryId },
-          });
-
-          let totalAdvancePaid = 0;
-          for (const ar of advanceReceipts) {
-            const arReceiptNumber = await getNextSequenceNumber('RCP', schoolId, tx, 6);
-
-            await tx.receipt.create({
-              data: {
-                receiptNumber: arReceiptNumber,
-                receiptDate: ar.receiptDate,
-                amount: ar.amount,
-                paymentMode: ar.paymentMode,
-                bankName: ar.bankName,
-                chequeNumber: ar.chequeNumber,
-                chequeDate: ar.chequeDate,
-                admissionId: admission.id,
-                invoiceId: invoice.id,
-              },
-            });
-
-            totalAdvancePaid += Number(ar.amount);
-          }
-
-          // Update invoice status based on advance payments
-          if (totalAdvancePaid >= netAmount) {
-            await tx.invoice.update({
-              where: { id: invoice.id },
-              data: { status: 'PAID' },
-            });
-          } else if (totalAdvancePaid > 0) {
-            await tx.invoice.update({
-              where: { id: invoice.id },
-              data: { status: 'PARTIALLY_PAID' },
-            });
-          }
-        }
-
-        // Create SOA Entry for Franchisee Fees (Debit Invoice)
-        await tx.sOAEntry.create({
-          data: {
-            schoolId,
-            entryDate: new Date(),
-            particulars: `Term Fees Invoice - ${student.firstName} ${student.lastName}`,
-            entryType: 'FRANCHISEE_FEES',
-            invoiceAmount: netAmount,
-            receiptAmount: 0,
-            balance: netAmount,
-          },
+      let discount = null;
+      if (input.discountTypeId) {
+        discount = await tx.discountType.findUnique({
+          where: { id: input.discountTypeId },
         });
       }
+
+      let discountAmount = 0;
+      if (discount && input.isDiscountApplicable) {
+        if (discount.percentage) {
+          discountAmount = totalAmount * (Number(discount.percentage) / 100);
+        } else if (discount.flatAmount) {
+          discountAmount = Number(discount.flatAmount);
+        }
+      }
+
+      const netAmount = totalAmount - discountAmount;
+
+      // Create Invoice with invoice number matching student UIN
+      const invoiceNumber = admission.student?.uin || newUin;
+
+      const invoice = await tx.invoice.create({
+        data: {
+          invoiceNumber,
+          admissionId: admission.id,
+          term1Amount,
+          term2Amount,
+          totalAmount,
+          discountAmount,
+          netAmount,
+          status: 'GENERATED',
+        },
+      });
+
+      // Carry over enquiry advance receipts as independent receipts (NOT deducted from tuition invoice)
+      if (input.enquiryId) {
+        const advanceReceipts = await tx.advanceReceipt.findMany({
+          where: { enquiryId: input.enquiryId },
+        });
+
+        for (const ar of advanceReceipts) {
+          const arReceiptNumber = await getNextSequenceNumber('RCP', schoolId, tx, 6);
+
+          await tx.receipt.create({
+            data: {
+              receiptNumber: arReceiptNumber,
+              receiptDate: ar.receiptDate,
+              amount: ar.amount,
+              paymentMode: ar.paymentMode,
+              bankName: ar.bankName,
+              bankBranch: 'Admission Form',
+              chequeNumber: ar.chequeNumber,
+              chequeDate: ar.chequeDate,
+              admissionId: admission.id,
+              invoiceId: null, // Form fee is NOT adjusted against or deducted from Admission Fee
+            },
+          });
+        }
+      }
+
+      // Create SOA Entry for Franchisee Fees (Debit Invoice)
+      await tx.sOAEntry.create({
+        data: {
+          schoolId,
+          entryDate: new Date(),
+          particulars: `Term Fees Invoice - ${student.firstName} ${student.lastName}`,
+          entryType: 'FRANCHISEE_FEES',
+          invoiceAmount: netAmount,
+          receiptAmount: 0,
+          balance: netAmount,
+        },
+      });
 
       await createAuditLog({
         userId,

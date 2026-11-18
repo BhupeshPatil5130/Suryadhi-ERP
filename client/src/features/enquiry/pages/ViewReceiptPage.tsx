@@ -2,9 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Menu, FileText, Plus, Loader2, Receipt, ArrowLeft, Printer, Mail, Trash2 } from 'lucide-react';
+import { Menu, FileText, Plus, Loader2, Receipt, ArrowLeft, Printer, Mail, Trash2, Eye } from 'lucide-react';
 import api from '@/api/client';
 import { showToast } from '@/lib/toast';
+import ReceiptDetailsViewer, {
+  buildReceiptPrintHtml,
+  AdmissionReceiptData,
+  ReceiptItem,
+} from '@/features/admission/components/ReceiptDetailsViewer';
 
 interface AdvanceReceipt {
   id: string;
@@ -40,6 +45,7 @@ export default function ViewReceiptPage() {
   const [enquiry, setEnquiry] = useState<EnquiryData | null>(null);
   const [receipts, setReceipts] = useState<AdvanceReceipt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedReceipt, setSelectedReceipt] = useState<AdvanceReceipt | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -91,6 +97,43 @@ export default function ViewReceiptPage() {
       showToast(`Receipt ${receiptNumber} deleted successfully`, 'success');
     } catch (err: any) {
       showToast(err?.response?.data?.error || 'Failed to delete receipt', 'error');
+    }
+  };
+
+  const getReceiptViewerData = (r: AdvanceReceipt): { item: ReceiptItem; data: AdmissionReceiptData } => ({
+    item: {
+      id: r.id,
+      receiptDate: r.receiptDate,
+      receiptNumber: r.receiptNumber,
+      amount: Number(r.amount),
+      paymentMode: r.paymentMode,
+      bankName: r.bankName,
+      chequeNumber: r.chequeNumber,
+      chequeDate: r.chequeDate,
+      category: 'Admission Form',
+      notes: r.notes || 'Admission Form',
+      particular: 'Admission Form',
+      source: 'enquiry',
+      isOther: false,
+    },
+    data: {
+      studentName: studentName || 'Student',
+      program: programName || 'Nursery',
+      invoiceNumber: 'N/A',
+      academicYear: 'April 2026 to March 2027',
+      franchisee: 'SNK - Dhule - Deopur',
+      franchiseeContactPerson: 'Rahul Khandale',
+      franchiseeAddress: 'Mohanlal Mangal Karyalay, Yavatmal road in front of forest office, ward number-1, At Post Taluka-Arni, District',
+      franchiseePhone: '9823990362',
+    },
+  });
+
+  const handlePrintReceipt = (r: AdvanceReceipt) => {
+    const { item, data } = getReceiptViewerData(r);
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(buildReceiptPrintHtml(item, data));
+      win.document.close();
     }
   };
 
@@ -183,7 +226,7 @@ export default function ViewReceiptPage() {
                             {r.receiptNumber}
                           </td>
                           <td className="px-4 py-3 text-center border-r border-slate-200 font-medium text-slate-800">
-                            Admission
+                            {r.notes || 'Admission Form'}
                           </td>
                           <td className="px-4 py-3 text-center border-r border-slate-200 capitalize text-slate-700">
                             {r.paymentMode?.toLowerCase().replace('_', ' ')}
@@ -201,25 +244,18 @@ export default function ViewReceiptPage() {
                               <Button
                                 size="sm"
                                 variant="ghost"
+                                className="h-6 w-6 p-0 hover:bg-blue-50 text-blue-700"
+                                title="View Receipt"
+                                onClick={() => setSelectedReceipt(r)}
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
                                 className="h-6 w-6 p-0 hover:bg-blue-50"
                                 title="Print Receipt"
-                                onClick={() => {
-                                  const printContent = `
-                                    <html><head><title>Receipt ${r.receiptNumber}</title>
-                                    <style>body{font-family:Arial,sans-serif;padding:40px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:8px}h2{color:#333}</style></head>
-                                    <body><h2>Receipt</h2>
-                                    <p><strong>Receipt No:</strong> ${r.receiptNumber}</p>
-                                    <p><strong>Date:</strong> ${r.receiptDate ? new Date(r.receiptDate).toLocaleDateString('en-GB') : 'N/A'}</p>
-                                    <p><strong>Student:</strong> ${studentName}</p>
-                                    <p><strong>Program:</strong> ${programName}</p>
-                                    <p><strong>Particular:</strong> Admission</p>
-                                    <p><strong>Payment Mode:</strong> ${r.paymentMode?.toLowerCase().replace('_', ' ')}</p>
-                                    <p><strong>Amount:</strong> ₹${Number(r.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-                                    <br/><p style="color:#888;font-size:12px">This is a computer-generated receipt.</p>
-                                    </body></html>`;
-                                  const win = window.open('', '_blank');
-                                  if (win) { win.document.write(printContent); win.document.close(); win.print(); }
-                                }}
+                                onClick={() => handlePrintReceipt(r)}
                               >
                                 <Printer className="h-3.5 w-3.5 text-blue-600" />
                               </Button>
@@ -273,6 +309,16 @@ export default function ViewReceiptPage() {
           </div>
         </CardContent>
       </Card>
+
+      {selectedReceipt && (
+        <ReceiptDetailsViewer
+          isModal
+          receipt={getReceiptViewerData(selectedReceipt).item}
+          data={getReceiptViewerData(selectedReceipt).data}
+          onClose={() => setSelectedReceipt(null)}
+          onRefresh={() => {}}
+        />
+      )}
     </div>
   );
 }

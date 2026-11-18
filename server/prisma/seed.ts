@@ -125,21 +125,25 @@ async function main() {
 
   console.log('✅ Batches created');
 
-  // ── Fee Structures ─────────────────────────────────────────
+  // ── Fee Structures (Approved Rates matching Fee Rate Card & Calculator) ────────
   const feeData = [
-    { program: 'Play Group', registration: 5000, termFee: 15000, tuitionFee: 10000 },
-    { program: 'Nursery', registration: 5000, termFee: 18000, tuitionFee: 12000 },
-    { program: 'SUNOIA Junior', registration: 5000, termFee: 20000, tuitionFee: 14000 },
-    { program: 'SUNOIA Senior', registration: 5000, termFee: 22000, tuitionFee: 16000 },
+    { program: 'Play Group', registration: 6950, term1Term: 2750, term2Term: 2750, term1Tuition: 4750, term2Tuition: 4750, uniforms: 0 },
+    { program: 'Nursery', registration: 7500, term1Term: 3000, term2Term: 3000, term1Tuition: 5500, term2Tuition: 5500, uniforms: 0 },
+    { program: 'SUNOIA Junior', registration: 8000, term1Term: 3250, term2Term: 3250, term1Tuition: 6250, term2Tuition: 6250, uniforms: 1500 },
+    { program: 'SUNOIA Senior', registration: 8500, term1Term: 3500, term2Term: 3500, term1Tuition: 7000, term2Tuition: 7000, uniforms: 1500 },
   ];
 
   for (const fee of feeData) {
     const program = programs.find((p) => p.name === fee.program)!;
     const feeEntries = [
       { feeType: 'REGISTRATION' as const, term1: fee.registration, term2: 0 },
-      { feeType: 'TERM_FEE' as const, term1: fee.termFee, term2: fee.termFee },
-      { feeType: 'TUITION_FEE' as const, term1: fee.tuitionFee, term2: fee.tuitionFee },
+      { feeType: 'TERM_FEE' as const, term1: fee.term1Term, term2: fee.term2Term },
+      { feeType: 'TUITION_FEE' as const, term1: fee.term1Tuition, term2: fee.term2Tuition },
     ];
+
+    if (fee.uniforms > 0) {
+      feeEntries.push({ feeType: 'UNIFORM_FEE' as const, term1: fee.uniforms, term2: 0 });
+    }
 
     for (const entry of feeEntries) {
       await prisma.feeStructure.upsert({
@@ -151,7 +155,11 @@ async function main() {
             feeType: entry.feeType,
           },
         },
-        update: {},
+        update: {
+          term1Amount: entry.term1,
+          term2Amount: entry.term2,
+          totalAmount: entry.term1 + entry.term2,
+        },
         create: {
           programId: program.id,
           academicYearId: ay2627.id,

@@ -10,6 +10,7 @@ import { showToast } from '@/lib/toast';
 import ReceiptDetailsViewer, {
   buildReceiptPrintHtml,
   formatInvoiceNumber,
+  getFeeBreakdown as getViewerFeeBreakdown,
 } from '@/features/admission/components/ReceiptDetailsViewer';
 
 interface AdmissionData {
@@ -61,12 +62,12 @@ interface ReceiptRow {
 }
 
 const DUMMY_FALLBACK_ADMISSIONS: Record<string, Partial<AdmissionData>> = {
-  '1': { studentName: 'Gurvesh Ganesh Rathod', uin: 'SNK/3201/0001/2027', fatherName: 'Ganesh Rathod', motherName: 'Rekha Rathod', fatherMobile: '9822114455', motherMobile: '9822114456', program: 'Nursery', batch: 'Morning Shift', gender: 'MALE', term1Amount: 15800, term2Amount: 8000, totalAmount: 23800, netAmount: 23800 },
-  '2': { studentName: 'Shourya Sachin Bhoyar', uin: 'SNK/3201/0002/2027', fatherName: 'Sachin Bhoyar', motherName: 'Savita Bhoyar', fatherMobile: '8149811545', motherMobile: '8999313214', program: 'SUNOIA Junior', batch: 'Morning Shift', gender: 'MALE', term1Amount: 25000, term2Amount: 20000, totalAmount: 45000, netAmount: 45000 },
-  '3': { studentName: 'Aarohi Santosh Sonare', uin: 'SNK/3201/0003/2027', fatherName: 'Santosh Sonare', motherName: 'Kavita Sonare', fatherMobile: '9370005720', motherMobile: '9325944111', program: 'SUNOIA Junior', batch: 'Late Morning Shift', gender: 'FEMALE', term1Amount: 25000, term2Amount: 20000, totalAmount: 45000, netAmount: 45000 },
-  '4': { studentName: 'Dnyanda Nandkishor Bawane', uin: 'SNK/3201/0004/2027', fatherName: 'Nandkishor Bawane', motherName: 'Sunita Bawane', fatherMobile: '9552407021', motherMobile: '9145460195', program: 'SUNOIA Junior', batch: 'Morning Shift', gender: 'FEMALE', term1Amount: 25000, term2Amount: 20000, totalAmount: 45000, netAmount: 45000 },
-  '5': { studentName: 'Alfaz Baig Mirza', uin: 'SNK/3201/0005/2027', fatherName: 'Furhan Baig Mirza', motherName: 'Sultana Mirza', fatherMobile: '7721024102', motherMobile: '7400051112', program: 'SUNOIA Junior', batch: 'Morning Shift', gender: 'MALE', term1Amount: 25000, term2Amount: 20000, totalAmount: 45000, netAmount: 45000 },
-  '6': { studentName: 'Rudransh Vaibhav Deshmukh', uin: 'SNK/3201/0006/2027', fatherName: 'Vaibhav Deshmukh', motherName: 'Megha Deshmukh', fatherMobile: '9673966580', motherMobile: '8208466635', program: 'SUNOIA Senior', batch: 'Morning Shift', gender: 'MALE', term1Amount: 27000, term2Amount: 23000, totalAmount: 50000, netAmount: 50000 },
+  '1': { studentName: 'Gurvesh Ganesh Rathod', uin: 'SNK/3201/0001/2027', fatherName: 'Ganesh Rathod', motherName: 'Rekha Rathod', fatherMobile: '9822114455', motherMobile: '9822114456', program: 'Nursery', batch: 'Morning Shift', gender: 'MALE', term1Amount: 22500, term2Amount: 8500, totalAmount: 31000, netAmount: 31000 },
+  '2': { studentName: 'Shourya Sachin Bhoyar', uin: 'SNK/3201/0002/2027', fatherName: 'Sachin Bhoyar', motherName: 'Savita Bhoyar', fatherMobile: '8149811545', motherMobile: '8999313214', program: 'SUNOIA Junior', batch: 'Morning Shift', gender: 'MALE', term1Amount: 26000, term2Amount: 9500, totalAmount: 35500, netAmount: 35500 },
+  '3': { studentName: 'Aarohi Santosh Sonare', uin: 'SNK/3201/0003/2027', fatherName: 'Santosh Sonare', motherName: 'Kavita Sonare', fatherMobile: '9370005720', motherMobile: '9325944111', program: 'SUNOIA Junior', batch: 'Late Morning Shift', gender: 'FEMALE', term1Amount: 26000, term2Amount: 9500, totalAmount: 35500, netAmount: 35500 },
+  '4': { studentName: 'Dnyanda Nandkishor Bawane', uin: 'SNK/3201/0004/2027', fatherName: 'Nandkishor Bawane', motherName: 'Sunita Bawane', fatherMobile: '9552407021', motherMobile: '9145460195', program: 'SUNOIA Junior', batch: 'Morning Shift', gender: 'FEMALE', term1Amount: 26000, term2Amount: 9500, totalAmount: 35500, netAmount: 35500 },
+  '5': { studentName: 'Alfaz Baig Mirza', uin: 'SNK/3201/0005/2027', fatherName: 'Furhan Baig Mirza', motherName: 'Sultana Mirza', fatherMobile: '7721024102', motherMobile: '7400051112', program: 'SUNOIA Junior', batch: 'Morning Shift', gender: 'MALE', term1Amount: 26000, term2Amount: 9500, totalAmount: 35500, netAmount: 35500 },
+  '6': { studentName: 'Rudransh Vaibhav Deshmukh', uin: 'SNK/3201/0006/2027', fatherName: 'Vaibhav Deshmukh', motherName: 'Megha Deshmukh', fatherMobile: '9673966580', motherMobile: '8208466635', program: 'SUNOIA Senior', batch: 'Morning Shift', gender: 'MALE', term1Amount: 28000, term2Amount: 10500, totalAmount: 38500, netAmount: 38500 },
 };
 
 export default function AdvanceReceiptFormPage() {
@@ -99,10 +100,14 @@ export default function AdvanceReceiptFormPage() {
 
         const rawReceipts: any[] = d.receipts || [];
         const mappedReceipts: ReceiptRow[] = rawReceipts.map((r: any) => {
-          const isOther = !r.invoiceId;
           const branch = r.bankBranch || '';
+          const notes = r.notes || '';
+          const isFormFee = branch.toLowerCase().includes('form') || notes.toLowerCase().includes('form') || Number(r.amount) === 500;
+          const isOther = !r.invoiceId || isFormFee;
           let category = 'Term 1';
-          if (isOther) {
+          if (isFormFee) {
+            category = 'Admission Form';
+          } else if (isOther) {
             category = branch || 'Other Fee';
           } else if (branch.toLowerCase().includes('term 2')) {
             category = 'Term 2';
@@ -120,25 +125,41 @@ export default function AdvanceReceiptFormPage() {
             amount: Number(r.amount),
             paymentMode: r.paymentMode,
             category,
-            invoiceId: r.invoiceId || null,
+            invoiceId: isFormFee ? null : (r.invoiceId || null),
             isOther,
           };
         });
 
-        const term1Amount = Number(invoice?.term1Amount || d.summary?.term1Amount || 15800);
-        const term2Amount = Number(invoice?.term2Amount || d.summary?.term2Amount || 8000);
+        const progName = (d.program?.name || '').toLowerCase();
+        let defaultT1 = 22500, defaultT2 = 8500;
+        if (progName.includes('play')) {
+          defaultT1 = 20350; defaultT2 = 7500;
+        } else if (progName.includes('junior') || progName.includes('jr')) {
+          defaultT1 = 26000; defaultT2 = 9500;
+        } else if (progName.includes('senior') || progName.includes('sr')) {
+          defaultT1 = 28000; defaultT2 = 10500;
+        } else if (progName.includes('nurse')) {
+          defaultT1 = 22500; defaultT2 = 8500;
+        }
+
+        const rawT1 = Number(invoice?.term1Amount || d.summary?.term1Amount || 0);
+        const rawT2 = Number(invoice?.term2Amount || d.summary?.term2Amount || 0);
+        const rawTotal = rawT1 + rawT2;
+        const term1Amount = (rawTotal > 0 && rawTotal <= 60000) ? rawT1 : defaultT1;
+        const term2Amount = (rawTotal > 0 && rawTotal <= 60000) ? rawT2 : defaultT2;
         const totalAmount = term1Amount + term2Amount;
         const discountAmount = Number(invoice?.discountAmount || 0);
         const netAmount = Number(invoice?.netAmount || totalAmount - discountAmount);
 
+        // ONLY Term 1 and Term 2 receipts count towards amount received (Admission Form fee is not adjusted against Admission Fee)
         const term1Receipts = mappedReceipts.filter((r) => !r.isOther && r.category === 'Term 1');
         const term2Receipts = mappedReceipts.filter((r) => !r.isOther && r.category === 'Term 2');
         const otherReceiptsList = mappedReceipts.filter((r) => r.isOther);
 
-        const term1Received = d.summary?.term1Received ?? term1Receipts.reduce((sum, r) => sum + r.amount, 0);
-        const term2Received = d.summary?.term2Received ?? term2Receipts.reduce((sum, r) => sum + r.amount, 0);
+        const term1Received = term1Receipts.reduce((sum, r) => sum + r.amount, 0);
+        const term2Received = term2Receipts.reduce((sum, r) => sum + r.amount, 0);
         const amountReceived = term1Received + term2Received;
-        const otherTotalReceived = d.summary?.otherTotalReceived ?? otherReceiptsList.reduce((sum, r) => sum + r.amount, 0);
+        const otherTotalReceived = otherReceiptsList.reduce((sum, r) => sum + r.amount, 0);
 
         setData({
           studentName: `${d.student?.firstName || ''} ${d.student?.middleName || ''} ${d.student?.lastName || ''}`.trim() || 'Gurvesh Ganesh Rathod',
@@ -179,8 +200,8 @@ export default function AdvanceReceiptFormPage() {
     } catch {
       const fallback = DUMMY_FALLBACK_ADMISSIONS[admissionId || '1'] || DUMMY_FALLBACK_ADMISSIONS['1'];
       const uin = fallback.uin || 'SNK/3201/0001/2027';
-      const term1Amount = fallback.term1Amount || 15800;
-      const term2Amount = fallback.term2Amount || 8000;
+      const term1Amount = fallback.term1Amount || 22500;
+      const term2Amount = fallback.term2Amount || 8500;
       const totalAmount = term1Amount + term2Amount;
       const term1Received = 0;
       const term2Received = 0;
@@ -348,34 +369,8 @@ function formatReceiptDate(dateStr?: string | null): string {
   return dateStr;
 }
 
-function getFeeBreakdown(r: ReceiptRow) {
-  if (r.isOther) {
-    return [{ label: r.category || 'Other Fee', amount: r.amount }];
-  }
-  if (r.amount === 7000) {
-    return [
-      { label: 'Online Admission Form', amount: 4250 },
-      { label: 'Term Fee', amount: 2750 },
-    ];
-  }
-  if (r.amount === 15800) {
-    return [
-      { label: 'Online Admission Form', amount: 7800 },
-      { label: 'Term Fee', amount: 8000 },
-    ];
-  }
-  if (r.amount <= 10000) {
-    const reg = Math.min(4250, Math.round(r.amount * 0.607));
-    return [
-      { label: 'Online Admission Form', amount: reg },
-      { label: 'Term Fee', amount: r.amount - reg },
-    ];
-  }
-  const reg = 7800;
-  return [
-    { label: 'Online Admission Form', amount: reg },
-    { label: 'Term Fee', amount: r.amount - reg },
-  ];
+function getFeeBreakdown(r: ReceiptRow, program?: string) {
+  return getViewerFeeBreakdown(r as any, program);
 }
 
 function printReceiptDocument(r: ReceiptRow, data: AdmissionData) {
@@ -703,8 +698,8 @@ function ReceiptDetailsModal({
   return (
     <ReceiptDetailsViewer
       isModal
-      receipt={receipt}
-      data={data}
+      receipt={receipt as any}
+      data={data as any}
       onClose={onClose}
       onEmail={onEmail}
       onRefresh={onClose}
@@ -1301,18 +1296,74 @@ function NewReceiptView({
   const [transactionId, setTransactionId] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  // Term 1 items: proportional to 15800 (Term Fee 3050, Reg Fee 7800, Tuition 4950)
-  const term1Items = useMemo(() => [
-    { type: 'Term Fee', receivable: 3050.00, received: 0.00, balance: 3050.00 },
-    { type: 'Online Admission Form', receivable: 7800.00, received: 0.00, balance: 7800.00 },
-    { type: 'Tuition Fee', receivable: 4950.00, received: 0.00, balance: 4950.00 },
-  ], []);
+  const progLower = (data.program || '').toLowerCase();
+  const isPlayGroup = progLower.includes('play');
+  const isJunior = progLower.includes('junior') || progLower.includes('jr');
+  const isSenior = progLower.includes('senior') || progLower.includes('sr');
 
-  // Term 2 items: proportional to 8000 (Term Fee 3050, Tuition 4950)
-  const term2Items = useMemo(() => [
-    { type: 'Term Fee', receivable: 3050.00, received: 0.00, balance: 3050.00 },
-    { type: 'Tuition Fee', receivable: 4950.00, received: 0.00, balance: 4950.00 },
-  ], []);
+  // Installment 1 (Term 1) items strictly matching Approved Fee Card
+  const term1Items = useMemo(() => {
+    if (isPlayGroup) {
+      return [
+        { type: 'Registration Fee', receivable: 6950.00, received: 0.00, balance: 6950.00 },
+        { type: 'Term Fee', receivable: 2750.00, received: 0.00, balance: 2750.00 },
+        { type: 'Tuition Fee', receivable: 4750.00, received: 0.00, balance: 4750.00 },
+        { type: 'HomeSunny App', receivable: 5900.00, received: 0.00, balance: 5900.00 },
+      ];
+    }
+    if (isJunior) {
+      return [
+        { type: 'Registration Fee', receivable: 8000.00, received: 0.00, balance: 8000.00 },
+        { type: 'Term Fee', receivable: 3250.00, received: 0.00, balance: 3250.00 },
+        { type: 'Tuition Fee', receivable: 6250.00, received: 0.00, balance: 6250.00 },
+        { type: 'HomeSunny App', receivable: 7000.00, received: 0.00, balance: 7000.00 },
+        { type: 'Uniform', receivable: 1500.00, received: 0.00, balance: 1500.00 },
+      ];
+    }
+    if (isSenior) {
+      return [
+        { type: 'Registration Fee', receivable: 8500.00, received: 0.00, balance: 8500.00 },
+        { type: 'Term Fee', receivable: 3500.00, received: 0.00, balance: 3500.00 },
+        { type: 'Tuition Fee', receivable: 7000.00, received: 0.00, balance: 7000.00 },
+        { type: 'HomeSunny App', receivable: 7500.00, received: 0.00, balance: 7500.00 },
+        { type: 'Uniform', receivable: 1500.00, received: 0.00, balance: 1500.00 },
+      ];
+    }
+    // Nursery (Default)
+    return [
+      { type: 'Registration Fee', receivable: 7500.00, received: 0.00, balance: 7500.00 },
+      { type: 'Term Fee', receivable: 3000.00, received: 0.00, balance: 3000.00 },
+      { type: 'Tuition Fee', receivable: 5500.00, received: 0.00, balance: 5500.00 },
+      { type: 'HomeSunny App', receivable: 6500.00, received: 0.00, balance: 6500.00 },
+    ];
+  }, [isPlayGroup, isJunior, isSenior]);
+
+  // Installment 2 (Term 2) items strictly matching Approved Fee Card
+  const term2Items = useMemo(() => {
+    if (isPlayGroup) {
+      return [
+        { type: 'Term Fee', receivable: 2750.00, received: 0.00, balance: 2750.00 },
+        { type: 'Tuition Fee', receivable: 4750.00, received: 0.00, balance: 4750.00 },
+      ];
+    }
+    if (isJunior) {
+      return [
+        { type: 'Term Fee', receivable: 3250.00, received: 0.00, balance: 3250.00 },
+        { type: 'Tuition Fee', receivable: 6250.00, received: 0.00, balance: 6250.00 },
+      ];
+    }
+    if (isSenior) {
+      return [
+        { type: 'Term Fee', receivable: 3500.00, received: 0.00, balance: 3500.00 },
+        { type: 'Tuition Fee', receivable: 7000.00, received: 0.00, balance: 7000.00 },
+      ];
+    }
+    // Nursery (Default)
+    return [
+      { type: 'Term Fee', receivable: 3000.00, received: 0.00, balance: 3000.00 },
+      { type: 'Tuition Fee', receivable: 5500.00, received: 0.00, balance: 5500.00 },
+    ];
+  }, [isPlayGroup, isJunior, isSenior]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1382,11 +1433,11 @@ function NewReceiptView({
               </div>
 
               <div className="flex">
-                <span className="w-36 text-slate-600 font-normal">Amount Term 1</span>
+                <span className="w-36 text-slate-600 font-normal">Amount Installment 1</span>
                 <span className="font-normal text-slate-800">{data.term1Amount.toFixed(2)}</span>
               </div>
               <div className="flex">
-                <span className="w-28 text-slate-600 font-normal">Amount Term 2</span>
+                <span className="w-28 text-slate-600 font-normal">Amount Installment 2</span>
                 <span className="font-normal text-slate-800">{data.term2Amount.toFixed(2)}</span>
               </div>
               <div className="flex">
@@ -1435,10 +1486,10 @@ function NewReceiptView({
               </div>
             </div>
 
-            {/* Table 1: ≡ Term 1 matching Screenshot 2 */}
+            {/* Table 1: ≡ Installment 1 (Term 1) */}
             <div className="border border-slate-300 rounded-none overflow-hidden">
               <div className="bg-[#f7f7f7] px-3 py-1.5 border-b border-slate-300 text-xs font-semibold text-slate-700">
-                <span>≡ Term 1</span>
+                <span>≡ Installment 1 (Term 1)</span>
               </div>
               <table className="w-full border-collapse text-xs">
                 <thead>
@@ -1462,10 +1513,10 @@ function NewReceiptView({
               </table>
             </div>
 
-            {/* Table 2: ≡ Term 2 matching Screenshot 2 */}
+            {/* Table 2: ≡ Installment 2 (Term 2) */}
             <div className="border border-slate-300 rounded-none overflow-hidden">
               <div className="bg-[#f7f7f7] px-3 py-1.5 border-b border-slate-300 text-xs font-semibold text-slate-700">
-                <span>≡ Term 2</span>
+                <span>≡ Installment 2 (Term 2)</span>
               </div>
               <table className="w-full border-collapse text-xs">
                 <thead>

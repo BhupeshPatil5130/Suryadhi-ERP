@@ -102,10 +102,10 @@ export class EnquiryService {
     const admissionMap = new Map(admissions.map((a) => [a.id, a]));
 
     const DEFAULT_PROGRAM_FEES: Record<string, number> = {
-      'Play Group': 30000,
-      'Nursery': 23800,
-      'SUNOIA Junior': 45000,
-      'SUNOIA Senior': 50000,
+      'Play Group': 27850,
+      'Nursery': 31000,
+      'SUNOIA Junior': 35500,
+      'SUNOIA Senior': 38500,
     };
 
     const enrichedEnquiries = enquiries.map((e) => {
@@ -194,10 +194,10 @@ export class EnquiryService {
     });
     const fsTotal = feeStructures.reduce((sum, fs) => sum + Number(fs.totalAmount || 0), 0);
     const DEFAULT_PROGRAM_FEES: Record<string, number> = {
-      'Play Group': 30000,
-      'Nursery': 23800,
-      'SUNOIA Junior': 45000,
-      'SUNOIA Senior': 50000,
+      'Play Group': 27850,
+      'Nursery': 31000,
+      'SUNOIA Junior': 35500,
+      'SUNOIA Senior': 38500,
     };
     const defaultFee = DEFAULT_PROGRAM_FEES[enquiry.program?.name || ''] || 23800;
     const baseProgramFee = fsTotal > 0 ? fsTotal : defaultFee;
@@ -455,7 +455,7 @@ export class EnquiryService {
           bankName: input.bankName || null,
           chequeNumber: input.chequeNumber || null,
           chequeDate: input.chequeDate ? new Date(input.chequeDate) : null,
-          notes: input.notes || null,
+          notes: input.notes || 'Admission Form',
         },
       });
 
