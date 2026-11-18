@@ -221,7 +221,7 @@ export class DashboardService {
           { type: 'Term Fee', term1: 3250, term2: 3250, total: 6500 },
           { type: 'Tuition Fee', term1: 6250, term2: 6250, total: 12500 },
           { type: 'HomeSunny App Fee', term1: 7000, term2: 0, total: 7000 },
-          { type: 'Uniform Fee', term1: 1500, term2: 0, total: 1500 },
+          { type: 'Uniforms', term1: 1500, term2: 0, total: 1500 },
         ],
       },
       {
@@ -232,7 +232,7 @@ export class DashboardService {
           { type: 'Term Fee', term1: 3500, term2: 3500, total: 7000 },
           { type: 'Tuition Fee', term1: 7000, term2: 7000, total: 14000 },
           { type: 'HomeSunny App Fee', term1: 7500, term2: 0, total: 7500 },
-          { type: 'Uniform Fee', term1: 1500, term2: 0, total: 1500 },
+          { type: 'Uniforms', term1: 1500, term2: 0, total: 1500 },
         ],
       },
     ];

@@ -64,7 +64,7 @@ export default function FeeRateCardPage() {
                 'Term Fee': r.termFee,
                 'Tuition Fee': r.tuitionFee,
                 'HomeSunny App Fee': r.homeSunnyAppFee,
-                'Uniform Fee': r.uniforms > 0 ? r.uniforms : '',
+                ...(r.uniforms > 0 ? { 'Uniforms': r.uniforms } : {}),
                 'Total': r.total,
               })),
               'approved-fee-card'
@@ -92,9 +92,11 @@ export default function FeeRateCardPage() {
                   <span>Tuition: {formatCurrency(r.tuitionFee)}</span>
                   <span>HomeSunny: {formatCurrency(r.homeSunnyAppFee)}</span>
                 </div>
-                <div className="text-[11px] text-slate-500 flex justify-between">
-                  <span>{r.uniforms > 0 ? `Uniforms: ${formatCurrency(r.uniforms)}` : ''}</span>
-                </div>
+                {r.uniforms > 0 && (
+                  <div className="text-[11px] text-slate-500 flex justify-between">
+                    <span>Uniforms: {formatCurrency(r.uniforms)}</span>
+                  </div>
+                )}
                 <div className="mt-2 h-1 w-full rounded" style={{ backgroundColor: colors[idx % colors.length] }}></div>
               </CardContent>
             </Card>
@@ -102,43 +104,80 @@ export default function FeeRateCardPage() {
         })}
       </div>
 
-      {/* Main Table: Exact Columns Requested */}
-      <div className="bg-white border border-[#ccc] shadow-sm rounded-sm">
-        <div className="bg-[#f2f2f2] px-4 py-2.5 border-b border-[#ccc] flex items-center justify-between">
+      {/* Main Tables */}
+      <div className="bg-white border border-[#ccc] shadow-sm rounded-sm space-y-6 p-4">
+        <div className="bg-[#f2f2f2] px-4 py-2.5 border-b border-[#ccc] -mx-4 -mt-4 mb-2 flex items-center justify-between">
           <span className="font-semibold text-[13px] text-slate-700">
             ≡ Approved Fee Card {feeYear} — Franchisee: {franchisee}
           </span>
         </div>
 
-        <div className="overflow-x-auto p-4">
-          <table className="w-full text-left border-collapse border border-[#ccc] text-[13px]">
-            <thead>
-              <tr className="bg-[#f9f9f9]">
-                <th className="p-2.5 border border-[#ccc] font-bold text-[#333]">Program</th>
-                <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Registration Fee</th>
-                <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Term Fee</th>
-                <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Tuition Fee</th>
-                <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">HomeSunny App Fee</th>
-                <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Uniform Fee</th>
-                <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rates.map((row) => (
-                <tr key={row.program} className="hover:bg-slate-50">
-                  <td className="p-2.5 border border-[#ccc] font-semibold text-slate-800">{row.program}</td>
-                  <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.regFee)}</td>
-                  <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.termFee)}</td>
-                  <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.tuitionFee)}</td>
-                  <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.homeSunnyAppFee)}</td>
-                  <td className="p-2.5 border border-[#ccc] text-right font-mono font-medium">
-                    {row.uniforms > 0 ? formatCurrency(row.uniforms) : ''}
-                  </td>
-                  <td className="p-2.5 border border-[#ccc] text-right font-mono font-bold text-[#0056b3]">{formatCurrency(row.total)}</td>
+        {/* 1. Play Group & Nursery: Completely remove the Uniforms column */}
+        <div>
+          <div className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+            Play Group & Nursery
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse border border-[#ccc] text-[13px]">
+              <thead>
+                <tr className="bg-[#f9f9f9]">
+                  <th className="p-2.5 border border-[#ccc] font-bold text-[#333]">Program</th>
+                  <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Registration Fee</th>
+                  <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Term Fee</th>
+                  <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Tuition Fee</th>
+                  <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">HomeSunny App Fee</th>
+                  <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Total</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rates.filter(r => r.uniforms === 0).map((row) => (
+                  <tr key={row.program} className="hover:bg-slate-50">
+                    <td className="p-2.5 border border-[#ccc] font-semibold text-slate-800">{row.program}</td>
+                    <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.regFee)}</td>
+                    <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.termFee)}</td>
+                    <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.tuitionFee)}</td>
+                    <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.homeSunnyAppFee)}</td>
+                    <td className="p-2.5 border border-[#ccc] text-right font-mono font-bold text-[#0056b3]">{formatCurrency(row.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* 2. Sunoia Junior & Sunoia Senior: Column name "Uniforms" without bracketed text */}
+        <div>
+          <div className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+            Sunoia Junior & Sunoia Senior
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse border border-[#ccc] text-[13px]">
+              <thead>
+                <tr className="bg-[#f9f9f9]">
+                  <th className="p-2.5 border border-[#ccc] font-bold text-[#333]">Program</th>
+                  <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Registration Fee</th>
+                  <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Term Fee</th>
+                  <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Tuition Fee</th>
+                  <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">HomeSunny App Fee</th>
+                  <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Uniforms</th>
+                  <th className="p-2.5 border border-[#ccc] font-bold text-[#333] text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rates.filter(r => r.uniforms > 0).map((row) => (
+                  <tr key={row.program} className="hover:bg-slate-50">
+                    <td className="p-2.5 border border-[#ccc] font-semibold text-slate-800">{row.program}</td>
+                    <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.regFee)}</td>
+                    <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.termFee)}</td>
+                    <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.tuitionFee)}</td>
+                    <td className="p-2.5 border border-[#ccc] text-right font-mono">{formatCurrency(row.homeSunnyAppFee)}</td>
+                    <td className="p-2.5 border border-[#ccc] text-right font-mono font-medium">{formatCurrency(row.uniforms)}</td>
+                    <td className="p-2.5 border border-[#ccc] text-right font-mono font-bold text-[#0056b3]">{formatCurrency(row.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

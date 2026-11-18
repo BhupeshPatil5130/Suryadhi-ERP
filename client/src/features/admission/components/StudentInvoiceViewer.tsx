@@ -101,12 +101,19 @@ export default function StudentInvoiceViewer({
           const progName = (a.program?.name || 'Sunoia Senior').replace(/euro/gi, 'Sunoia');
 
           // Standardize fee breakdown based on program or stored data
-          const feeRows: InvoiceFeeRow[] = [
-            { feeType: 'Registration Fee', term1Amount: 8900, term2Amount: 0, totalAmount: 8900 },
-            { feeType: 'Term Fee', term1Amount: 3300, term2Amount: 3300, totalAmount: 6600 },
-            { feeType: 'Tuition Fee', term1Amount: 5250, term2Amount: 5250, totalAmount: 10500 },
-            { feeType: 'Uniforms', term1Amount: 2150, term2Amount: 0, totalAmount: 2150 },
-          ];
+          const isPlayOrNursery = progName.toLowerCase().includes('play') || progName.toLowerCase().includes('nurse');
+          const feeRows: InvoiceFeeRow[] = isPlayOrNursery
+            ? [
+                { feeType: 'Registration Fee', term1Amount: 7500, term2Amount: 0, totalAmount: 7500 },
+                { feeType: 'Term Fee', term1Amount: 3000, term2Amount: 3000, totalAmount: 6000 },
+                { feeType: 'Tuition Fee', term1Amount: 5500, term2Amount: 5500, totalAmount: 11000 },
+              ]
+            : [
+                { feeType: 'Registration Fee', term1Amount: 8900, term2Amount: 0, totalAmount: 8900 },
+                { feeType: 'Term Fee', term1Amount: 3300, term2Amount: 3300, totalAmount: 6600 },
+                { feeType: 'Tuition Fee', term1Amount: 5250, term2Amount: 5250, totalAmount: 10500 },
+                { feeType: 'Uniforms', term1Amount: 2150, term2Amount: 0, totalAmount: 2150 },
+              ];
 
           setData({
             uin: s?.uin ? s.uin.replace(/^INV[-_/]/i, '').replace(/SEMS-DEMO-\d+\//i, '') : cleanInv,

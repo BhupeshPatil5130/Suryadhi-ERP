@@ -46,7 +46,7 @@ const fallbackFeeRateCards = [
       { type: 'Term Fee', term1: 3250, term2: 3250, total: 6500 },
       { type: 'Tuition Fee', term1: 6250, term2: 6250, total: 12500 },
       { type: 'HomeSunny App Fee', term1: 7000, term2: 0, total: 7000 },
-      { type: 'Uniform Fee', term1: 1500, term2: 0, total: 1500 },
+      { type: 'Uniforms', term1: 1500, term2: 0, total: 1500 },
     ],
   },
   {
@@ -57,7 +57,7 @@ const fallbackFeeRateCards = [
       { type: 'Term Fee', term1: 3500, term2: 3500, total: 7000 },
       { type: 'Tuition Fee', term1: 7000, term2: 7000, total: 14000 },
       { type: 'HomeSunny App Fee', term1: 7500, term2: 0, total: 7500 },
-      { type: 'Uniform Fee', term1: 1500, term2: 0, total: 1500 },
+      { type: 'Uniforms', term1: 1500, term2: 0, total: 1500 },
     ],
   },
 ];
@@ -106,9 +106,15 @@ function FeeRateAccordion({ card }: { card: typeof fallbackFeeRateCards[0] }) {
               {visibleFees.map((fee) => (
                 <TableRow key={fee.type}>
                   <TableCell className="font-medium text-sm">{fee.type}</TableCell>
-                  <TableCell className="text-right font-mono text-sm">{formatCurrency(fee.term1)}</TableCell>
-                  <TableCell className="text-right font-mono text-sm">{formatCurrency(fee.term2)}</TableCell>
-                  <TableCell className="text-right font-mono text-sm font-semibold">{formatCurrency(fee.total)}</TableCell>
+                  <TableCell className="text-right font-mono text-sm">
+                    {fee.term1 > 0 ? formatCurrency(fee.term1) : ''}
+                  </TableCell>
+                  <TableCell className="text-right font-mono text-sm">
+                    {fee.term2 > 0 ? formatCurrency(fee.term2) : ''}
+                  </TableCell>
+                  <TableCell className="text-right font-mono text-sm font-semibold">
+                    {fee.total > 0 ? formatCurrency(fee.total) : ''}
+                  </TableCell>
                 </TableRow>
               ))}
               <TableRow className="bg-muted/20 font-bold">

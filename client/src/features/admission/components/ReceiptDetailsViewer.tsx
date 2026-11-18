@@ -187,7 +187,7 @@ export function getFeeBreakdown(receipt: ReceiptItem, programName?: string): Fee
       { label: 'Term Fee', installment1: 3250, installment2: 3250, total: 6500, amount: 6500 },
       { label: 'Tuition Fee', installment1: 6250, installment2: 6250, total: 12500, amount: 12500 },
       { label: 'HomeSunny App', installment1: 7000, installment2: 0, total: 7000, amount: 7000 },
-      { label: 'Uniform', installment1: 1500, installment2: 0, total: 1500, amount: 1500 },
+      { label: 'Uniforms', installment1: 1500, installment2: 0, total: 1500, amount: 1500 },
     ];
   }
 
@@ -198,7 +198,7 @@ export function getFeeBreakdown(receipt: ReceiptItem, programName?: string): Fee
       { label: 'Term Fee', installment1: 3500, installment2: 3500, total: 7000, amount: 7000 },
       { label: 'Tuition Fee', installment1: 7000, installment2: 7000, total: 14000, amount: 14000 },
       { label: 'HomeSunny App', installment1: 7500, installment2: 0, total: 7500, amount: 7500 },
-      { label: 'Uniform', installment1: 1500, installment2: 0, total: 1500, amount: 1500 },
+      { label: 'Uniforms', installment1: 1500, installment2: 0, total: 1500, amount: 1500 },
     ];
   }
 
