@@ -294,6 +294,11 @@ export default function FeeCalculatorPage() {
         const appItem = d.feeBreakup?.find((f: any) => f.feeType === 'ACTIVITY_FEE' || f.feeType === 'HOMESUNNY_APP_FEE');
         const uniItem = d.feeBreakup?.find((f: any) => f.feeType === 'UNIFORM_FEE' || f.feeType === 'UNIFORMS');
 
+        const isJrOrSr = programName.toLowerCase().includes('junior') || programName.toLowerCase().includes('jr') || programName.toLowerCase().includes('senior') || programName.toLowerCase().includes('sr');
+        const uniformsT1 = isJrOrSr ? (uniItem?.term1Amount ?? localBreakup.uniformsT1) : 0;
+        const uniformsT2 = isJrOrSr ? (uniItem?.term2Amount ?? localBreakup.uniformsT2) : 0;
+        const uniformsTotal = isJrOrSr ? (uniItem?.totalAmount ?? localBreakup.uniformsTotal) : 0;
+
         finalResult = {
           regT1: regItem?.term1Amount ?? localBreakup.regT1,
           regT2: regItem?.term2Amount ?? localBreakup.regT2,
@@ -307,9 +312,9 @@ export default function FeeCalculatorPage() {
           homeSunnyT1: appItem?.term1Amount ?? localBreakup.homeSunnyT1,
           homeSunnyT2: appItem?.term2Amount ?? localBreakup.homeSunnyT2,
           homeSunnyTotal: appItem?.totalAmount ?? localBreakup.homeSunnyTotal,
-          uniformsT1: uniItem?.term1Amount ?? localBreakup.uniformsT1,
-          uniformsT2: uniItem?.term2Amount ?? localBreakup.uniformsT2,
-          uniformsTotal: uniItem?.totalAmount ?? localBreakup.uniformsTotal,
+          uniformsT1,
+          uniformsT2,
+          uniformsTotal,
           totalT1: d.term1Total ?? localBreakup.totalT1,
           totalT2: d.term2Total ?? localBreakup.totalT2,
           grossTotal: d.subtotal ?? localBreakup.grossTotal,

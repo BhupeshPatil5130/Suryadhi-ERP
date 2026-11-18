@@ -124,9 +124,18 @@ export class FeeService {
         { id: 'fs-term', feeType: 'TERM_FEE' as any, totalAmount: term1Term + term2Term, term1Amount: term1Term, term2Amount: term2Term } as any,
         { id: 'fs-tuit', feeType: 'TUITION_FEE' as any, totalAmount: term1Tuit + term2Tuit, term1Amount: term1Tuit, term2Amount: term2Tuit } as any,
         { id: 'fs-app', feeType: 'ACTIVITY_FEE' as any, totalAmount: homeSunny, term1Amount: homeSunny, term2Amount: 0 } as any,
-        { id: 'fs-uni', feeType: 'UNIFORM_FEE' as any, totalAmount: uniforms, term1Amount: uniforms, term2Amount: 0 } as any,
+        ...(uniforms > 0 ? [{ id: 'fs-uni', feeType: 'UNIFORM_FEE' as any, totalAmount: uniforms, term1Amount: uniforms, term2Amount: 0 } as any] : []),
       ];
     }
+
+    // For PlayGroup & Nursery, or whenever uniform fee is 0, filter out UNIFORM_FEE
+    const progClean = (program?.name || input.programId || '').toLowerCase();
+    const isJrOrSrProg = progClean.includes('junior') || progClean.includes('senior') || progClean.includes('jr') || progClean.includes('sr');
+    if (!isJrOrSrProg) {
+      feeStructures = feeStructures.filter((fs) => fs.feeType !== 'UNIFORM_FEE');
+    }
+    // Filter out any 0 amount fee items so zero amount rows never appear
+    feeStructures = feeStructures.filter((fs) => Number(fs.totalAmount) > 0);
 
     const subtotal = feeStructures.reduce(
       (sum, fs) => sum + Number(fs.totalAmount),
