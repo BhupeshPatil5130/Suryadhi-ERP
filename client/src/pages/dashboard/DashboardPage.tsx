@@ -180,8 +180,8 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Welcome Partners to EPMS V2.0"
-        description="Your Own ERP Tool — Monitor enrollments, finances, and operations at a glance."
+        title="Dashboard"
+        description="Monitor enrollments, finances, and operations at a glance."
       />
 
       {/* Enrollment KPIs */}

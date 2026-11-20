@@ -182,8 +182,8 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Welcome Partners to EPMS V2.0"
-        description="Your Own ERP Tool — Monitor enrollments, finances, and operations at a glance."
+        title="Dashboard"
+        description="Monitor enrollments, finances, and operations at a glance."
       />
 
       {/* Enrollment KPIs */}
@@ -287,8 +287,8 @@ export default function DashboardPage() {
                               className={cn(
                                 "text-[10px]",
                                 inv.status === 'PAID' ? "text-emerald-700 bg-emerald-50 border-emerald-200" :
-                                inv.status === 'PARTIALLY_PAID' ? "text-amber-700 bg-amber-50 border-amber-200" :
-                                "text-blue-700 bg-blue-50 border-blue-200"
+                                  inv.status === 'PARTIALLY_PAID' ? "text-amber-700 bg-amber-50 border-amber-200" :
+                                    "text-blue-700 bg-blue-50 border-blue-200"
                               )}
                             >
                               {inv.status}

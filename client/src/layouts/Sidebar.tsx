@@ -19,6 +19,8 @@ import {
   Wrench,
   AlertTriangle,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   X,
   Settings,
 } from 'lucide-react';
@@ -242,7 +244,7 @@ function SidebarGroup({ item }: { item: SidebarItem }) {
 }
 
 export default function Sidebar() {
-  const { sidebarCollapsed, sidebarMobileOpen, setSidebarMobileOpen } = useUIStore();
+  const { sidebarCollapsed, toggleSidebar, sidebarMobileOpen, setSidebarMobileOpen } = useUIStore();
   const location = useLocation();
 
   useEffect(() => {
@@ -253,41 +255,27 @@ export default function Sidebar() {
 
   const sidebarContent = (
     <>
-      {/* Logo */}
+      {/* Sidebar Top Controls / Quick Collapse */}
       <div className={cn(
-        'h-20 flex items-center border-b border-sidebar-border/40 px-3.5 shrink-0 transition-all',
-        sidebarCollapsed ? 'justify-center' : 'gap-3'
+        'h-10 flex items-center border-b border-sidebar-border/40 px-3 shrink-0 text-sidebar-foreground/50 transition-all',
+        sidebarCollapsed ? 'justify-center' : 'justify-between'
       )}>
-        {/* Suryadhi circular icon — shown always */}
-        <div className={cn(
-          "rounded-2xl overflow-hidden shrink-0 bg-white flex items-center justify-center p-1.5 shadow-sm border border-slate-200 transition-all",
-          sidebarCollapsed ? "w-11 h-11" : "w-12 h-12"
-        )}>
-          <img
-            src={BRAND.iconSrc}
-            alt="Suryadhi icon"
-            className="w-full h-full object-contain"
-          />
-        </div>
         {!sidebarCollapsed && (
-          <div className="min-w-0 flex-1">
-            {/* SURYADHI LEARNING wordmark */}
-            <div className="bg-white px-2.5 py-1 rounded-lg border border-slate-200/90 inline-block shadow-xs">
-              <img
-                src={BRAND.logoSrc}
-                alt="Suryadhi Learning"
-                className="h-7 object-contain"
-              />
-            </div>
-            <div className="flex items-center gap-1.5 mt-1">
-              <span className="text-[10px] font-bold text-amber-500 tracking-wider uppercase">
-                {BRAND.franchiseCode}
-              </span>
-              <span className="text-[10px] text-sidebar-foreground/30">•</span>
-              <span className="text-[10px] text-sidebar-foreground/60 font-semibold">{BRAND.version}</span>
-            </div>
-          </div>
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/60">
+            Navigation Menu
+          </span>
         )}
+        <button
+          onClick={toggleSidebar}
+          className="p-1 rounded hover:bg-sidebar-accent text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors"
+          title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          {sidebarCollapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+        </button>
       </div>
 
       {/* Navigation */}
@@ -316,8 +304,8 @@ export default function Sidebar() {
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          'fixed top-0 left-0 z-40 h-screen bg-sidebar flex-col hidden lg:flex',
-          'transition-all duration-300 ease-in-out',
+          'fixed top-14 left-0 z-40 h-[calc(100vh-3.5rem)] bg-sidebar flex-col hidden lg:flex',
+          'transition-all duration-300 ease-in-out border-r border-sidebar-border/50',
           sidebarCollapsed ? 'w-16' : 'w-[260px]'
         )}
       >

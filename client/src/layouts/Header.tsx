@@ -103,112 +103,108 @@ export default function Header() {
     : (user?.role?.replace(/_/g, ' ') || 'Admin');
 
   return (
-    <header className="h-16 border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-30 flex items-center justify-between px-4 gap-4 transition-all">
-      {/* Left */}
-      <div className="flex items-center gap-3">
+    <header className="h-14 border-b border-[#2d3139] bg-[#1c1f26] text-white sticky top-0 z-50 flex items-center justify-between px-3 md:px-4 gap-3 select-none shadow-md">
+      {/* Left: Mobile Toggle + SUNOIAKIDS Logo Badge + System Title */}
+      <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={() => { toggleSidebar(); setSidebarMobileOpen(true); }}
-          className="p-2 rounded-lg hover:bg-accent transition-colors"
+          className="lg:hidden p-1.5 rounded hover:bg-white/10 text-slate-300 hover:text-white transition-colors shrink-0"
+          title="Toggle Navigation"
         >
-          <Menu className="h-5 w-5 text-muted-foreground" />
+          <Menu className="h-5 w-5" />
         </button>
 
-        {/* ERP Brand Logo in Header for quick identification */}
-        <div className="flex items-center gap-2.5 pl-0.5">
-          <div className="w-9 h-9 rounded-xl bg-white p-1 border border-slate-200/90 shadow-xs flex items-center justify-center shrink-0">
-            <img
-              src={BRAND.iconSrc}
-              alt={BRAND.systemName}
-              className="w-full h-full object-contain"
-            />
+        {/* SUNOIAKIDS Logo Badge (styled to match EuroKids reference box) */}
+        <Link to="/dashboard" className="flex items-center shrink-0">
+          <div className="bg-white px-2.5 py-1 rounded-[3px] shadow-sm flex items-center justify-center border border-white/20 select-none">
+            <div className="flex flex-col items-center leading-none">
+              <span className="font-black text-[15px] sm:text-[16px] tracking-tight leading-none text-[#1d4ed8]">
+                SŪNOIA<span className="text-[#ea580c]">KIDS</span>
+              </span>
+              <div className="w-full flex justify-start pl-0.5 mt-0.5">
+                <div className="h-[2px] w-5 bg-[#ea580c] rounded-full" />
+              </div>
+            </div>
           </div>
-          <span className="font-extrabold text-sm tracking-tight text-slate-800 dark:text-slate-100 hidden sm:inline-block">
-            {BRAND.systemAbbr}
-          </span>
-        </div>
+        </Link>
 
-        {/* Search */}
-        <div className="hidden md:flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-1.5 w-60 border border-transparent focus-within:border-primary/30 transition-colors ml-1">
-          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
-          <input
-            type="text"
-            placeholder="Search students, enquiries..."
-            className="bg-transparent text-sm outline-none w-full placeholder:text-muted-foreground/50"
-          />
-          <kbd className="hidden lg:flex h-5 items-center gap-1 rounded border bg-background px-1.5 text-[10px] font-medium text-muted-foreground">
-            ⌘K
-          </kbd>
+        {/* Brand System Title: SUNOIAKIDS PRE-SCHOOL MANAGEMENT SYSTEM */}
+        <div className="flex items-center min-w-0">
+          <span className="text-[#eab308] font-bold text-xs sm:text-[13px] md:text-sm tracking-wide sm:tracking-wider uppercase truncate select-none drop-shadow-xs">
+            SUNOIAKIDS PRE-SCHOOL MANAGEMENT SYSTEM
+          </span>
         </div>
       </div>
 
-      {/* Right */}
-      <div className="flex items-center gap-2">
+      {/* Right Controls */}
+      <div className="flex items-center gap-2 shrink-0">
+        {/* Search */}
+        <div className="hidden xl:flex items-center gap-2 bg-[#2a2e37] rounded-md px-3 py-1.5 w-52 border border-white/10 text-slate-200 focus-within:border-amber-400/50 transition-colors">
+          <Search className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+          <input
+            type="text"
+            placeholder="Search students, enquiries..."
+            className="bg-transparent text-xs text-white outline-none w-full placeholder:text-slate-400"
+          />
+          <kbd className="hidden 2xl:flex h-4 items-center gap-0.5 rounded border border-white/10 bg-white/5 px-1 text-[9px] font-medium text-slate-400">
+            ⌘K
+          </kbd>
+        </div>
+
         {/* Franchise Badge */}
-        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 text-xs font-semibold border border-amber-200 dark:border-amber-800/40">
-          <Building2 className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
-          <span>Franchisee: <span className="font-bold">{BRAND.franchiseCode}</span></span>
+        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#2a2e37] text-amber-300 text-xs font-semibold border border-amber-500/30 shadow-xs">
+          <Building2 className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+          <span>Franchisee: <strong className="text-white font-bold">{BRAND.franchiseCode}</strong></span>
         </div>
 
-        {/* Logged in School / Brand (Static Display - No dropdown, No switch after login) */}
-        <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-blue-50/90 text-blue-900 dark:bg-blue-950/40 dark:text-blue-300 text-xs font-semibold border border-blue-200/60 dark:border-blue-800/40 shadow-xs">
-          <div className="w-8 h-8 rounded-lg bg-white p-1 border border-slate-200 flex items-center justify-center shrink-0 shadow-xs">
-            <img
-              src={currentBrand.logoSrc}
-              alt={loggedInName}
-              className="w-full h-full object-contain"
-            />
-          </div>
-          <span className="font-bold text-xs tracking-tight">{loggedInName}</span>
-        </div>
-
-        {/* Academic Year Display (Locked - Selected at Login, No Change inside ERP) */}
+        {/* Academic Year Display (Locked - Selected at Login) */}
         <div
-          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 text-xs font-semibold border border-emerald-200/70 dark:border-emerald-800/40 shadow-xs"
+          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#2a2e37] text-emerald-300 text-xs font-semibold border border-emerald-500/30 shadow-xs"
           title="Academic Year locked from login session"
         >
-          <Calendar className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-          <span>AY: <strong className="font-bold">{academicYear || 'Apr 26 - May 27'}</strong></span>
+          <Calendar className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+          <span>AY: <strong className="text-white font-bold">{academicYear || 'Apr 26 - May 27'}</strong></span>
         </div>
 
         {/* Theme */}
         <button
           onClick={cycleTheme}
-          className="p-2 rounded-lg hover:bg-accent transition-colors"
+          className="p-1.5 rounded hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
           title={`Theme: ${theme}`}
         >
-          <ThemeIcon className="h-4 w-4 text-muted-foreground" />
+          <ThemeIcon className="h-4 w-4" />
         </button>
 
         {/* Notifications */}
-        <button className="p-2 rounded-lg hover:bg-accent transition-colors relative">
-          <Bell className="h-4 w-4 text-muted-foreground" />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-card" />
+        <button className="p-1.5 rounded hover:bg-white/10 text-slate-300 hover:text-white transition-colors relative">
+          <Bell className="h-4 w-4" />
+          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-[#1c1f26]" />
         </button>
 
         {/* Profile */}
         <div className="relative" ref={profileRef}>
           <button
             onClick={() => setShowProfile(!showProfile)}
-            className="flex items-center gap-2 ml-1 pl-3 border-l border-border hover:bg-accent rounded-lg py-1 pr-2 transition-colors"
+            className="flex items-center gap-2 pl-2 border-l border-white/10 hover:bg-white/10 rounded-md py-1 pr-1.5 transition-colors"
           >
-            <div className="h-7 w-7 rounded-full bg-primary/15 flex items-center justify-center">
-              <span className="text-[11px] font-bold text-primary">
-                {user ? getInitials(`${user.firstName} ${user.lastName}`) : 'U'}
+            <div className="h-7 w-7 rounded-full bg-amber-500/20 border border-amber-400/40 flex items-center justify-center">
+              <span className="text-[11px] font-bold text-amber-300">
+                {user ? getInitials(`${user.firstName} ${user.lastName}`) : 'A'}
               </span>
             </div>
             <div className="hidden md:block text-left">
-              <p className="text-xs font-medium leading-none">
+              <p className="text-xs font-semibold leading-none text-white">
                 {user?.firstName} {user?.lastName}
               </p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">
+              <p className="text-[10px] text-slate-400 mt-0.5">
                 {displayRole}
               </p>
             </div>
-            <ChevronDown className="h-3 w-3 text-muted-foreground hidden md:block" />
+            <ChevronDown className="h-3 w-3 text-slate-400 hidden md:block" />
           </button>
 
           {showProfile && (
-            <div className="absolute right-0 top-full mt-2 w-56 bg-popover border border-border rounded-xl shadow-xl z-50 py-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="absolute right-0 top-full mt-2 w-56 bg-popover border border-border rounded-xl shadow-xl z-50 py-1.5 animate-in fade-in slide-in-from-top-2 duration-200 text-slate-900 dark:text-slate-100">
               <div className="px-3 py-2 border-b border-border mb-1">
                 <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
@@ -258,5 +254,6 @@ export default function Header() {
         </div>
       </div>
     </header>
+  );
   );
 }
