@@ -18,7 +18,6 @@ import {
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '@/lib/api-client';
-import { showToast } from '@/lib/toast';
 
 export default function Header() {
   const { user, logout } = useAuthStore();
@@ -30,28 +29,9 @@ export default function Header() {
     academicYear,
     setAcademicYear,
     setAcademicYearId,
-    activeBrandId,
-    activePortal,
   } = useUIStore();
   const [showProfile, setShowProfile] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
-
-  const [academicYearsList, setAcademicYearsList] = useState<string[]>([]);
-  const [academicYearsRaw, setAcademicYearsRaw] = useState<any[]>([]);
-
-  // Find logged-in brand
-  const currentBrand =
-    BRAND.subBrands.find(
-      (b) =>
-        b.id === activeBrandId ||
-        b.name === activePortal ||
-        b.fullName === activePortal
-    ) || BRAND.subBrands[0];
-
-  const loggedInName =
-    user?.school?.name ||
-    activePortal ||
-    currentBrand.name;
 
   useEffect(() => {
     const fetchYears = async () => {
@@ -59,9 +39,7 @@ export default function Header() {
         const res = await apiClient.get('/lookups/academic-years');
         if (res.data.success && res.data.data?.length > 0) {
           const labels = res.data.data.map((y: any) => y.label);
-          setAcademicYearsList(labels);
-          setAcademicYearsRaw(res.data.data);
-          
+
           if (!academicYear) {
             const current = res.data.data.find((y: any) => y.isCurrent);
             if (current) {
@@ -78,7 +56,7 @@ export default function Header() {
       }
     };
     fetchYears();
-  }, [academicYear]);
+  }, [academicYear, setAcademicYear, setAcademicYearId]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -255,5 +233,5 @@ export default function Header() {
       </div>
     </header>
   );
-  );
+
 }

@@ -248,10 +248,8 @@ export default function Sidebar() {
   const location = useLocation();
 
   useEffect(() => {
-    if (sidebarMobileOpen) {
-      setSidebarMobileOpen(false);
-    }
-  }, [location.pathname, sidebarMobileOpen, setSidebarMobileOpen]);
+    setSidebarMobileOpen(false);
+  }, [location.pathname, setSidebarMobileOpen]);
 
   const sidebarContent = (
     <>

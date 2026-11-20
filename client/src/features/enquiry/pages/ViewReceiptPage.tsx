@@ -226,7 +226,7 @@ export default function ViewReceiptPage() {
                             {r.receiptNumber}
                           </td>
                           <td className="px-4 py-3 text-center border-r border-slate-200 font-medium text-slate-800">
-                            {r.notes || 'Admission Form'}
+                            {(!r.notes || r.notes.toLowerCase() === 'admission') ? 'Admission Form' : r.notes}
                           </td>
                           <td className="px-4 py-3 text-center border-r border-slate-200 capitalize text-slate-700">
                             {r.paymentMode?.toLowerCase().replace('_', ' ')}

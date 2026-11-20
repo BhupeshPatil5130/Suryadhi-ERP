@@ -48,6 +48,9 @@ export interface ReceiptItem {
   category?: string;
   invoiceId?: string | null;
   isOther?: boolean;
+  notes?: string | null;
+  particular?: string | null;
+  source?: string;
 }
 
 export function numberToWords(amount: number): string {

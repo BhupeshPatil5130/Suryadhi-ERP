@@ -193,7 +193,7 @@ export default function AddReceiptPage() {
                   <tbody>
                     <tr className="border-b border-slate-200 bg-white">
                       <td className="px-6 py-4 text-center font-medium text-[13px] text-slate-700 border-r border-slate-200">
-                        Admission
+                        Admission Form
                       </td>
                       <td className="px-6 py-3 border-r border-slate-200">
                         <Input 
